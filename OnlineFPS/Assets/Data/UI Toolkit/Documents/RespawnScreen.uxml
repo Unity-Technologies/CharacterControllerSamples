@@ -1,0 +1,5 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement style="flex-grow: 1; background-color: rgba(0, 0, 0, 0.8);">
+        <ui:Label tabindex="-1" text="Respawning in X..." display-tooltip-when-elided="true" name="RespawnMessageLabel" style="color: rgb(255, 255, 255); -unity-text-align: middle-center; flex-grow: 1; flex-shrink: 1; font-size: 50px;" />
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,7 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Data/UI%20Toolkit/Stylesheets/CrosshairStyle.uss?fileID=7433441132597879392&amp;guid=79f2160433816884f9f9ee21caa1f348&amp;type=3#CrosshairStyle" />
+    <ui:VisualElement name="Root" picking-mode="Ignore" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
+        <ui:VisualElement name="V" picking-mode="Ignore" class="Crosshair" style="width: 1px; height: 20px;" />
+        <ui:VisualElement name="H" picking-mode="Ignore" class="Crosshair" style="width: 20px; height: 1px;" />
+    </ui:VisualElement>
+</ui:UXML>

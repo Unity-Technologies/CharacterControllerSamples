@@ -1,0 +1,34 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Data/UI%20Toolkit/Stylesheets/MenuStyle.uss?fileID=7433441132597879392&amp;guid=b1c53d013324cc04782bdf1fb4d51f0e&amp;type=3#MenuStyle" />
+    <ui:VisualElement name="MainPanel" class="MainPanel">
+        <ui:VisualElement name="ConnectionPanel" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); display: flex;">
+            <ui:VisualElement name="NamePanel" class="MenuSubPanel">
+                <ui:TextField picking-mode="Ignore" label="Name" value="Player" name="NameTextField" />
+            </ui:VisualElement>
+            <ui:VisualElement name="SpectatorPanel" class="MenuSubPanel" style="visibility: visible;">
+                <ui:Toggle label="Spectator Mode" name="SpectatorToggle" focusable="false" />
+            </ui:VisualElement>
+            <ui:VisualElement name="Separator" class="Separator" />
+            <ui:VisualElement name="JoinIPPanel" class="MenuSubPanel">
+                <ui:TextField picking-mode="Ignore" label="Join IP" value="127.0.0.1" name="JoinIPTextField" />
+            </ui:VisualElement>
+            <ui:VisualElement name="JoinPortPanel" class="MenuSubPanel">
+                <ui:TextField picking-mode="Ignore" label="Join Port" value="7777" name="JoinPortTextField" />
+            </ui:VisualElement>
+            <ui:Button tabindex="-1" text="Join Game" display-tooltip-when-elided="true" name="JoinButton" class="JoinButton" />
+            <ui:VisualElement name="Separator" class="Separator" />
+            <ui:VisualElement name="HostPortPanel" class="MenuSubPanel">
+                <ui:TextField picking-mode="Ignore" label="Host Port" value="7777" name="HostPortTextField" />
+            </ui:VisualElement>
+            <ui:Button tabindex="-1" text="Host Game" display-tooltip-when-elided="true" name="HostButton" class="HostButton" />
+        </ui:VisualElement>
+        <ui:VisualElement name="ConnectingPanel" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); display: none;">
+            <ui:Label tabindex="-1" text="Connecting...." display-tooltip-when-elided="true" class="InfoText" />
+        </ui:VisualElement>
+        <ui:VisualElement name="InGamePanel" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); display: none;">
+            <ui:Slider label="Look Sensitivity" value="3" high-value="8" name="LookSensitivitySlider" show-input-field="false" page-size="0" focusable="true" low-value="0.1" style="display: flex;" />
+            <ui:VisualElement name="Space" style="flex-grow: 0; background-color: rgba(0, 0, 0, 0); flex-shrink: 0; height: 40px;" />
+            <ui:Button tabindex="-1" text="Disconnect" display-tooltip-when-elided="true" name="DisconnectButton" style="background-color: rgb(82, 82, 82);" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

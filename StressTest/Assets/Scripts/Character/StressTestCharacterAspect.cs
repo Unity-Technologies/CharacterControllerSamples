@@ -37,12 +37,12 @@ public readonly partial struct StressTestCharacterAspect : IAspect, IKinematicCh
     {
         ref StressTestCharacterComponent characterComponent = ref CharacterComponent.ValueRW;
         ref KinematicCharacterBody characterBody = ref CharacterAspect.CharacterBody.ValueRW;
+        ref float3 characterPosition = ref CharacterAspect.LocalTransform.ValueRW.Position;
 
         // First phase of default character update
-        CharacterAspect.Update_Initialize(baseContext.Time.DeltaTime);
-        UpdateGroundingUp();
-        CharacterAspect.Update_ParentMovement(in this, ref context, ref baseContext, characterBody.WasGroundedBeforeCharacterUpdate);
-        CharacterAspect.Update_Grounding(in this, ref context, ref baseContext);
+        CharacterAspect.Update_Initialize(in this, ref context, ref baseContext, ref characterBody, baseContext.Time.DeltaTime);
+        CharacterAspect.Update_ParentMovement(in this, ref context, ref baseContext, ref characterBody, ref characterPosition, characterBody.WasGroundedBeforeCharacterUpdate);
+        CharacterAspect.Update_Grounding(in this, ref context, ref baseContext, ref characterBody, ref characterPosition);
         
         // Update desired character velocity after grounding was detected, but before doing additional processing that depends on velocity
         HandleVelocityControl(ref context, ref baseContext);
@@ -55,11 +55,12 @@ public readonly partial struct StressTestCharacterAspect : IAspect, IKinematicCh
         }
 
         // Second phase of default character update
-        CharacterAspect.Update_PreventGroundingFromFutureSlopeChange(in this, ref context, ref baseContext, in characterComponent.StepAndSlopeHandling);
+        CharacterAspect.Update_PreventGroundingFromFutureSlopeChange(in this, ref context, ref baseContext, ref characterBody, in characterComponent.StepAndSlopeHandling);
         CharacterAspect.Update_GroundPushing(in this, ref context, ref baseContext, characterComponent.Gravity);
-        CharacterAspect.Update_MovementAndDecollisions(in this, ref context, ref baseContext);
-        CharacterAspect.Update_MovingPlatformDetection(ref baseContext); 
-        CharacterAspect.Update_ParentMomentum(ref baseContext);
+        CharacterAspect.Update_MovementAndDecollisions(in this, ref context, ref baseContext, ref characterBody, ref characterPosition);
+        CharacterAspect.Update_MovingPlatformDetection(ref baseContext, ref characterBody); 
+        CharacterAspect.Update_ParentMomentum(ref baseContext, ref characterBody);
+        CharacterAspect.Update_ProcessStatefulCharacterHits();
 
         if (characterComponent.UseStatefulHits)
         {
@@ -129,9 +130,13 @@ public readonly partial struct StressTestCharacterAspect : IAspect, IKinematicCh
     }
     
     #region Character Processor Callbacks
-    public void UpdateGroundingUp()
+    public void UpdateGroundingUp(
+        ref StressTestCharacterUpdateContext context,
+        ref KinematicCharacterUpdateContext baseContext)
     {
-        CharacterAspect.Default_UpdateGroundingUp();
+        ref KinematicCharacterBody characterBody = ref CharacterAspect.CharacterBody.ValueRW;
+        
+        CharacterAspect.Default_UpdateGroundingUp(ref characterBody);
     }
     
     public bool CanCollideWithHit(
@@ -171,12 +176,16 @@ public readonly partial struct StressTestCharacterAspect : IAspect, IKinematicCh
             float3 originalVelocityDirection,
             float hitDistance)
     {
+        ref KinematicCharacterBody characterBody = ref CharacterAspect.CharacterBody.ValueRW;
+        ref float3 characterPosition = ref CharacterAspect.LocalTransform.ValueRW.Position;
         StressTestCharacterComponent characterComponent = CharacterComponent.ValueRO;
         
         CharacterAspect.Default_OnMovementHit(
             in this,
             ref context,
             ref baseContext,
+            ref characterBody,
+            ref characterPosition,
             ref hit,
             ref remainingMovementDirection,
             ref remainingMovementLength,

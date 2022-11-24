@@ -1,4 +1,4 @@
-Rival Samples copyright © 2017-2022 Unity Technologies ApS
+Rival Samples copyright © 2022 Unity Technologies ApS
 
 Licensed under the Unity Companion License for Unity-dependent projects--see Unity Companion License.
 

@@ -30,9 +30,10 @@ public struct ClimbingState : IPlatformerCharacterState
 
     public void OnStateExit(CharacterState nextState, ref PlatformerCharacterUpdateContext context, ref KinematicCharacterUpdateContext baseContext, in PlatformerCharacterAspect aspect)
     {
+        ref KinematicCharacterBody characterBody = ref aspect.CharacterAspect.CharacterBody.ValueRW;
         ref KinematicCharacterProperties characterProperties = ref aspect.CharacterAspect.CharacterProperties.ValueRW;
         
-        aspect.CharacterAspect.SetOrUpdateParentBody(ref baseContext, default, default); 
+        aspect.CharacterAspect.SetOrUpdateParentBody(ref baseContext, ref characterBody, default, default); 
         characterProperties.EvaluateGrounding = true;
         characterProperties.DetectMovementCollisions = true;
         characterProperties.DecollideFromOverlaps = true;
@@ -88,11 +89,11 @@ public struct ClimbingState : IPlatformerCharacterState
             // Apply velocity to position
             characterPosition += characterBody.RelativeVelocity * baseContext.Time.DeltaTime;
             
-            aspect.CharacterAspect.SetOrUpdateParentBody(ref baseContext, closestClimbableHit.Entity, closestClimbableHit.Position); 
+            aspect.CharacterAspect.SetOrUpdateParentBody(ref baseContext, ref characterBody, closestClimbableHit.Entity, closestClimbableHit.Position); 
         }
         else
         {
-            aspect.CharacterAspect.SetOrUpdateParentBody(ref baseContext, default, default); 
+            aspect.CharacterAspect.SetOrUpdateParentBody(ref baseContext, ref characterBody, default, default); 
         }
         
         aspect.HandlePhysicsUpdatePhase2(ref context, ref baseContext, false, false, false, false, true);

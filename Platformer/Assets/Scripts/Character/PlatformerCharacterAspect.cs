@@ -156,16 +156,16 @@ public readonly partial struct PlatformerCharacterAspect : IAspect, IKinematicCh
         bool allowGroundingDetection)
     {
         ref KinematicCharacterBody characterBody = ref CharacterAspect.CharacterBody.ValueRW;
+        ref float3 characterPosition = ref CharacterAspect.LocalTransform.ValueRW.Position;
         
-        CharacterAspect.Update_Initialize(baseContext.Time.DeltaTime);
-        UpdateGroundingUp();
+        CharacterAspect.Update_Initialize(in this, ref context, ref baseContext, ref characterBody, baseContext.Time.DeltaTime);
         if (allowParentHandling)
         {
-            CharacterAspect.Update_ParentMovement(in this, ref context, ref baseContext, characterBody.WasGroundedBeforeCharacterUpdate);
+            CharacterAspect.Update_ParentMovement(in this, ref context, ref baseContext, ref characterBody, ref characterPosition, characterBody.WasGroundedBeforeCharacterUpdate);
         }
         if (allowGroundingDetection)
         {
-            CharacterAspect.Update_Grounding(in this, ref context, ref baseContext);
+            CharacterAspect.Update_Grounding(in this, ref context, ref baseContext, ref characterBody, ref characterPosition);
         }
     }
 
@@ -179,11 +179,13 @@ public readonly partial struct PlatformerCharacterAspect : IAspect, IKinematicCh
         bool allowParentHandling)
     {
         ref PlatformerCharacterComponent character = ref Character.ValueRW;
+        ref KinematicCharacterBody characterBody = ref CharacterAspect.CharacterBody.ValueRW;
+        ref float3 characterPosition = ref CharacterAspect.LocalTransform.ValueRW.Position;
         CustomGravity customGravity = CustomGravity.ValueRO;
 
         if (allowPreventGroundingFromFutureSlopeChange)
         {
-            CharacterAspect.Update_PreventGroundingFromFutureSlopeChange(in this, ref context, ref baseContext, in character.StepAndSlopeHandling);
+            CharacterAspect.Update_PreventGroundingFromFutureSlopeChange(in this, ref context, ref baseContext, ref characterBody, in character.StepAndSlopeHandling);
         }
         if (allowGroundingPushing)
         {
@@ -191,15 +193,15 @@ public readonly partial struct PlatformerCharacterAspect : IAspect, IKinematicCh
         }
         if (allowMovementAndDecollisions)
         {
-            CharacterAspect.Update_MovementAndDecollisions(in this, ref context, ref baseContext);
+            CharacterAspect.Update_MovementAndDecollisions(in this, ref context, ref baseContext, ref characterBody, ref characterPosition);
         }
         if (allowMovingPlatformDetection)
         {
-            CharacterAspect.Update_MovingPlatformDetection(ref baseContext);
+            CharacterAspect.Update_MovingPlatformDetection(ref baseContext, ref characterBody);
         }
         if (allowParentHandling)
         {
-            CharacterAspect.Update_ParentMomentum(ref baseContext);
+            CharacterAspect.Update_ParentMomentum(ref baseContext, ref characterBody);
         }
         CharacterAspect.Update_ProcessStatefulCharacterHits();
     }
@@ -297,9 +299,13 @@ public readonly partial struct PlatformerCharacterAspect : IAspect, IKinematicCh
     }
     
     #region Character Processor Callbacks
-    public void UpdateGroundingUp()
+    public void UpdateGroundingUp(
+        ref PlatformerCharacterUpdateContext context,
+        ref KinematicCharacterUpdateContext baseContext)
     {
-        CharacterAspect.Default_UpdateGroundingUp();
+        ref KinematicCharacterBody characterBody = ref CharacterAspect.CharacterBody.ValueRW;
+        
+        CharacterAspect.Default_UpdateGroundingUp(ref characterBody);
     }
     
     public bool CanCollideWithHit(
@@ -339,12 +345,16 @@ public readonly partial struct PlatformerCharacterAspect : IAspect, IKinematicCh
             float3 originalVelocityDirection,
             float hitDistance)
     {
+        ref KinematicCharacterBody characterBody = ref CharacterAspect.CharacterBody.ValueRW;
+        ref float3 characterPosition = ref CharacterAspect.LocalTransform.ValueRW.Position;
         PlatformerCharacterComponent characterComponent = Character.ValueRO;
         
         CharacterAspect.Default_OnMovementHit(
             in this,
             ref context,
             ref baseContext,
+            ref characterBody,
+            ref characterPosition,
             ref hit,
             ref remainingMovementDirection,
             ref remainingMovementLength,

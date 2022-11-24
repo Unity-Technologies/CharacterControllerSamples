@@ -30,13 +30,14 @@ public struct LedgeStandingUpState : IPlatformerCharacterState
 
     public void OnStateExit(CharacterState nextState, ref PlatformerCharacterUpdateContext context, ref KinematicCharacterUpdateContext baseContext, in PlatformerCharacterAspect aspect)
     {
+        ref KinematicCharacterBody characterBody = ref aspect.CharacterAspect.CharacterBody.ValueRW;
         ref KinematicCharacterProperties characterProperties = ref aspect.CharacterAspect.CharacterProperties.ValueRW;
         
         characterProperties.EvaluateGrounding = true;
         characterProperties.DetectMovementCollisions = true;
         characterProperties.DecollideFromOverlaps = true;
 
-        aspect.CharacterAspect.SetOrUpdateParentBody(ref baseContext, default, default); 
+        aspect.CharacterAspect.SetOrUpdateParentBody(ref baseContext, ref characterBody, default, default); 
     }
 
     public void OnStatePhysicsUpdate(ref PlatformerCharacterUpdateContext context, ref KinematicCharacterUpdateContext baseContext, in PlatformerCharacterAspect aspect)

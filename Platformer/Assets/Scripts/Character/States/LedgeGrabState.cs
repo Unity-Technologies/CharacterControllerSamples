@@ -38,7 +38,7 @@ public struct LedgeGrabState : IPlatformerCharacterState
             characterProperties.DetectMovementCollisions = true;
             characterProperties.DecollideFromOverlaps = true;
 
-            aspect.CharacterAspect.SetOrUpdateParentBody(ref baseContext, default, default); 
+            aspect.CharacterAspect.SetOrUpdateParentBody(ref baseContext, ref characterBody, default, default); 
         }
 
         characterBody.RelativeVelocity = float3.zero;
@@ -118,7 +118,7 @@ public struct LedgeGrabState : IPlatformerCharacterState
                 }
             }
             
-            aspect.CharacterAspect.SetOrUpdateParentBody(ref baseContext, forwardHit.Entity, forwardHit.Position); 
+            aspect.CharacterAspect.SetOrUpdateParentBody(ref baseContext, ref characterBody, forwardHit.Entity, forwardHit.Position); 
         }
         else
         {

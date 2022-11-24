@@ -39,7 +39,7 @@ public struct FlyingNoCollisionsState : IPlatformerCharacterState
         ref PlatformerCharacterControl characterControl = ref aspect.CharacterControl.ValueRW;
         ref float3 characterPosition = ref aspect.CharacterAspect.LocalTransform.ValueRW.Position;
         
-        aspect.CharacterAspect.Update_Initialize(deltaTime);
+        aspect.CharacterAspect.Update_Initialize(in aspect, ref context, ref baseContext, ref characterBody, deltaTime);
         
         // Movement
         float3 targetVelocity = characterControl.MoveVector * character.FlyingMaxSpeed;

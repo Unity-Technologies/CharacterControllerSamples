@@ -153,7 +153,7 @@ public struct AirMoveState : IPlatformerCharacterState
         if (LedgeGrabState.CanGrabLedge(ref context, ref baseContext, in aspect, out Entity ledgeEntity, out ColliderCastHit ledgeSurfaceHit))
         {
             stateMachine.TransitionToState(CharacterState.LedgeGrab, ref context, ref baseContext, in aspect);
-            aspect.CharacterAspect.SetOrUpdateParentBody(ref baseContext, ledgeEntity, ledgeSurfaceHit.Position); 
+            aspect.CharacterAspect.SetOrUpdateParentBody(ref baseContext, ref characterBody, ledgeEntity, ledgeSurfaceHit.Position); 
             return true;
         }
 

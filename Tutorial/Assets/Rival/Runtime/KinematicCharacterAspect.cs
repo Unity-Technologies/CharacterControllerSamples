@@ -26,7 +26,9 @@ namespace Rival
         /// <summary>
         /// Requests that the grounding up direction should be updated.
         /// </summary>
-        void UpdateGroundingUp();
+        void UpdateGroundingUp(
+            ref C context, 
+            ref KinematicCharacterUpdateContext baseContext);
         
         /// <summary>
         /// Determines if a hit can be collided with or not.
@@ -466,11 +468,18 @@ namespace Rival
         /// <summary>
         /// The initialization step of the character update (should be called on every character update). This resets key component values and buffers
         /// </summary>
+        /// <param name="processor"> The struct implementing <see cref="IKinematicCharacterProcessor{C}"/> </param>
+        /// <param name="characterBody"> The character body component </param>
         /// <param name="deltaTime"> The time delta of the character update </param>
-        public void Update_Initialize(float deltaTime)
+        /// <typeparam name="T"> The type of the struct implementing <see cref="IKinematicCharacterProcessor{C}"/> </typeparam>
+        /// <typeparam name="C"> The type of the user-created context struct </typeparam>
+        public void Update_Initialize<T, C>(
+            in T processor, 
+            ref C context,
+            ref KinematicCharacterUpdateContext baseContext,
+            ref KinematicCharacterBody characterBody, 
+            float deltaTime)  where T : unmanaged, IKinematicCharacterProcessor<C> where C : unmanaged
         {
-            ref KinematicCharacterBody characterBody = ref CharacterBody.ValueRW;
-
             CharacterHitsBuffer.Clear();
             DeferredImpulsesBuffer.Clear();
             VelocityProjectionHits.Clear();
@@ -482,6 +491,8 @@ namespace Rival
             characterBody.IsGrounded = false;
             characterBody.GroundHit = default;
             characterBody.LastPhysicsUpdateDeltaTime = deltaTime;
+            
+            processor.UpdateGroundingUp(ref context, ref baseContext);
         }
 
         /// <summary>
@@ -490,6 +501,8 @@ namespace Rival
         /// <param name="processor"> The struct implementing <see cref="IKinematicCharacterProcessor{C}"/> </param>
         /// <param name="context"> The user context struct holding global data meant to be accessed during the character update </param>
         /// <param name="baseContext"> The built-in context struct holding global data meant to be accessed during the character update </param> 
+        /// <param name="characterBody"> The character body component </param>
+        /// <param name="characterPosition"> The position of the character </param>
         /// <param name="constrainRotationToGroundingUp"> Whether or not to limit rotation around the grounding up direction </param>
         /// <typeparam name="T"> The type of the struct implementing <see cref="IKinematicCharacterProcessor{C}"/> </typeparam>
         /// <typeparam name="C"> The type of the user-created context struct </typeparam>
@@ -497,12 +510,12 @@ namespace Rival
             in T processor,
             ref C context,
             ref KinematicCharacterUpdateContext baseContext,
+            ref KinematicCharacterBody characterBody,
+            ref float3 characterPosition,
             bool constrainRotationToGroundingUp) where T : unmanaged, IKinematicCharacterProcessor<C> where C : unmanaged
         {
             quaternion characterRotation = LocalTransform.ValueRO.Rotation;
-            ref float3 characterPosition = ref LocalTransform.ValueRW.Position;
             KinematicCharacterProperties characterProperties = CharacterProperties.ValueRO;
-            ref KinematicCharacterBody characterBody = ref CharacterBody.ValueRW;
             PhysicsCollider characterPhysicsCollider = PhysicsCollider.ValueRO;
 
             // Reset parent if parent entity doesn't exist anymore
@@ -577,16 +590,18 @@ namespace Rival
         /// <param name="processor"> The struct implementing <see cref="IKinematicCharacterProcessor{C}"/> </param>
         /// <param name="context"> The user context struct holding global data meant to be accessed during the character update </param>
         /// <param name="baseContext"> The built-in context struct holding global data meant to be accessed during the character update </param> 
+        /// <param name="characterBody"> The character body component </param>
+        /// <param name="characterPosition"> The position of the character </param>
         /// <typeparam name="T"> The type of the struct implementing <see cref="IKinematicCharacterProcessor{C}"/> </typeparam>
         /// <typeparam name="C"> The type of the user-created context struct </typeparam>
         public void Update_Grounding<T, C>(
             in T processor,
             ref C context,
-            ref KinematicCharacterUpdateContext baseContext) where T : unmanaged, IKinematicCharacterProcessor<C> where C : unmanaged
+            ref KinematicCharacterUpdateContext baseContext,
+            ref KinematicCharacterBody characterBody,
+            ref float3 characterPosition) where T : unmanaged, IKinematicCharacterProcessor<C> where C : unmanaged
         {
-            ref float3 characterPosition = ref LocalTransform.ValueRW.Position;
             KinematicCharacterProperties characterProperties = CharacterProperties.ValueRO;
-            ref KinematicCharacterBody characterBody = ref CharacterBody.ValueRW;
 
             // Detect ground
             bool newIsGrounded = false;
@@ -651,15 +666,18 @@ namespace Rival
         /// <param name="processor"> The struct implementing <see cref="IKinematicCharacterProcessor{C}"/> </param>
         /// <param name="context"> The user context struct holding global data meant to be accessed during the character update </param>
         /// <param name="baseContext"> The built-in context struct holding global data meant to be accessed during the character update </param> 
+        /// <param name="characterBody"> The character body component </param>
+        /// <param name="characterPosition"> The position of the character </param>
         /// <typeparam name="T"> The type of the struct implementing <see cref="IKinematicCharacterProcessor{C}"/> </typeparam>
         /// <typeparam name="C"> The type of the user-created context struct </typeparam>
         public void Update_MovementAndDecollisions<T, C>(
             in T processor,
             ref C context,
-            ref KinematicCharacterUpdateContext baseContext) where T : unmanaged, IKinematicCharacterProcessor<C> where C : unmanaged
+            ref KinematicCharacterUpdateContext baseContext,
+            ref KinematicCharacterBody characterBody,
+            ref float3 characterPosition) where T : unmanaged, IKinematicCharacterProcessor<C> where C : unmanaged
         {
             KinematicCharacterProperties characterProperties = CharacterProperties.ValueRO;
-            ref KinematicCharacterBody characterBody = ref CharacterBody.ValueRW;
             
             float3 originalVelocityDirectionBeforeMove = math.normalizesafe(characterBody.RelativeVelocity);
 
@@ -669,6 +687,8 @@ namespace Rival
                 in processor, 
                 ref context, 
                 ref baseContext, 
+                ref characterBody,
+                ref characterPosition,
                 originalVelocityDirectionBeforeMove, 
                 out moveConfirmedThereWereNoOverlaps);
 
@@ -680,6 +700,8 @@ namespace Rival
                     in processor, 
                     ref context, 
                     ref baseContext, 
+                    ref characterBody,
+                    ref characterPosition,
                     originalVelocityDirectionBeforeMove);
             }
 
@@ -689,7 +711,8 @@ namespace Rival
                 ProcessCharacterHitDynamics(
                     in processor, 
                     ref context,
-                    ref baseContext);
+                    ref baseContext,
+                    ref characterBody);
             }
         }
 
@@ -699,6 +722,7 @@ namespace Rival
         /// <param name="processor"> The struct implementing <see cref="IKinematicCharacterProcessor{C}"/> </param>
         /// <param name="context"> The user context struct holding global data meant to be accessed during the character update </param>
         /// <param name="baseContext"> The built-in context struct holding global data meant to be accessed during the character update </param> 
+        /// <param name="characterBody"> The character body component </param>
         /// <param name="stepAndSlopeHandling"> Parameters for step and slope handling </param>
         /// <param name="slopeDetectionVerticalOffset"> The vertical distance from ground hit at which slope detection raycasts will start </param>
         /// <param name="slopeDetectionDownDetectionDepth"> The distance of downward slope detection raycasts, added to the initial vertical offset </param>
@@ -709,13 +733,12 @@ namespace Rival
             in T processor,
             ref C context,
             ref KinematicCharacterUpdateContext baseContext,
+            ref KinematicCharacterBody characterBody,
             in BasicStepAndSlopeHandlingParameters stepAndSlopeHandling,
             float slopeDetectionVerticalOffset = 0.05f,
             float slopeDetectionDownDetectionDepth = 0.05f,
             float slopeDetectionSecondaryNoGroundingCheckDistance = 0.25f) where T : unmanaged, IKinematicCharacterProcessor<C> where C : unmanaged
         {
-            ref KinematicCharacterBody characterBody = ref CharacterBody.ValueRW;
-
             if (characterBody.IsGrounded && (stepAndSlopeHandling.PreventGroundingWhenMovingTowardsNoGrounding || stepAndSlopeHandling.HasMaxDownwardSlopeChangeAngle))
             {
                 DetectFutureSlopeChange(
@@ -827,19 +850,18 @@ namespace Rival
         /// Handles detecting valid moving platforms based on current ground hit, and automatically sets them as the character's parent entity
         /// </summary>
         /// <param name="baseContext"> The built-in context struct holding global data meant to be accessed during the character update </param> 
-        public void Update_MovingPlatformDetection(ref KinematicCharacterUpdateContext baseContext)
+        /// <param name="characterBody"> The character body component </param>
+        public void Update_MovingPlatformDetection(ref KinematicCharacterUpdateContext baseContext, ref KinematicCharacterBody characterBody)
         {
-            KinematicCharacterBody characterBody = CharacterBody.ValueRO;
-            
             if (characterBody.IsGrounded &&
                 baseContext.TrackedTransformLookup.HasComponent(characterBody.GroundHit.Entity))
             {
                 RigidTransform groundWorldTransform = baseContext.PhysicsWorld.Bodies[characterBody.GroundHit.RigidBodyIndex].WorldFromBody;
-                SetOrUpdateParentBody(ref baseContext, characterBody.GroundHit.Entity, math.transform(math.inverse(groundWorldTransform), characterBody.GroundHit.Position));
+                SetOrUpdateParentBody(ref baseContext, ref characterBody, characterBody.GroundHit.Entity, math.transform(math.inverse(groundWorldTransform), characterBody.GroundHit.Position));
             }
             else
             {
-                SetOrUpdateParentBody(ref baseContext, Entity.Null, default);
+                SetOrUpdateParentBody(ref baseContext, ref characterBody, Entity.Null, default);
             }
         }
 
@@ -847,10 +869,10 @@ namespace Rival
         /// Handles preserving velocity momentum when getting unparented from a parent body (such as a moving platform).
         /// </summary>
         /// <param name="baseContext"> The built-in context struct holding global data meant to be accessed during the character update </param> 
-        public void Update_ParentMomentum(ref KinematicCharacterUpdateContext baseContext)
+        /// <param name="characterBody"> The character body component </param>
+        public void Update_ParentMomentum(ref KinematicCharacterUpdateContext baseContext, ref KinematicCharacterBody characterBody)
         {
             float3 characterPosition = LocalTransform.ValueRO.Position;
-            ref KinematicCharacterBody characterBody = ref CharacterBody.ValueRW;
             
             // Reset parent if parent entity doesn't exist anymore
             if (characterBody.ParentEntity != Entity.Null && !baseContext.TrackedTransformLookup.HasComponent(characterBody.ParentEntity))
@@ -1126,17 +1148,18 @@ namespace Rival
         /// <param name="processor"> The struct implementing <see cref="IKinematicCharacterProcessor{C}"/> </param>
         /// <param name="context"> The user context struct holding global data meant to be accessed during the character update </param>
         /// <param name="baseContext"> The built-in context struct holding global data meant to be accessed during the character update </param> 
+        /// <param name="characterBody"> The character body component </param>
         /// <typeparam name="T"> The type of the struct implementing <see cref="IKinematicCharacterProcessor{C}"/> </typeparam>
         /// <typeparam name="C"> The type of the user-created context struct </typeparam>
         public void ProcessCharacterHitDynamics<T, C>(
             in T processor,
             ref C context,
-            ref KinematicCharacterUpdateContext baseContext) where T : unmanaged, IKinematicCharacterProcessor<C> where C : unmanaged
+            ref KinematicCharacterUpdateContext baseContext,
+            ref KinematicCharacterBody characterBody) where T : unmanaged, IKinematicCharacterProcessor<C> where C : unmanaged
         {
             quaternion characterRotation = LocalTransform.ValueRO.Rotation;
             float3 characterPosition = LocalTransform.ValueRO.Position;
             KinematicCharacterProperties characterProperties = CharacterProperties.ValueRO;
-            ref KinematicCharacterBody characterBody = ref CharacterBody.ValueRW;
             
             baseContext.TmpRigidbodyIndexesProcessed.Clear();
             
@@ -1294,6 +1317,8 @@ namespace Rival
         /// <param name="processor"> The struct implementing <see cref="IKinematicCharacterProcessor{C}"/> </param>
         /// <param name="context"> The user context struct holding global data meant to be accessed during the character update </param>
         /// <param name="baseContext"> The built-in context struct holding global data meant to be accessed during the character update </param> 
+        /// <param name="characterBody"> The character body component </param>
+        /// <param name="characterPosition"> The position of the character </param>
         /// <param name="originalVelocityDirection"> Direction of the character velocity before any projection of velocity happened on this update </param>
         /// <param name="confirmedNoOverlapsOnLastMoveIteration"> Whether or not we can confirm that the character wasn't overlapping with any colliders after the last movement iteration. This is used for optimisation purposes as it gives us an opportunity to skip certain physics queries later in the character update </param>
         /// <typeparam name="T"> The type of the struct implementing <see cref="IKinematicCharacterProcessor{C}"/> </typeparam>
@@ -1302,15 +1327,15 @@ namespace Rival
             in T processor,
             ref C context,
             ref KinematicCharacterUpdateContext baseContext, 
+            ref KinematicCharacterBody characterBody,
+            ref float3 characterPosition,
             float3 originalVelocityDirection,
             out bool confirmedNoOverlapsOnLastMoveIteration) where T : unmanaged, IKinematicCharacterProcessor<C> where C : unmanaged
         {
             confirmedNoOverlapsOnLastMoveIteration = false;
             
             quaternion characterRotation = LocalTransform.ValueRO.Rotation;
-            ref float3 characterPosition = ref LocalTransform.ValueRW.Position;
             KinematicCharacterProperties characterProperties = CharacterProperties.ValueRO;
-            ref KinematicCharacterBody characterBody = ref CharacterBody.ValueRW;
             PhysicsCollider characterPhysicsCollider = PhysicsCollider.ValueRO;
             
             // Project on ground hit
@@ -1506,6 +1531,8 @@ namespace Rival
         /// <param name="processor"> The struct implementing <see cref="IKinematicCharacterProcessor{C}"/> </param>
         /// <param name="context"> The user context struct holding global data meant to be accessed during the character update </param>
         /// <param name="baseContext"> The built-in context struct holding global data meant to be accessed during the character update </param> 
+        /// <param name="characterBody"> The character body component </param>
+        /// <param name="characterPosition"> The position of the character </param>
         /// <param name="originalVelocityDirection"> Direction of the character velocity before any projection of velocity happened on this update </param>
         /// <typeparam name="T"> The type of the struct implementing <see cref="IKinematicCharacterProcessor{C}"/> </typeparam>
         /// <typeparam name="C"> The type of the user-created context struct </typeparam>
@@ -1513,14 +1540,14 @@ namespace Rival
             in T processor,
             ref C context,
             ref KinematicCharacterUpdateContext baseContext, 
+            ref KinematicCharacterBody characterBody,
+            ref float3 characterPosition,
             float3 originalVelocityDirection) where T : unmanaged, IKinematicCharacterProcessor<C> where C : unmanaged
         {
             baseContext.TmpRigidbodyIndexesProcessed.Clear();
             
             quaternion characterRotation = LocalTransform.ValueRO.Rotation;
-            ref float3 characterPosition = ref LocalTransform.ValueRW.Position;
             KinematicCharacterProperties characterProperties = CharacterProperties.ValueRO;
-            ref KinematicCharacterBody characterBody = ref CharacterBody.ValueRW;
             PhysicsCollider characterPhysicsCollider = PhysicsCollider.ValueRO;
 
             int decollisionIterationsMade = 0;
@@ -1596,6 +1623,8 @@ namespace Rival
                             in processor,
                             ref context,
                             ref baseContext, 
+                            ref characterBody,
+                            ref characterPosition,
                             in basicChosenHit,
                             -chosenDecollisionHit.Distance,
                             originalVelocityDirection,
@@ -1663,6 +1692,8 @@ namespace Rival
                             in processor,
                             ref context,
                             ref baseContext, 
+                            ref characterBody,
+                            ref characterPosition,
                             in basicChosenHit,
                             -mostPenetratingNonDynamicHit.Distance,
                             originalVelocityDirection,
@@ -1699,6 +1730,8 @@ namespace Rival
         /// <param name="processor"> The struct implementing <see cref="IKinematicCharacterProcessor{C}"/> </param>
         /// <param name="context"> The user context struct holding global data meant to be accessed during the character update </param>
         /// <param name="baseContext"> The built-in context struct holding global data meant to be accessed during the character update </param> 
+        /// <param name="characterBody"> The character body component </param>
+        /// <param name="characterPosition"> The position of the character </param>
         /// <param name="hit"> The hit to decollide from </param>
         /// <param name="decollisionDistance"></param>
         /// <param name="originalVelocityDirection"> Direction of the character velocity before any projection of velocity happened on this update </param>
@@ -1713,6 +1746,8 @@ namespace Rival
             in T processor,
             ref C context,
             ref KinematicCharacterUpdateContext baseContext, 
+            ref KinematicCharacterBody characterBody,
+            ref float3 characterPosition,
             in BasicHit hit,
             float decollisionDistance,
             float3 originalVelocityDirection,
@@ -1723,8 +1758,6 @@ namespace Rival
             bool projectVelocityOnHit) where T : unmanaged, IKinematicCharacterProcessor<C> where C : unmanaged
         {
             quaternion characterRotation = LocalTransform.ValueRO.Rotation;
-            ref float3 characterPosition = ref LocalTransform.ValueRW.Position;
-            ref KinematicCharacterBody characterBody = ref CharacterBody.ValueRW;
             
             // Grounding considerations for decollision (modified decollision direction)
             float3 decollisionDirection = hit.Normal;
@@ -2019,6 +2052,8 @@ namespace Rival
         /// <param name="processor"> The struct implementing <see cref="IKinematicCharacterProcessor{C}"/> </param>
         /// <param name="context"> The user context struct holding global data meant to be accessed during the character update </param>
         /// <param name="baseContext"> The built-in context struct holding global data meant to be accessed during the character update </param> 
+        /// <param name="characterBody"> The character body component </param>
+        /// <param name="characterPosition"> The position of the character </param>
         /// <param name="hit"> The hit to decollide from </param>
         /// <param name="remainingMovementDirection"></param>
         /// <param name="remainingMovementLength"></param>
@@ -2032,6 +2067,8 @@ namespace Rival
             in T processor,
             ref C context,
             ref KinematicCharacterUpdateContext baseContext,
+            ref KinematicCharacterBody characterBody,
+            ref float3 characterPosition,
             ref KinematicCharacterHit hit,
             ref float3 remainingMovementDirection,
             ref float remainingMovementLength,
@@ -2043,9 +2080,7 @@ namespace Rival
             hasSteppedUp = false;
             
             quaternion characterRotation = LocalTransform.ValueRO.Rotation;
-            ref float3 characterPosition = ref LocalTransform.ValueRW.Position;
             KinematicCharacterProperties characterProperties = CharacterProperties.ValueRO;
-            ref KinematicCharacterBody characterBody = ref CharacterBody.ValueRW;
 
             // Step up hits (only needed if not grounded on that hit)
             if (characterProperties.EvaluateGrounding &&
@@ -2426,15 +2461,15 @@ namespace Rival
         /// Called on every character physics update in order to set a parent body for the character
         /// </summary>
         /// <param name="baseContext"> The built-in context struct holding global data meant to be accessed during the character update </param> 
+        /// <param name="characterBody"> The character body component </param>
         /// <param name="parentEntity"> The parent entity of the character </param>
         /// <param name="anchorPointLocalParentSpace"> The contact point between character and parent, in the parent's local space, around which the character will be rotated </param>
         public void SetOrUpdateParentBody(
             ref KinematicCharacterUpdateContext baseContext, 
+            ref KinematicCharacterBody characterBody,
             Entity parentEntity,
             float3 anchorPointLocalParentSpace)
         {
-            ref KinematicCharacterBody characterBody = ref CharacterBody.ValueRW;
-            
             if (parentEntity != Entity.Null && baseContext.TrackedTransformLookup.HasComponent(parentEntity))
             {
                 characterBody.ParentEntity = parentEntity;
@@ -2526,9 +2561,9 @@ namespace Rival
         /// <summary>
         /// Default implementation of the "UpdateGroundingUp" processor callback. Sets the character ground up to the character transform's up direction
         /// </summary>
-        public void Default_UpdateGroundingUp()
+        /// <param name="characterBody"> The character body component </param>
+        public void Default_UpdateGroundingUp(ref KinematicCharacterBody characterBody)
         {
-            ref KinematicCharacterBody characterBody = ref CharacterBody.ValueRW;
             quaternion characterRotation = LocalTransform.ValueRO.Rotation;
         
             // GroundingUp must be a normalized vector representing the "up" direction that we use to evaluate slope angles with.
@@ -2716,6 +2751,8 @@ namespace Rival
         /// <param name="processor"> The struct implementing <see cref="IKinematicCharacterProcessor{C}"/> </param>
         /// <param name="context"> The user context struct holding global data meant to be accessed during the character update </param>
         /// <param name="baseContext"> The built-in context struct holding global data meant to be accessed during the character update </param> 
+        /// <param name="characterBody"> The character body component </param>
+        /// <param name="characterPosition"> The position of the character </param>
         /// <param name="hit"> The hit to decollide from </param>
         /// <param name="remainingMovementDirection"> Direction of the character movement that's left to be processed </param>
         /// <param name="remainingMovementLength"> Magnitude of the character movement that's left to be processed </param>
@@ -2729,6 +2766,8 @@ namespace Rival
             in T processor,
             ref C context,
             ref KinematicCharacterUpdateContext baseContext, 
+            ref KinematicCharacterBody characterBody,
+            ref float3 characterPosition,
             ref KinematicCharacterHit hit,
             ref float3 remainingMovementDirection,
             ref float remainingMovementLength,
@@ -2738,9 +2777,6 @@ namespace Rival
             float maxStepHeight) where T : unmanaged, IKinematicCharacterProcessor<C> where C : unmanaged
         {
             bool hasSteppedUp = false;
-            
-            ref KinematicCharacterBody characterBody = ref CharacterBody.ValueRW;
-            ref float3 characterPosition = ref LocalTransform.ValueRW.Position;
 
             if (stepHandling && 
                 !hit.IsGroundedOnHit &&
@@ -2750,6 +2786,8 @@ namespace Rival
                     in processor,
                     ref context,
                     ref baseContext, 
+                    ref characterBody,
+                    ref characterPosition,
                     ref hit,
                     ref remainingMovementDirection,
                     ref remainingMovementLength,

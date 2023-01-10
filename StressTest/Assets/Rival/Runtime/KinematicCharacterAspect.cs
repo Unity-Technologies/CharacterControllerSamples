@@ -12,6 +12,7 @@ using Unity.Physics.Authoring;
 using Unity.Physics.Extensions;
 using Unity.Physics.Systems;
 using Unity.Transforms;
+using UnityEngine;
 using Material = Unity.Physics.Material;
 using RaycastHit = Unity.Physics.RaycastHit;
 
@@ -333,18 +334,51 @@ namespace Rival
     [Serializable]
     public struct BasicStepAndSlopeHandlingParameters
     {
+        /// <summary>
+        /// Whether or not step handling logic is enabled
+        /// </summary>
         [UnityEngine.Header("Step Handling")]
+        [UnityEngine.Tooltip("Whether or not step handling logic is enabled")]
         public bool StepHandling;
+        /// <summary>
+        /// Max height that the character can step on
+        /// </summary>
+        [UnityEngine.Tooltip("Max height that the character can step on")]
         public float MaxStepHeight;
+        /// <summary>
+        /// Horizontal offset distance of extra downwards raycasts used to detect grounding around a step
+        /// </summary>
+        [UnityEngine.Tooltip("Horizontal offset distance of extra downwards raycasts used to detect grounding around a step")]
         public float ExtraStepChecksDistance;
+        /// <summary>
+        /// Character width used to determine grounding for steps. For a capsule this should be 2x capsule radius, and for a box it should be maximum box width. This is for cases where character with a spherical base tries to step onto an angled surface that is near the character's max step height. In thoses cases, the character might be grounded on steps on one frame, but wouldn't be grounded on the next frame as the spherical nature of its shape would push it a bit further up beyond its max step height.
+        /// </summary>
+        [UnityEngine.Tooltip("Character width used to determine grounding for steps. For a capsule this should be 2x capsule radius, and for a box it should be maximum box width. This is for cases where character with a spherical base tries to step onto an angled surface that is near the character's max step height. In thoses cases, the character might be grounded on steps on one frame, but wouldn't be grounded on the next frame as the spherical nature of its shape would push it a bit further up beyond its max step height.")]
+        public float CharacterWidthForStepGroundingCheck;
 
+        /// <summary>
+        /// Whether or not to cancel grounding when the character is moving off a ledge. This prevents the character from "snapping" onto the ledge as it moves off of it
+        /// </summary>
         [UnityEngine.Header("Slope Changes")]
+        [UnityEngine.Tooltip("Whether or not to cancel grounding when the character is moving off a ledge. This prevents the character from \"snapping\" onto the ledge as it moves off of it")]
         public bool PreventGroundingWhenMovingTowardsNoGrounding;
+        /// <summary>
+        /// Whether or not the character has a max slope change that it can stay grounded on
+        /// </summary>
+        [UnityEngine.Tooltip("Whether or not the character has a max slope change that it can stay grounded on")]
         public bool HasMaxDownwardSlopeChangeAngle;
+        /// <summary>
+        /// Max slope change that the character can stay grounded on
+        /// </summary>
+        [UnityEngine.Tooltip("Max slope change that the character can stay grounded on")]
         [UnityEngine.Range(0f, 180f)]
         public float MaxDownwardSlopeChangeAngle;
         
+        /// <summary>
+        /// Whether or not to constrain the character velocity to ground plane when it hits a non-grounded slope
+        /// </summary>
         [UnityEngine.Header("Misc")]
+        [UnityEngine.Tooltip("Whether or not to constrain the character velocity to ground plane when it hits a non-grounded slope")]
         public bool ConstrainVelocityToGroundPlane;
 
         public static BasicStepAndSlopeHandlingParameters GetDefault()
@@ -354,6 +388,7 @@ namespace Rival
                 StepHandling = false,
                 MaxStepHeight = 0.5f,
                 ExtraStepChecksDistance = 0.1f,
+                CharacterWidthForStepGroundingCheck = 1f,
 
                 PreventGroundingWhenMovingTowardsNoGrounding = true,
                 HasMaxDownwardSlopeChangeAngle = false,
@@ -1448,7 +1483,6 @@ namespace Rival
                             characterBody.IsGrounded,
                             characterBody.RelativeVelocity,
                             isGroundedOnMovementHit);
-                        VelocityProjectionHits.Add(new KinematicVelocityProjectionHit(currentCharacterHit));
 
                         processor.OnMovementHit(
                             ref context,
@@ -1918,6 +1952,7 @@ namespace Rival
             float maxStepHeight,
             float extraStepChecksDistance) where T : unmanaged, IKinematicCharacterProcessor<C> where C : unmanaged
         {
+            
             KinematicCharacterBody characterBody = CharacterBody.ValueRO;
             KinematicCharacterProperties characterProperties = CharacterProperties.ValueRO;
             
@@ -2045,7 +2080,7 @@ namespace Rival
 
             return false;
         }
-
+        
         /// <summary>
         /// Handles the stepping-up-a-step logic during character movement iterations
         /// </summary>
@@ -2060,6 +2095,7 @@ namespace Rival
         /// <param name="hitDistance"></param>
         /// <param name="stepHandling"></param>
         /// <param name="maxStepHeight"></param>
+        /// <param name="characterWidthForStepGroundingCheck"> Character width used to determine grounding for steps. This is for cases where character with a spherical base tries to step onto an angled surface that is near the character's max step height. In thoses cases, the character might be grounded on steps on one frame, but wouldn't be grounded on the next frame as the spherical nature of its shape would push it a bit further up beyond its max step height. </param>
         /// <param name="hasSteppedUp"></param>
         /// <typeparam name="T"> The type of the struct implementing <see cref="IKinematicCharacterProcessor{C}"/> </typeparam>
         /// <typeparam name="C"> The type of the user-created context struct </typeparam>
@@ -2075,6 +2111,7 @@ namespace Rival
             float hitDistance,
             bool stepHandling,
             float maxStepHeight,
+            float characterWidthForStepGroundingCheck,
             out bool hasSteppedUp) where T : unmanaged, IKinematicCharacterProcessor<C> where C : unmanaged
         {
             hasSteppedUp = false;
@@ -2086,7 +2123,8 @@ namespace Rival
             if (characterProperties.EvaluateGrounding &&
                 stepHandling &&
                 !hit.IsGroundedOnHit &&
-                maxStepHeight > 0f)
+                maxStepHeight > 0f &&
+                !PhysicsUtilities.IsBodyDynamic(in baseContext.PhysicsWorld, hit.RigidBodyIndex))
             {
                 float3 startPositionOfUpCheck = characterPosition;
                 float3 upCheckDirection = characterBody.GroundingUp;
@@ -2119,7 +2157,7 @@ namespace Rival
                 {
                     float3 startPositionOfForwardCheck = startPositionOfUpCheck + (upCheckDirection * upStepHitDistance);
                     float distanceOverStep = math.length(math.projectsafe(remainingMovementDirection * (remainingMovementLength - hitDistance), hit.Normal));
-                    float3 endPositionOfForwardCheck = startPositionOfForwardCheck + (remainingMovementDirection * remainingMovementLength);
+                    float3 endPositionOfForwardCheck = startPositionOfForwardCheck + (remainingMovementDirection * (remainingMovementLength + Constants.CollisionOffset));
                     float minimumDistanceOverStep = Constants.CollisionOffset * 3f;
                     if (distanceOverStep < minimumDistanceOverStep)
                     {
@@ -2185,22 +2223,53 @@ namespace Rival
                             }
 
                             if (isGroundedOnStepHit)
-                            {
-                                float steppedHeight = upStepHitDistance - downStepHitDistance;
-
-                                if (steppedHeight > Constants.CollisionOffset)
+                            {  
+                                float hitHeight = upStepHitDistance - downStepHitDistance;
+                                float steppedHeight = hitHeight;
+                                steppedHeight = math.max(0f, steppedHeight + Constants.CollisionOffset);
+                                    
+                                // Add slope & character width consideration to stepped height
+                                if(characterWidthForStepGroundingCheck > 0f)
+                                {
+                                    // Find the effective slope normal
+                                    float3 forwardSlopeCheckDirection =  -math.normalizesafe(math.cross(math.cross(characterBody.GroundingUp, stepHit.Normal), stepHit.Normal));
+                                    
+                                    if (RaycastClosestCollisions(
+                                            in processor,
+                                            ref context,
+                                            ref baseContext,
+                                            stepHit.Position + (characterBody.GroundingUp * Constants.CollisionOffset) + (forwardSlopeCheckDirection * Constants.CollisionOffset),
+                                            -characterBody.GroundingUp,
+                                            maxStepHeight,
+                                            characterProperties.ShouldIgnoreDynamicBodies(),
+                                            out RaycastHit forwardSlopeCheckHit,
+                                            out float forwardSlopeCheckHitDistance))
+                                    {
+                                        float3 effectiveSlopeNormal = forwardSlopeCheckHit.SurfaceNormal;
+                                        float slopeRadians = MathUtilities.AngleRadians(characterBody.GroundingUp, effectiveSlopeNormal);
+                                        float extraHeightFromAngleAndCharacterWidth = math.tan(slopeRadians) * characterWidthForStepGroundingCheck * 0.5f;
+                                        steppedHeight += extraHeightFromAngleAndCharacterWidth;
+                                    }
+                                }
+                                
+                                if (steppedHeight < maxStepHeight)
                                 {
                                     // Step up
-                                    characterPosition += characterBody.GroundingUp * steppedHeight;
+                                    characterPosition += characterBody.GroundingUp * hitHeight;
                                     characterPosition += forwardCheckDirection * forwardStepHitDistance;
 
                                     characterBody.IsGrounded = true;
                                     characterBody.GroundHit = stepHit;
 
                                     // Project vel
+                                    float3 characterVelocityBeforeHit = characterBody.RelativeVelocity;
                                     characterBody.RelativeVelocity = MathUtilities.ProjectOnPlane(characterBody.RelativeVelocity, characterBody.GroundingUp);
                                     remainingMovementDirection = math.normalizesafe(characterBody.RelativeVelocity);
                                     remainingMovementLength -= forwardStepHitDistance;
+                                    
+                                    // Replace hit with step hit
+                                    hit = KinematicCharacterUtilities.CreateCharacterHit(stepHit, characterBody.IsGrounded, characterVelocityBeforeHit, isGroundedOnStepHit);
+                                    hit.CharacterVelocityAfterHit = characterBody.RelativeVelocity;
 
                                     hasSteppedUp = true;
                                 }
@@ -2542,19 +2611,23 @@ namespace Rival
             if (!isGroundedOnSlope && stepAndSlopeHandling.StepHandling && stepAndSlopeHandling.MaxStepHeight > 0f)
             {
                 bool hitIsOnCharacterBottom = math.dot(characterBody.GroundingUp, hit.Normal) > Constants.DotProductSimilarityEpsilon;
-                if (hitIsOnCharacterBottom ||
-                    (groundingEvaluationType != (int)GroundingEvaluationType.MovementHit && groundingEvaluationType != (int)GroundingEvaluationType.InitialOverlaps))
+                if (hitIsOnCharacterBottom &&
+                    (groundingEvaluationType == (int)GroundingEvaluationType.GroundProbing || groundingEvaluationType == (int)GroundingEvaluationType.StepUpHit))
                 {
-                    isGroundedOnSteps = IsGroundedOnSteps(
-                        in processor,
-                        ref context,
-                        ref baseContext, 
-                        in hit,
-                        stepAndSlopeHandling.MaxStepHeight,
-                        stepAndSlopeHandling.ExtraStepChecksDistance);
+                    // Prevent step grounding detection on dynamic bodies, to prevent cases of character stepping onto sphere rolling towards it
+                    if (!PhysicsUtilities.IsBodyDynamic(in baseContext.PhysicsWorld, hit.RigidBodyIndex))
+                    {
+                        isGroundedOnSteps = IsGroundedOnSteps(
+                            in processor,
+                            ref context,
+                            ref baseContext,
+                            in hit,
+                            stepAndSlopeHandling.MaxStepHeight,
+                            stepAndSlopeHandling.ExtraStepChecksDistance);
+                    }
                 }
             }
-            
+
             return isGroundedOnSlope || isGroundedOnSteps;
         }
         
@@ -2666,7 +2739,7 @@ namespace Rival
                 ProjectVelocityOnSingleHit(ref velocity, ref characterIsGrounded, ref characterGroundHit, in firstHit, characterBody.GroundingUp);
                 velocityDirection = math.normalizesafe(velocity);
 
-                // Original velocity direction will act as a plane constaint just like other hits, to prevent our velocity from going back the way it came from. Hit index -1 represents original velocity
+                // Original velocity direction will act as a plane constraint just like other hits, to prevent our velocity from going back the way it came from. Hit index -1 represents original velocity
                 KinematicVelocityProjectionHit originalVelocityHit = default;
                 originalVelocityHit.Normal = characterIsGrounded ? math.normalizesafe(MathUtilities.ProjectOnPlane(originalVelocityDirection, characterBody.GroundingUp)) : originalVelocityDirection;
 
@@ -2760,6 +2833,7 @@ namespace Rival
         /// <param name="movementHitDistance"> Distance of the hit </param>
         /// <param name="stepHandling"> Whether step-handling is enabled or not </param>
         /// <param name="maxStepHeight"> Maximum height of steps that can be stepped on </param>
+        /// <param name="characterWidthForStepGroundingCheck"> Character width used to determine grounding for steps. This is for cases where character with a spherical base tries to step onto an angled surface that is near the character's max step height. In thoses cases, the character might be grounded on steps on one frame, but wouldn't be grounded on the next frame as the spherical nature of its shape would push it a bit further up beyond its max step height. </param>
         /// <typeparam name="T"> The type of the struct implementing <see cref="IKinematicCharacterProcessor{C}"/> </typeparam>
         /// <typeparam name="C"> The type of the user-created context struct </typeparam>
         public void Default_OnMovementHit<T, C>(
@@ -2774,7 +2848,8 @@ namespace Rival
             float3 originalVelocityDirection,
             float movementHitDistance,
             bool stepHandling,
-            float maxStepHeight) where T : unmanaged, IKinematicCharacterProcessor<C> where C : unmanaged
+            float maxStepHeight,
+            float characterWidthForStepGroundingCheck = 0f) where T : unmanaged, IKinematicCharacterProcessor<C> where C : unmanaged
         {
             bool hasSteppedUp = false;
 
@@ -2794,8 +2869,12 @@ namespace Rival
                     movementHitDistance,
                     stepHandling,
                     maxStepHeight,
+                    characterWidthForStepGroundingCheck,
                     out hasSteppedUp);
             }
+            
+            // Add velocityProjection hits only after potential correction from step handling
+            VelocityProjectionHits.Add(new KinematicVelocityProjectionHit(hit));
 
             if (!hasSteppedUp)
             {
@@ -2814,7 +2893,7 @@ namespace Rival
                     ref characterBody.GroundHit,
                     in VelocityProjectionHits,
                     originalVelocityDirection);
-
+                
                 // Recalculate remaining movement after projection
                 float projectedVelocityLengthFactor = math.length(characterBody.RelativeVelocity) / math.length(velocityBeforeProjection);
                 remainingMovementLength *= projectedVelocityLengthFactor;

@@ -201,11 +201,11 @@ MonoBehaviour:
       Tag05: 0
       Tag06: 0
       Tag07: 0
-    InterpolatePosition: 0
+    InterpolatePosition: 1
     InterpolateRotation: 0
     EvaluateGrounding: 1
     SnapToGround: 1
-    GroundSnappingDistance: 0.3
+    GroundSnappingDistance: 0.5
     EnhancedGroundPrecision: 0
     MaxGroundedSlopeAngle: 60
     DetectMovementCollisions: 1
@@ -236,6 +236,7 @@ MonoBehaviour:
       StepHandling: 1
       MaxStepHeight: 0.5
       ExtraStepChecksDistance: 0.1
+      CharacterWidthForStepGroundingCheck: 1
       PreventGroundingWhenMovingTowardsNoGrounding: 1
       HasMaxDownwardSlopeChangeAngle: 0
       MaxDownwardSlopeChangeAngle: 90

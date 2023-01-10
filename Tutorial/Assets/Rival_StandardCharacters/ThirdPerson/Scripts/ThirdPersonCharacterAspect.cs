@@ -227,7 +227,8 @@ public readonly partial struct ThirdPersonCharacterAspect : IAspect, IKinematicC
             originalVelocityDirection,
             hitDistance,
             characterComponent.StepAndSlopeHandling.StepHandling,
-            characterComponent.StepAndSlopeHandling.MaxStepHeight);
+            characterComponent.StepAndSlopeHandling.MaxStepHeight,
+            characterComponent.StepAndSlopeHandling.CharacterWidthForStepGroundingCheck);
     }
 
     public void OverrideDynamicHitMasses(

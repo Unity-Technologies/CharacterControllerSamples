@@ -192,7 +192,7 @@ public partial struct ServerGameSystem : ISystem
                     // Accept join request
                     Entity joinRequestAcceptedEntity = state.EntityManager.CreateEntity();
                     ecb.AddComponent(joinRequestAcceptedEntity, new JoinRequestAccepted());
-                    ecb.AddComponent(joinRequestAcceptedEntity, new SendRpcCommandRequestComponent());
+                    ecb.AddComponent(joinRequestAcceptedEntity, new SendRpcCommandRequestComponent{ TargetConnection = rpcReceive.SourceConnection });
 
                     // Stream in game
                     ecb.AddComponent(rpcReceive.SourceConnection, new NetworkStreamInGame());

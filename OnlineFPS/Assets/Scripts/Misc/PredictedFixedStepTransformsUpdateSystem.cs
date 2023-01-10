@@ -15,15 +15,20 @@ public partial struct PredictedFixedStepTransformsUpdateSystem : ISystem
     private SystemHandle _transformsGroupHandle;
     
     public void OnCreate(ref SystemState state)
-    {
-        _transformsGroupHandle = state.World.GetExistingSystem<TransformSystemGroup>();
-    }
+    { }
 
     public void OnDestroy(ref SystemState state)
     { }
 
     public void OnUpdate(ref SystemState state)
     {
-        _transformsGroupHandle.Update(state.WorldUnmanaged);
+        if (_transformsGroupHandle == SystemHandle.Null)
+        {
+            _transformsGroupHandle = state.World.GetExistingSystem<TransformSystemGroup>();
+        }
+        else
+        {
+            _transformsGroupHandle.Update(state.WorldUnmanaged);
+        }
     }
 }

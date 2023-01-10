@@ -131,7 +131,7 @@ namespace Rival
                 // Grounding
                 EvaluateGrounding = true,
                 SnapToGround = true,
-                GroundSnappingDistance = 0.3f,
+                GroundSnappingDistance = 0.5f,
                 EnhancedGroundPrecision = false,
                 MaxGroundedSlopeAngle = 60f,
 

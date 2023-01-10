@@ -192,7 +192,8 @@ public readonly partial struct StressTestCharacterAspect : IAspect, IKinematicCh
             originalVelocityDirection,
             hitDistance,
             characterComponent.StepAndSlopeHandling.StepHandling,
-            characterComponent.StepAndSlopeHandling.MaxStepHeight);
+            characterComponent.StepAndSlopeHandling.MaxStepHeight,
+            characterComponent.StepAndSlopeHandling.CharacterWidthForStepGroundingCheck);
     }
 
     public void OverrideDynamicHitMasses(

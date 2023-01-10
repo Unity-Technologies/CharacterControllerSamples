@@ -1333,6 +1333,7 @@ MonoBehaviour:
       StepHandling: 1
       MaxStepHeight: 0.5
       ExtraStepChecksDistance: 0.1
+      CharacterWidthForStepGroundingCheck: 1
       PreventGroundingWhenMovingTowardsNoGrounding: 1
       HasMaxDownwardSlopeChangeAngle: 0
       MaxDownwardSlopeChangeAngle: 90
@@ -1658,6 +1659,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: ThirdPersonCharacter
+      objectReference: {fileID: 0}
+    - target: {fileID: 6689285571920954877, guid: 5fbcc801dea8fd640a004697d22ed448,
+        type: 3}
+      propertyPath: CharacterProperties.GroundSnappingDistance
+      value: 0.5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3044,6 +3050,7 @@ MonoBehaviour:
       StepHandling: 1
       MaxStepHeight: 0.5
       ExtraStepChecksDistance: 0.1
+      CharacterWidthForStepGroundingCheck: 1
       PreventGroundingWhenMovingTowardsNoGrounding: 1
       HasMaxDownwardSlopeChangeAngle: 0
       MaxDownwardSlopeChangeAngle: 90
@@ -5028,6 +5035,7 @@ MonoBehaviour:
       StepHandling: 1
       MaxStepHeight: 0.5
       ExtraStepChecksDistance: 0.1
+      CharacterWidthForStepGroundingCheck: 1
       PreventGroundingWhenMovingTowardsNoGrounding: 1
       HasMaxDownwardSlopeChangeAngle: 0
       MaxDownwardSlopeChangeAngle: 90

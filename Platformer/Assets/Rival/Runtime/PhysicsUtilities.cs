@@ -270,22 +270,25 @@ namespace Rival
             float3 relativeVelocityAToB = pointVelocityB - pointVelocityA;
             float relativeVelocityOnNormal = math.dot(relativeVelocityAToB, collisionNormalBToA);
 
-            float3 crossA = math.cross(centerOfMassAToPoint, collisionNormalBToA);
-            float3 crossB = math.cross(collisionNormalBToA, centerOfMassBToPoint);
-            float3 angularA = math.mul(new Math.MTransform(transformA).InverseRotation, crossA).xyz;
-            float3 angularB = math.mul(new Math.MTransform(transformB).InverseRotation, crossB).xyz;
-            float3 temp = angularA * angularA * physicsMassA.InverseInertia + angularB * angularB * physicsMassB.InverseInertia;
-            float invEffectiveMass = temp.x + temp.y + temp.z + (physicsMassA.InverseMass + physicsMassB.InverseMass);
-
-            if (invEffectiveMass > 0f)
+            if (relativeVelocityOnNormal > 0f)
             {
-                float effectiveMass = 1f / invEffectiveMass;
+                float3 crossA = math.cross(centerOfMassAToPoint, collisionNormalBToA);
+                float3 crossB = math.cross(collisionNormalBToA, centerOfMassBToPoint);
+                float3 angularA = math.mul(new Math.MTransform(transformA).InverseRotation, crossA).xyz;
+                float3 angularB = math.mul(new Math.MTransform(transformB).InverseRotation, crossB).xyz;
+                float3 temp = angularA * angularA * physicsMassA.InverseInertia + angularB * angularB * physicsMassB.InverseInertia;
+                float invEffectiveMass = temp.x + temp.y + temp.z + (physicsMassA.InverseMass + physicsMassB.InverseMass);
 
-                float impulseScale = -relativeVelocityOnNormal * effectiveMass;
-                float3 totalImpulse = collisionNormalBToA * impulseScale;
+                if (invEffectiveMass > 0f)
+                {
+                    float effectiveMass = 1f / invEffectiveMass;
 
-                impulseOnA = -totalImpulse;
-                impulseOnB = totalImpulse;
+                    float impulseScale = -relativeVelocityOnNormal * effectiveMass;
+                    float3 totalImpulse = collisionNormalBToA * impulseScale;
+
+                    impulseOnA = -totalImpulse;
+                    impulseOnB = totalImpulse;
+                }
             }
         }
 

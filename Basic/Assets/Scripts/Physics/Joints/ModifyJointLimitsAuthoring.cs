@@ -128,7 +128,7 @@ partial class ModifyJointLimitsBakingSystem : SystemBase
         }
 
         // Collect all the joints
-        NativeMultiHashMap<Entity, (Entity, PhysicsJoint)> jointsLookUp = new NativeMultiHashMap<Entity, (Entity, PhysicsJoint)>(10, Allocator.TempJob);
+        NativeParallelMultiHashMap<Entity, (Entity, PhysicsJoint)> jointsLookUp = new NativeParallelMultiHashMap<Entity, (Entity, PhysicsJoint)>(10, Allocator.TempJob);
 
         foreach (var(jointEntity, physicsJoint, entity) in SystemAPI.Query<RefRO<JointEntityBaking>, RefRO<PhysicsJoint>>().WithEntityAccess().WithOptions(EntityQueryOptions.IncludeDisabledEntities | EntityQueryOptions.IncludePrefab))
         {

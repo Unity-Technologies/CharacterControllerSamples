@@ -295,7 +295,7 @@ public partial class GameManagementSystem : SystemBase
             // unload menu scene if it exists
             if (SystemAPI.HasComponent<SceneReference>(singleton.MenuVisualsSceneInstance))
             {
-                SceneSystem.UnloadScene(World.Unmanaged, singleton.MenuVisualsSceneInstance, SceneSystem.UnloadParameters.DestroySceneProxyEntity | SceneSystem.UnloadParameters.DestroySectionProxyEntities);
+                SceneSystem.UnloadScene(World.Unmanaged, singleton.MenuVisualsSceneInstance, SceneSystem.UnloadParameters.DestroyMetaEntities);
             }
         }
     }

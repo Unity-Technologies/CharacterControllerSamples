@@ -5,7 +5,7 @@ using Unity.Mathematics;
 using Unity.NetCode;
 using Unity.Transforms;
 using UnityEngine;
-using Rival;
+using Unity.CharacterController;
 
 public class DefaultVariantSystem : DefaultVariantSystemBase
 {

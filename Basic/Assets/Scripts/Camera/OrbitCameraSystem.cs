@@ -6,7 +6,7 @@ using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Physics.Systems;
 using Unity.Transforms;
-using Rival;
+using Unity.CharacterController;
 
 [UpdateAfter(typeof(TransformSystemGroup))]
 [UpdateBefore(typeof(EndSimulationEntityCommandBufferSystem))]

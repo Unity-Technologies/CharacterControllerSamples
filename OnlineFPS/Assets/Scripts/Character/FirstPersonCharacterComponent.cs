@@ -3,7 +3,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
-using Rival;
+using Unity.CharacterController;
 using Unity.NetCode;
 
 [Serializable]
@@ -31,7 +31,7 @@ public struct FirstPersonCharacterComponent : IComponentData
     public float MaxViewAngle;
     public float ViewRollAmount;
     public float ViewRollSharpness;
-
+    
     [HideInInspector]
     [GhostField(Smoothing = SmoothingAction.InterpolateAndExtrapolate)]
     public float CharacterYDegrees;
@@ -80,17 +80,10 @@ public struct FirstPersonCharacterView : IComponentData
 }
 
 [Serializable]
-public struct CharacterCleanupClient : ICleanupComponentData
+public struct CharacterClientCleanup : ICleanupComponentData
 {
     public Entity DeathVFX;
-    public float3 DeathVFXSpawnWorldPos;
-    public int OwnerNetworkId;
-}
-
-[Serializable]
-public struct CharacterCleanupServer : ICleanupComponentData
-{
-    public Entity OwningConnectionEntity;
+    public float3 DeathVFXSpawnWorldPosition;
 }
 
 [Serializable]

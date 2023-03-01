@@ -8,7 +8,7 @@ using Unity.Physics.Extensions;
 using Unity.Physics.Systems;
 using Unity.Transforms;
 using UnityEngine;
-using Rival;
+using Unity.CharacterController;
 
 [UpdateInGroup(typeof(AfterPhysicsSystemGroup))]
 [UpdateAfter(typeof(KinematicCharacterPhysicsUpdateGroup))]

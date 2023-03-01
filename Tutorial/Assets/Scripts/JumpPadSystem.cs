@@ -3,7 +3,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics.Stateful;
 using Unity.Physics.Systems;
-using Rival;
+using Unity.CharacterController;
 
 // Update after events processing system 
 [UpdateInGroup(typeof(AfterPhysicsSystemGroup))]

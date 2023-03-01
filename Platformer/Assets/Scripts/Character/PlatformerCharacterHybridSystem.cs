@@ -1,7 +1,7 @@
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
-using Rival;
+using Unity.CharacterController;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -53,7 +53,7 @@ public partial class PlatformerCharacterHybridSystem : SystemBase
             if (hybridLink.Object)
             {
                 // Transform
-                LocalToWorld meshRootLTW = GetComponent<LocalToWorld>(characterComponent.MeshRootEntity);
+                LocalToWorld meshRootLTW = SystemAPI.GetComponent<LocalToWorld>(characterComponent.MeshRootEntity);
                 hybridLink.Object.transform.position = meshRootLTW.Position;
                 hybridLink.Object.transform.rotation = meshRootLTW.Rotation;
 

@@ -6,7 +6,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
-using Rival;
+using Unity.CharacterController;
 
 [Serializable]
 public struct PlatformerCharacterAnimation : IComponentData

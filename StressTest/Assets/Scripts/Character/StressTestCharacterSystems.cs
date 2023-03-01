@@ -1,11 +1,12 @@
 using Unity.Burst;
+using Unity.Burst.Intrinsics;
 using Unity.Entities;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Transforms;
-using Rival;
+using Unity.CharacterController;
 
 [UpdateInGroup(typeof(KinematicCharacterPhysicsUpdateGroup))]
 [BurstCompile]
@@ -64,16 +65,24 @@ public partial struct StressTestCharacterPhysicsUpdateSystem : ISystem
     }
 
     [BurstCompile]
-    public partial struct StressTestCharacterPhysicsUpdateJob : IJobEntity
+    public partial struct StressTestCharacterPhysicsUpdateJob : IJobEntity, IJobEntityChunkBeginEnd
     {
         public StressTestCharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
     
         void Execute(ref StressTestCharacterAspect characterAspect)
         {
-            BaseContext.EnsureCreationOfTmpCollections();
             characterAspect.PhysicsUpdate(ref Context, ref BaseContext);
         }
+
+        public bool OnChunkBegin(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
+        {
+            BaseContext.EnsureCreationOfTmpCollections();
+            return true;
+        }
+
+        public void OnChunkEnd(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask, bool chunkWasExecuted)
+        { }
     }
 }
 
@@ -133,15 +142,23 @@ public partial struct StressTestCharacterVariableUpdateSystem : ISystem
     }
 
     [BurstCompile]
-    public partial struct StressTestCharacterVariableUpdateJob : IJobEntity
+    public partial struct StressTestCharacterVariableUpdateJob : IJobEntity, IJobEntityChunkBeginEnd
     {
         public StressTestCharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
     
         void Execute(ref StressTestCharacterAspect characterAspect)
         {
-            BaseContext.EnsureCreationOfTmpCollections();
             characterAspect.VariableUpdate(ref Context, ref BaseContext);
         }
+
+        public bool OnChunkBegin(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
+        {
+            BaseContext.EnsureCreationOfTmpCollections();
+            return true;
+        }
+
+        public void OnChunkEnd(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask, bool chunkWasExecuted)
+        { }
     }
 }

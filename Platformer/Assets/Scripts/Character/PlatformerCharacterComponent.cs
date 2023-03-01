@@ -4,7 +4,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 using Unity.Physics.Authoring;
-using Rival;
+using Unity.CharacterController;
 using Unity.Physics;
 
 [Serializable]

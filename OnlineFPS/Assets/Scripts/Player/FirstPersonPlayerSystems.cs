@@ -6,7 +6,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using Unity.Physics.Systems;
-using Rival;
+using Unity.CharacterController;
 using Unity.NetCode;
 
 [UpdateInGroup(typeof(GhostInputSystemGroup))]
@@ -33,16 +33,10 @@ public partial class FirstPersonPlayerInputsSystem : SystemBase
         float deltaTime = SystemAPI.Time.DeltaTime;
         float elapsedTime = (float)SystemAPI.Time.ElapsedTime;
         NetworkTick tick = SystemAPI.GetSingleton<NetworkTime>().ServerTick;
-        int localNetworkId = SystemAPI.GetSingleton<NetworkIdComponent>().Value;
-        GameResources gameResources = SystemAPI.GetSingleton<GameResources>();
         FPSInputActions.DefaultMapActions defaultActionsMap = InputActions.DefaultMap;
 
-        foreach (var (playerCommands, player, ghostOwner, entity) in SystemAPI.Query<RefRW<FirstPersonPlayerCommands>, RefRW<FirstPersonPlayer>, GhostOwnerComponent>().WithEntityAccess())
+        foreach (var (playerCommands, player, ghostOwner, entity) in SystemAPI.Query<RefRW<FirstPersonPlayerCommands>, RefRW<FirstPersonPlayer>, GhostOwnerComponent>().WithAll<GhostOwnerIsLocal>().WithEntityAccess())
         {
-            // Only process input for local owner
-            if (ghostOwner.NetworkId != localNetworkId)
-                continue;
-            
             // Remember if new tick because some inputs need to be reset when we just started a new tick
             bool isOnNewTick = !player.ValueRW.LastKnownCommandsTick.IsValid || tick.IsNewerThan(player.ValueRW.LastKnownCommandsTick);
 
@@ -124,8 +118,6 @@ public partial struct FirstPersonPlayerVariableStepControlSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        NetworkTime networkTime = SystemAPI.GetSingleton<NetworkTime>();
-        
         foreach (var (playerCommands, player) in SystemAPI.Query<FirstPersonPlayerCommands, FirstPersonPlayer>().WithAll<Simulate>())
         {
             if (SystemAPI.HasComponent<FirstPersonCharacterControl>(player.ControlledCharacter))
@@ -159,8 +151,6 @@ public partial struct FirstPersonPlayerFixedStepControlSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        NetworkTime networkTime = SystemAPI.GetSingleton<NetworkTime>();
-
         foreach (var (playerCommands, player, commandInterpolationDelay, entity) in SystemAPI.Query<FirstPersonPlayerCommands, FirstPersonPlayer, CommandDataInterpolationDelay>().WithAll<Simulate>().WithEntityAccess())
         {
             // Character

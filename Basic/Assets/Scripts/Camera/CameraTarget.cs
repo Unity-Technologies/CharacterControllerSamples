@@ -6,5 +6,5 @@ using Unity.Mathematics;
 [Serializable]
 public struct CameraTarget : IComponentData
 {
-    public Entity TargetEntity;
+    public Entity TargetEntity; 
 }

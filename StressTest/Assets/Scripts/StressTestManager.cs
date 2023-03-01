@@ -9,7 +9,7 @@ using Unity.Transforms;
 using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Physics;
-using Rival;
+using Unity.CharacterController;
 
 public class StressTestManager : MonoBehaviour
 {

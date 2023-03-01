@@ -5,7 +5,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
-using Rival;
+using Unity.CharacterController;
 using Unity.Physics.Systems;
 
 [UpdateInGroup(typeof(InitializationSystemGroup))]
@@ -17,6 +17,7 @@ public partial class BasicPlayerInputsSystem : SystemBase
     {
         base.OnCreate();
         
+        RequireForUpdate<FixedTickSystem.Singleton>();
         RequireForUpdate(SystemAPI.QueryBuilder().WithAll<BasicPlayer, BasicPlayerInputs>().Build());
 
         InputActions = new BasicInputActions();
@@ -92,6 +93,7 @@ public partial struct BasicFixedStepPlayerControlSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
+        state.RequireForUpdate<FixedTickSystem.Singleton>();
         state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<BasicPlayer, BasicPlayerInputs>().Build());
     }
 

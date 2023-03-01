@@ -7,7 +7,7 @@ using Unity.Physics;
 using Unity.Physics.Systems;
 using Unity.Physics.Extensions;
 using Unity.Transforms;
-using Rival;
+using Unity.CharacterController;
 
 [UpdateInGroup(typeof(BeforePhysicsSystemGroup))]
 [BurstCompile]

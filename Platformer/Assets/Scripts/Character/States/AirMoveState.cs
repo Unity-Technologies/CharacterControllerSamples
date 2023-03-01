@@ -1,7 +1,7 @@
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Entities;
-using Rival;
+using Unity.CharacterController;
 
 public struct AirMoveState : IPlatformerCharacterState
 {

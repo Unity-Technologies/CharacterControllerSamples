@@ -6,9 +6,8 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
-[UpdateInGroup(typeof(SimulationSystemGroup))]
-[UpdateBefore(typeof(TransformSystemGroup))]
-[UpdateAfter(typeof(PostPredictionPreTransformsECBSystem))]
+[UpdateInGroup(typeof(WeaponShotVisualsGroup))]
+[UpdateAfter(typeof(WeaponShotVisualsSpawnECBSystem))]
 [BurstCompile]
 public partial struct LazerShotVisualsSystem : ISystem
 {
@@ -39,17 +38,17 @@ public partial struct LazerShotVisualsSystem : ISystem
         public float ElapsedTime;
         public EntityCommandBuffer ECB;
         
-        void Execute(Entity entity, ref LazerShotVisuals shotVisuals, ref LocalTransform localTransform, ref PostTransformScale postTransformScale, in StandardRaycastWeaponShotVisualsData shotData)
+        void Execute(Entity entity, ref LazerShotVisuals shotVisuals, ref LocalTransform localTransform, ref LocalToWorld ltw, in StandardRaycastWeaponShotVisualsData shotData)
         {
             if (!shotVisuals.HasInitialized)
             {
                 shotVisuals.StartTime = ElapsedTime;
                 
                 // Scale
-                shotVisuals.StartingScale = new float3(shotVisuals.Width, shotVisuals.Width, math.length(shotData.VisualOriginToHit));
+                shotVisuals.StartingScale = new float3(shotVisuals.Width, shotVisuals.Width, math.length(shotData.SolvedVisualOriginToHit));
                 
                 // Orientation
-                localTransform.Rotation = quaternion.LookRotationSafe(math.normalizesafe(shotData.VisualOriginToHit), shotData.SimulationUp);
+                localTransform.Rotation = quaternion.LookRotationSafe(math.normalizesafe(shotData.SolvedVisualOriginToHit), shotData.SimulationUp);
                     
                 // Hit VFX
                 if (shotData.Hit.Entity != Entity.Null)
@@ -67,12 +66,13 @@ public partial struct LazerShotVisualsSystem : ISystem
                 float clampedTimeRatio = math.clamp(timeRatio, 0f, 1f);
                 float invTimeRatio = 1f - clampedTimeRatio;
 
-                postTransformScale.Value = float3x3.Scale(shotVisuals.StartingScale.x * invTimeRatio, shotVisuals.StartingScale.y * invTimeRatio, shotVisuals.StartingScale.z);
-
                 if (timeRatio >= 1f)
                 {
                     ECB.DestroyEntity(entity);
                 }
+
+                // Calculating the LocalToWorld manually since this is happening after the transforms group update
+                ltw.Value = float4x4.TRS(localTransform.Position, localTransform.Rotation, new float3(shotVisuals.StartingScale.x * invTimeRatio, shotVisuals.StartingScale.y * invTimeRatio, shotVisuals.StartingScale.z));
             }
             else
             {

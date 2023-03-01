@@ -1,7 +1,7 @@
 using System;
 using Unity.Collections;
 using Unity.Entities;
-using Rival;
+using Unity.CharacterController;
 using Unity.Mathematics;
 using UnityEngine;
 

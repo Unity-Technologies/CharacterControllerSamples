@@ -38,6 +38,6 @@ public class PostPredictionPreTransformsECBSystem : EntityCommandBufferSystem
         base.OnCreate();
 
         ref UnsafeList<EntityCommandBuffer> pendingBuffers = ref *m_PendingBuffers;
-        this.RegisterSingleton<Singleton>(ref pendingBuffers, World.Unmanaged, $"{nameof(PostPredictionPreTransformsECBSystem)} {nameof(Singleton)}");
+        this.RegisterSingleton<Singleton>(ref pendingBuffers, World.Unmanaged);
     }
 }

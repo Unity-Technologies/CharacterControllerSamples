@@ -1,5 +1,5 @@
 using Unity.Entities;
-using Rival;
+using Unity.CharacterController;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Transforms;
@@ -28,6 +28,13 @@ public struct CrouchedState : IPlatformerCharacterState
         ref PlatformerCharacterControl characterControl = ref aspect.CharacterControl.ValueRW;
 
         aspect.HandlePhysicsUpdatePhase1(ref context, ref baseContext, true, true);
+
+        // Rotate move input and velocity to take into account parent rotation
+        if(characterBody.ParentEntity != Entity.Null)
+        {
+            characterControl.MoveVector = math.rotate(characterBody.RotationFromParent, characterControl.MoveVector);
+            characterBody.RelativeVelocity = math.rotate(characterBody.RotationFromParent, characterBody.RelativeVelocity);
+        }
 
         float chosenMaxSpeed = character.CrouchedMaxSpeed;
         

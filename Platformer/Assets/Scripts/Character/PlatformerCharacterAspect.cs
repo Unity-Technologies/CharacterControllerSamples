@@ -11,7 +11,7 @@ using Unity.Physics.Authoring;
 using Unity.Physics.Extensions;
 using Unity.Physics.Systems;
 using Unity.Transforms;
-using Rival;
+using Unity.CharacterController;
 using UnityEngine;
 using UnityEngine.SocialPlatforms;
 using CapsuleCollider = Unity.Physics.CapsuleCollider;
@@ -26,7 +26,7 @@ public struct PlatformerCharacterUpdateContext
     [ReadOnly]
     public BufferLookup<LinkedEntityGroup> LinkedEntityGroupLookup;
 
-    public void OnIterateEntity(int chunkIndex)
+    public void SetChunkIndex(int chunkIndex)
     {
         ChunkIndex = chunkIndex;
     }

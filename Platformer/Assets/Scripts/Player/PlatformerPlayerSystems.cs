@@ -6,7 +6,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using Unity.Physics.Systems;
-using Rival;
+using Unity.CharacterController;
 
 [UpdateInGroup(typeof(InitializationSystemGroup))]
 public partial class PlatformerPlayerInputsSystem : SystemBase
@@ -23,6 +23,7 @@ public partial class PlatformerPlayerInputsSystem : SystemBase
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         
+        RequireForUpdate<FixedTickSystem.Singleton>();
         RequireForUpdate(SystemAPI.QueryBuilder().WithAll<PlatformerPlayer, PlatformerPlayerInputs>().Build());
     }
     
@@ -119,6 +120,7 @@ public partial struct PlatformerPlayerFixedStepControlSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
+        state.RequireForUpdate<FixedTickSystem.Singleton>();
         state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<PlatformerPlayer, PlatformerPlayerInputs>().Build());
     }
 

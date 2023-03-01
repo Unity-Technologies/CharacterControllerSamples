@@ -6,9 +6,8 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
-[UpdateInGroup(typeof(SimulationSystemGroup))]
-[UpdateBefore(typeof(TransformSystemGroup))]
-[UpdateAfter(typeof(PostPredictionPreTransformsECBSystem))]
+[UpdateInGroup(typeof(WeaponShotVisualsGroup))]
+[UpdateAfter(typeof(WeaponShotVisualsSpawnECBSystem))]
 [BurstCompile]
 public partial struct BulletShotVisualsSystem : ISystem
 {
@@ -39,7 +38,7 @@ public partial struct BulletShotVisualsSystem : ISystem
         public float DeltaTime;
         public EntityCommandBuffer.ParallelWriter ECB;
 
-        void Execute(Entity entity, [ChunkIndexInQuery] int chunkIndexInQuery, ref BulletShotVisuals shotVisuals, ref LocalTransform localTransform, ref PostTransformScale postTransformScale, in StandardRaycastWeaponShotVisualsData shotData)
+        void Execute(Entity entity, [ChunkIndexInQuery] int chunkIndexInQuery, ref BulletShotVisuals shotVisuals, ref LocalTransform localTransform, ref LocalToWorld ltw, in StandardRaycastWeaponShotVisualsData shotData)
         {
             if (!shotVisuals.IsInitialized)
             {
@@ -68,16 +67,17 @@ public partial struct BulletShotVisualsSystem : ISystem
             if (shotVisuals.DistanceTraveled >= shotData.SimulationHitDistance)
             {
                 // clamp position to max dist
-                float preClampDistFromOrigin = math.length(localTransform.Position - shotData.VisualOrigin);
-                localTransform.Position = shotData.VisualOrigin + shotData.VisualOriginToHit;
+                float preClampDistFromOrigin = math.length(localTransform.Position - shotData.SolvedVisualOrigin);
+                localTransform.Position = shotData.SolvedVisualOrigin + shotData.SolvedVisualOriginToHit;
 
                 // adjust scale stretch for clamped pos
-                zScale *= math.length(localTransform.Position - shotData.VisualOrigin) / preClampDistFromOrigin;
+                zScale *= math.length(localTransform.Position - shotData.SolvedVisualOrigin) / preClampDistFromOrigin;
 
                 ECB.DestroyEntity(chunkIndexInQuery, entity);
             }
 
-            postTransformScale.Value = float3x3.Scale(localTransform.Scale, localTransform.Scale, zScale);
+            // Calculating the LocalToWorld manually since this is happening after the transforms group update
+            ltw.Value = float4x4.TRS(localTransform.Position, localTransform.Rotation, new float3(localTransform.Scale, localTransform.Scale, zScale));
         }
     }
 }

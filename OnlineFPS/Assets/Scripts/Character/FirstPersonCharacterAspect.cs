@@ -10,7 +10,7 @@ using Unity.Physics.Authoring;
 using Unity.Physics.Extensions;
 using Unity.Physics.Systems;
 using Unity.Transforms;
-using Rival;
+using Unity.CharacterController;
 using Unity.NetCode;
 using UnityEngine;
 
@@ -72,6 +72,13 @@ public readonly partial struct FirstPersonCharacterAspect : IAspect, IKinematicC
         ref KinematicCharacterBody characterBody = ref CharacterAspect.CharacterBody.ValueRW;
         ref FirstPersonCharacterComponent characterComponent = ref CharacterComponent.ValueRW;
         ref FirstPersonCharacterControl characterControl = ref CharacterControl.ValueRW;
+
+        // Rotate move input and velocity to take into account parent rotation
+        if(characterBody.ParentEntity != Entity.Null)
+        {
+            characterControl.MoveVector = math.rotate(characterBody.RotationFromParent, characterControl.MoveVector);
+            characterBody.RelativeVelocity = math.rotate(characterBody.RotationFromParent, characterBody.RelativeVelocity);
+        }
         
         if (characterBody.IsGrounded)
         {

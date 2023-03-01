@@ -1,11 +1,12 @@
 using Unity.Burst;
+using Unity.Burst.Intrinsics;
 using Unity.Entities;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Transforms;
-using Rival;
+using Unity.CharacterController;
 using Unity.NetCode;
 using UnityEngine;
 
@@ -93,16 +94,24 @@ public partial struct FirstPersonCharacterPhysicsUpdateSystem : ISystem
 
     [BurstCompile]
     [WithAll(typeof(Simulate))]
-    public partial struct FirstPersonCharacterPhysicsUpdateJob : IJobEntity
+    public partial struct FirstPersonCharacterPhysicsUpdateJob : IJobEntity, IJobEntityChunkBeginEnd
     {
         public FirstPersonCharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
     
         void Execute(ref FirstPersonCharacterAspect characterAspect)
         {
-            BaseContext.EnsureCreationOfTmpCollections();
             characterAspect.PhysicsUpdate(ref Context, ref BaseContext);
         }
+
+        public bool OnChunkBegin(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
+        {
+            BaseContext.EnsureCreationOfTmpCollections();
+            return true;
+        }
+
+        public void OnChunkEnd(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask, bool chunkWasExecuted)
+        { }
     }
 }
 
@@ -158,16 +167,24 @@ public partial struct FirstPersonCharacterVariableUpdateSystem : ISystem
 
     [BurstCompile]
     [WithAll(typeof(Simulate))]
-    public partial struct FirstPersonCharacterVariableUpdateJob : IJobEntity
+    public partial struct FirstPersonCharacterVariableUpdateJob : IJobEntity, IJobEntityChunkBeginEnd
     {
         public FirstPersonCharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
     
         void Execute(ref FirstPersonCharacterAspect characterAspect)
         {
-            BaseContext.EnsureCreationOfTmpCollections();
             characterAspect.VariableUpdate(ref Context, ref BaseContext);
         }
+
+        public bool OnChunkBegin(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
+        {
+            BaseContext.EnsureCreationOfTmpCollections();
+            return true;
+        }
+
+        public void OnChunkEnd(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask, bool chunkWasExecuted)
+        { }
     }
 
     [BurstCompile]
@@ -182,46 +199,6 @@ public partial struct FirstPersonCharacterVariableUpdateSystem : ISystem
             if (FirstPersonCharacterLookup.TryGetComponent(characterView.CharacterEntity, out FirstPersonCharacterComponent character))
             {
                 transformAspect.LocalRotation = character.ViewLocalRotation;
-            }
-        }
-    }
-}
-
-[WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
-[UpdateInGroup(typeof(SimulationSystemGroup))]
-[UpdateAfter(typeof(TransformSystemGroup))]
-[BurstCompile]
-public partial struct CharacterVisualsSystem : ISystem
-{
-    [BurstCompile]
-    public void OnCreate(ref SystemState state)
-    { }
-
-    [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    { }
-
-    [BurstCompile]
-    public void OnUpdate(ref SystemState state)
-    {
-        CharacterClientCleanupJob clientCleanupJob = new CharacterClientCleanupJob
-        {
-            LocalToWorldLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true),
-        };
-        clientCleanupJob.ScheduleParallel();
-    }
-
-    [BurstCompile]
-    public partial struct CharacterClientCleanupJob : IJobEntity
-    {
-        [ReadOnly] 
-        public ComponentLookup<LocalToWorld> LocalToWorldLookup;
-
-        void Execute(ref CharacterCleanupClient cleanup, in FirstPersonCharacterComponent character)
-        {
-            if (LocalToWorldLookup.TryGetComponent(character.DeathVFXSpawnPoint, out LocalToWorld deathVFXSpawnLtW))
-            {
-                cleanup.DeathVFXSpawnWorldPos = deathVFXSpawnLtW.Position;
             }
         }
     }

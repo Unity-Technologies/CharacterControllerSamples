@@ -11,7 +11,7 @@ using Unity.Physics.Authoring;
 using Unity.Physics.Extensions;
 using Unity.Physics.Systems;
 using Unity.Transforms;
-using Rival;
+using Unity.CharacterController;
 using UnityEngine;
 
 public struct StressTestCharacterUpdateContext
@@ -74,6 +74,13 @@ public readonly partial struct StressTestCharacterAspect : IAspect, IKinematicCh
         ref KinematicCharacterBody characterBody = ref CharacterAspect.CharacterBody.ValueRW;
         ref StressTestCharacterComponent characterComponent = ref CharacterComponent.ValueRW;
         ref StressTestCharacterControl characterControl = ref CharacterControl.ValueRW;
+
+        // Rotate move input and velocity to take into account parent rotation
+        if(characterBody.ParentEntity != Entity.Null)
+        {
+            characterControl.MoveVector = math.rotate(characterBody.RotationFromParent, characterControl.MoveVector);
+            characterBody.RelativeVelocity = math.rotate(characterBody.RotationFromParent, characterBody.RelativeVelocity);
+        }
         
         if (characterBody.IsGrounded)
         {

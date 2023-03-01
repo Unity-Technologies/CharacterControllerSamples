@@ -1,12 +1,13 @@
 using System;
 using Unity.Burst;
+using Unity.Burst.Intrinsics;
 using Unity.Entities;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Transforms;
-using Rival;
+using Unity.CharacterController;
 
 [UpdateInGroup(typeof(InitializationSystemGroup))]
 [RequireMatchingQueriesForUpdate]
@@ -85,17 +86,25 @@ public partial struct PlatformerCharacterPhysicsUpdateSystem : ISystem
 
     [BurstCompile]
     [WithAll(typeof(Simulate))]
-    public partial struct PlatformerCharacterPhysicsUpdateJob : IJobEntity
+    public partial struct PlatformerCharacterPhysicsUpdateJob : IJobEntity, IJobEntityChunkBeginEnd
     {
         public PlatformerCharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
     
         void Execute([ChunkIndexInQuery] int chunkIndex, ref PlatformerCharacterAspect characterAspect)
         {
-            Context.OnIterateEntity(chunkIndex);
-            BaseContext.EnsureCreationOfTmpCollections();
+            Context.SetChunkIndex(chunkIndex);
             characterAspect.PhysicsUpdate(ref Context, ref BaseContext);
         }
+
+        public bool OnChunkBegin(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
+        {
+            BaseContext.EnsureCreationOfTmpCollections();
+            return true;
+        }
+
+        public void OnChunkEnd(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask, bool chunkWasExecuted)
+        { }
     }
 }
 
@@ -144,16 +153,24 @@ public partial struct PlatformerCharacterVariableUpdateSystem : ISystem
 
     [BurstCompile]
     [WithAll(typeof(Simulate))]
-    public partial struct PlatformerCharacterVariableUpdateJob : IJobEntity
+    public partial struct PlatformerCharacterVariableUpdateJob : IJobEntity, IJobEntityChunkBeginEnd
     {
         public PlatformerCharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
     
         void Execute([ChunkIndexInQuery] int chunkIndex, ref PlatformerCharacterAspect characterAspect)
         {
-            Context.OnIterateEntity(chunkIndex);
-            BaseContext.EnsureCreationOfTmpCollections();
+            Context.SetChunkIndex(chunkIndex);
             characterAspect.VariableUpdate(ref Context, ref BaseContext);
         }
+
+        public bool OnChunkBegin(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
+        {
+            BaseContext.EnsureCreationOfTmpCollections();
+            return true;
+        }
+
+        public void OnChunkEnd(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask, bool chunkWasExecuted)
+        { }
     }
 }

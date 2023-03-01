@@ -1,5 +1,5 @@
 using Unity.Entities;
-using Rival;
+using Unity.CharacterController;
 using Unity.Mathematics;
 using Unity.Physics;
 

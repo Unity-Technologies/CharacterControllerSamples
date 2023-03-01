@@ -7,7 +7,7 @@ using Unity.Physics;
 using Unity.Physics.Stateful;
 using Unity.Physics.Systems;
 using Unity.Transforms;
-using Rival;
+using Unity.CharacterController;
 
 [UpdateInGroup(typeof(AfterPhysicsSystemGroup))]
 [UpdateBefore(typeof(KinematicCharacterPhysicsUpdateGroup))]

@@ -40,11 +40,13 @@ public struct StandardRaycastWeaponShotVFXRequest : IBufferElementData
 [Serializable]
 public struct StandardRaycastWeaponShotVisualsData : IComponentData
 {
-    public float3 VisualOrigin;
+    public Entity VisualOriginEntity;
     public float3 SimulationOrigin;
     public float3 SimulationDirection;
     public float3 SimulationUp;
     public float SimulationHitDistance;
     public RaycastHit Hit;
-    public float3 VisualOriginToHit;
+
+    public float3 SolvedVisualOrigin;
+    public float3 SolvedVisualOriginToHit;
 }

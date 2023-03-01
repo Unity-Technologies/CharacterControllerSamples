@@ -235,4 +235,5 @@ MonoBehaviour:
   CharacterGhost: {fileID: 1555240849038293811, guid: e95be3f6ef9cc8243994bdcda968a0e5, type: 3}
   RailgunGhost: {fileID: 5179934649230605806, guid: 44cc784d5b8c9594baabe6f315e02449, type: 3}
   MachineGunGhost: {fileID: 2703708565719520083, guid: 913ac431eeee6b64cae9c18f54d21fb1, type: 3}
+  DeathVFXGhost: {fileID: 7161354016620288120, guid: 098661ecdda5d864ea4212382582b67a, type: 3}
   SpectatorPrefab: {fileID: 10482797864367398, guid: 6f4378ce200172f42bc501e84a3a7220, type: 3}

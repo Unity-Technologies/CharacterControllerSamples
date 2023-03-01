@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine;
-using Rival;
+using Unity.CharacterController;
 using Unity.Mathematics;
 
 public enum CharacterState

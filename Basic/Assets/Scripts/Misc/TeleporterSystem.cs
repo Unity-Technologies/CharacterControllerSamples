@@ -6,7 +6,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using Unity.Physics;
 using Unity.Physics.Systems;
-using Rival;
+using Unity.CharacterController;
 using Unity.Physics.Stateful;
 
 [UpdateInGroup(typeof(AfterPhysicsSystemGroup))]

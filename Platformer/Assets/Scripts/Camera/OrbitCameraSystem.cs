@@ -7,7 +7,7 @@ using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Physics.Systems;
 using Unity.Transforms;
-using Rival;
+using Unity.CharacterController;
 using UnityEngine;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]

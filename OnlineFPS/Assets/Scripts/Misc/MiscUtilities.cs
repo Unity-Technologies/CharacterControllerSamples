@@ -4,6 +4,8 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Entities.Graphics;
 using Unity.Mathematics;
+using Unity.NetCode;
+using Unity.Networking.Transport;
 using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine.InputSystem;
@@ -42,5 +44,12 @@ public static class MiscUtilities
     public static Entity GetSingletonEntity<T>(ref SystemState state) where T : unmanaged, IComponentData
     {
         return new EntityQueryBuilder(Allocator.Temp).WithAll<T>().Build(ref state).GetSingletonEntity();
+    }
+
+    public static void GetConnectionsArrays(ref SystemState state, Allocator allocator, out NativeArray<Entity> connectionEntities, out NativeArray<NetworkIdComponent> connections)
+    {
+        EntityQuery connectionsQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<NetworkIdComponent>().Build(ref state);
+        connectionEntities = connectionsQuery.ToEntityArray(allocator);
+        connections = connectionsQuery.ToComponentDataArray<NetworkIdComponent>(allocator);
     }
 }

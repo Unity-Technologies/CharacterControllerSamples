@@ -65,10 +65,11 @@ public partial struct ClientGameSystem : ISystem
     {
         ref Singleton singleton = ref _singletonQuery.GetSingletonRW<Singleton>().ValueRW;
         GameResources gameResources = SystemAPI.GetSingleton<GameResources>();
+        WorldTransformsHelperReadOnly worldTransformsHelper = new WorldTransformsHelperReadOnly(ref state);
 
         HandleSendJoinRequestOncePendingScenesLoaded(ref state, ref singleton);
         HandlePendingJoinRequest(ref state, ref singleton, gameResources);
-        HandleCharacterSetupAndDestruction(ref state, ref singleton, gameResources);
+        HandleCharacterSetupAndDestruction(ref state, ref singleton, ref worldTransformsHelper, gameResources);
         HandleDisconnect(ref state, ref singleton, gameResources);
         HandleRespawnScreen(ref state, ref singleton, gameResources);
     }
@@ -136,66 +137,67 @@ public partial struct ClientGameSystem : ISystem
         }
     }
     
-    private void HandleCharacterSetupAndDestruction(ref SystemState state, ref Singleton singleton, GameResources gameResources)
+    private void HandleCharacterSetupAndDestruction(ref SystemState state, ref Singleton singleton, ref WorldTransformsHelperReadOnly worldTransformsHelper, GameResources gameResources)
     {
         if (SystemAPI.HasSingleton<NetworkIdComponent>())
         {
-            int localNetworkId = SystemAPI.GetSingleton<NetworkIdComponent>().Value;
             EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged);
 
-            foreach (var (character, owningPlayer, ghostOwner, entity) in SystemAPI.Query<FirstPersonCharacterComponent, OwningPlayer, GhostOwnerComponent>().WithNone<CharacterCleanupClient>().WithEntityAccess())
+            // Initialize local-owned characters
+            foreach (var (character, owningPlayer, ghostOwner, entity) in SystemAPI.Query<FirstPersonCharacterComponent, OwningPlayer, GhostOwnerComponent>().WithAll<GhostOwnerIsLocal>().WithNone<CharacterClientCleanup>().WithEntityAccess())
             {
-                // Setup for local-owned character
-                if (ghostOwner.NetworkId == localNetworkId)
-                {
-                    // Make camera follow character's view
-                    ecb.AddComponent(character.ViewEntity, new MainEntityCamera { BaseFoV = character.BaseFoV });
+                // Make camera follow character's view
+                ecb.AddComponent(character.ViewEntity, new MainEntityCamera { BaseFoV = character.BaseFoV });
 
-                    // Make local character meshes rendering be shadow-only
-                    MiscUtilities.SetShadowModeInHierarchy(state.EntityManager, ecb, entity, SystemAPI.GetBufferLookup<Child>(), UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly);
+                // Make local character meshes rendering be shadow-only
+                MiscUtilities.SetShadowModeInHierarchy(state.EntityManager, ecb, entity, SystemAPI.GetBufferLookup<Child>(), UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly);
 
-                    // Enable crosshair
-                    Entity crosshairRequestEntity = ecb.CreateEntity();
-                    ecb.AddComponent(crosshairRequestEntity, new CrosshairRequest { Enable = true });
-                    ecb.AddComponent(crosshairRequestEntity, new MoveToLocalWorld());
+                // Enable crosshair
+                Entity crosshairRequestEntity = ecb.CreateEntity();
+                ecb.AddComponent(crosshairRequestEntity, new CrosshairRequest { Enable = true });
+                ecb.AddComponent(crosshairRequestEntity, new MoveToLocalWorld());
 
-                    // Disable respawn screen (if any)
-                    Entity respawnScreenRequestEntity = ecb.CreateEntity();
-                    ecb.AddComponent(respawnScreenRequestEntity, new RespawnMessageRequest { Start = false });
-                    ecb.AddComponent(respawnScreenRequestEntity, new MoveToLocalWorld());
-                }
-                else
-                {
-                    // Spawn nameTag
-                    ecb.AddComponent(character.NameTagSocketEntity, new NameTagProxy { PlayerEntity = owningPlayer.Entity });
-                }
-
-                ecb.AddComponent(entity, new CharacterCleanupClient
-                {
-                    DeathVFX = character.DeathVFX,
-                    DeathVFXSpawnWorldPos = SystemAPI.GetComponent<LocalToWorld>(character.ViewEntity).Position,
-                    OwnerNetworkId = ghostOwner.NetworkId,
-                });
+                // Disable respawn screen (if any)
+                Entity respawnScreenRequestEntity = ecb.CreateEntity();
+                ecb.AddComponent(respawnScreenRequestEntity, new RespawnMessageRequest { Start = false });
+                ecb.AddComponent(respawnScreenRequestEntity, new MoveToLocalWorld());
+                
+                InitializeCharacterCommon(entity, ecb, in character, ref worldTransformsHelper);
             }
-
-            foreach (var (characterCleanup, entity) in SystemAPI.Query<CharacterCleanupClient>().WithNone<FirstPersonCharacterComponent>().WithEntityAccess())
+            
+            // Initialize remote characters
+            foreach (var (character, owningPlayer, ghostOwner, entity) in SystemAPI.Query<FirstPersonCharacterComponent, OwningPlayer, GhostOwnerComponent>().WithNone<GhostOwnerIsLocal>().WithNone<CharacterClientCleanup>().WithEntityAccess())
             {
-                // Destruction for local-owned character
-                if (characterCleanup.OwnerNetworkId == localNetworkId)
+                // Spawn nameTag
+                ecb.AddComponent(character.NameTagSocketEntity, new NameTagProxy { PlayerEntity = owningPlayer.Entity });
+
+                InitializeCharacterCommon(entity, ecb, in character, ref worldTransformsHelper);
+            }
+            
+            // TODO: This wouldn't be compatible with characters despawned due to network relevancy
+            // Handle destroyed characters
+            foreach (var (characterCleanup, entity) in SystemAPI.Query<CharacterClientCleanup>().WithNone<FirstPersonCharacterComponent>().WithEntityAccess())
+            {
+                // Spawn death VFX
+                if(SystemAPI.Exists(characterCleanup.DeathVFX))
                 {
-                    // Disable crosshair
-                    Entity crosshairRequestEntity = ecb.CreateEntity();
-                    ecb.AddComponent(crosshairRequestEntity, new CrosshairRequest { Enable = false });
-                    ecb.AddComponent(crosshairRequestEntity, new MoveToLocalWorld());
+                    Entity deathVFXEntity = ecb.Instantiate(characterCleanup.DeathVFX);
+                    ecb.SetComponent(deathVFXEntity, LocalTransform.FromPositionRotation(characterCleanup.DeathVFXSpawnWorldPosition, quaternion.identity));
                 }
-
-                // Death vfx
-                Entity deathVFXEntity = ecb.Instantiate(characterCleanup.DeathVFX);
-                ecb.SetComponent(deathVFXEntity, LocalTransform.FromPosition(characterCleanup.DeathVFXSpawnWorldPos));
-
-                ecb.RemoveComponent<CharacterCleanupClient>(entity);
+                
+                ecb.RemoveComponent<CharacterClientCleanup>(entity);
             }
         }
+    }
+
+    private void InitializeCharacterCommon(Entity entity, EntityCommandBuffer ecb, in FirstPersonCharacterComponent character, ref WorldTransformsHelperReadOnly worldTransformsHelper)
+    {
+        worldTransformsHelper.TryGetWorldTransformUnscaled(character.DeathVFXSpawnPoint, out RigidTransform deathVFXspawnTransform);
+        ecb.AddComponent(entity, new CharacterClientCleanup
+        {
+            DeathVFX = character.DeathVFX,
+            DeathVFXSpawnWorldPosition = deathVFXspawnTransform.pos,
+        });
     }
 
     private void HandleDisconnect(ref SystemState state, ref Singleton singleton, GameResources gameResources)
@@ -250,6 +252,11 @@ public partial struct ClientGameSystem : ISystem
 
         foreach (var (respawnScreenRequest, receiveRPC, entity) in SystemAPI.Query<RespawnMessageRequest, ReceiveRpcCommandRequestComponent>().WithEntityAccess())
         {
+            // Disable crosshair
+            Entity crosshairRequestEntity = ecb.CreateEntity();
+            ecb.AddComponent(crosshairRequestEntity, new CrosshairRequest { Enable = false });
+            ecb.AddComponent(crosshairRequestEntity, new MoveToLocalWorld());
+            
             // Send request to get processed by UI system
             ecb.AddComponent(entity, new MoveToLocalWorld());
         }

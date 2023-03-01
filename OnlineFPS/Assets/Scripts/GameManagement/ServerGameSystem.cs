@@ -82,7 +82,9 @@ public partial struct ServerGameSystem : ISystem
 
     [BurstCompile]
     public void OnDestroy(ref SystemState state)
-    { }
+    {
+        
+    }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
@@ -94,7 +96,6 @@ public partial struct ServerGameSystem : ISystem
         HandleJoinRequests(ref state, ref singleton, gameResources);
         HandlePendingJoinClientTimeout(ref state, ref singleton, gameResources);
         HandleDisconnect(ref state, ref singleton);
-        HandleCharacterDeath(ref state, ref singleton, gameResources);
         HandleSpawnCharacter(ref state, ref singleton, gameResources);
     }
 
@@ -248,28 +249,6 @@ public partial struct ServerGameSystem : ISystem
         }
     }
 
-    private void HandleCharacterDeath(ref SystemState state, ref Singleton singleton, GameResources gameResources)
-    {
-        EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged);
-        
-        foreach (var (characterCleanup, entity) in SystemAPI.Query<CharacterCleanupServer>().WithNone<FirstPersonCharacterComponent>().WithEntityAccess())
-        {
-            if (SystemAPI.HasComponent<NetworkIdComponent>(characterCleanup.OwningConnectionEntity))
-            {
-                // Send owning client to respawn state
-                Entity respawnScreenRequestEntity = ecb.CreateEntity();
-                ecb.AddComponent(respawnScreenRequestEntity, new RespawnMessageRequest { Start = true, CountdownTime = gameResources.RespawnTime });
-                ecb.AddComponent(respawnScreenRequestEntity, new SendRpcCommandRequestComponent { TargetConnection = characterCleanup.OwningConnectionEntity });
-
-                // Request to spawn character
-                Entity spawnCharacterRequestEntity = ecb.CreateEntity();
-                ecb.AddComponent(spawnCharacterRequestEntity, new CharacterSpawnRequest { ForConnection = characterCleanup.OwningConnectionEntity, Delay = gameResources.RespawnTime });
-            }
-
-            ecb.RemoveComponent<CharacterCleanupServer>(entity);
-        }
-    }
-
     private void HandleSpawnCharacter(ref SystemState state, ref Singleton singleton, GameResources gameResources)
     {
         if (SystemAPI.QueryBuilder().WithAll<CharacterSpawnRequest>().Build().CalculateEntityCount() > 0)
@@ -298,7 +277,6 @@ public partial struct ServerGameSystem : ISystem
                         ecb.SetComponent(characterEntity, new GhostOwnerComponent { NetworkId = connectionId });
                         ecb.SetComponent(characterEntity, LocalTransform.FromPosition(randomSpawnPosition));
                         ecb.SetComponent(characterEntity, new OwningPlayer { Entity = playerEntity });
-                        ecb.AddComponent(characterEntity, new CharacterCleanupServer() { OwningConnectionEntity = spawnRequest.ValueRW.ForConnection });
                         ecb.AppendToBuffer(spawnRequest.ValueRW.ForConnection, new ClientOwnedEntities { Entity = characterEntity });
 
                         // Assign character to player

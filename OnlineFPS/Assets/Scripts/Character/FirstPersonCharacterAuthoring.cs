@@ -2,7 +2,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics.Authoring;
 using UnityEngine;
-using Rival;
+using Unity.CharacterController;
 using Unity.Physics;
 using System.Collections.Generic;
 using UnityEngine.Serialization;

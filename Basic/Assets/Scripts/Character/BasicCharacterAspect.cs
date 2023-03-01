@@ -11,7 +11,7 @@ using Unity.Physics.Authoring;
 using Unity.Physics.Extensions;
 using Unity.Physics.Systems;
 using Unity.Transforms;
-using Rival;
+using Unity.CharacterController;
 
 public struct BasicCharacterUpdateContext
 {
@@ -64,6 +64,13 @@ public readonly partial struct BasicCharacterAspect : IAspect, IKinematicCharact
         ref KinematicCharacterBody characterBody = ref CharacterAspect.CharacterBody.ValueRW;
         ref BasicCharacterComponent characterComponent = ref CharacterComponent.ValueRW;
         ref BasicCharacterControl characterControl = ref CharacterControl.ValueRW;
+
+        // Rotate move input and velocity to take into account parent rotation
+        if(characterBody.ParentEntity != Entity.Null)
+        {
+            characterControl.MoveVector = math.rotate(characterBody.RotationFromParent, characterControl.MoveVector);
+            characterBody.RelativeVelocity = math.rotate(characterBody.RotationFromParent, characterBody.RelativeVelocity);
+        }
         
         if (characterBody.IsGrounded)
         {

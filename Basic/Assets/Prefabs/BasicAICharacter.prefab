@@ -35,7 +35,7 @@ Transform:
   - {fileID: 1692896103431116737}
   - {fileID: 2861637503494133750}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1692896102597148393
 MonoBehaviour:
@@ -86,7 +86,7 @@ MonoBehaviour:
     m_Template: {fileID: 0}
     m_CollisionResponse:
       m_Override: 0
-      m_Value: 3
+      m_Value: 0
     m_Friction:
       m_Override: 0
       m_Value:
@@ -202,11 +202,12 @@ MonoBehaviour:
       Tag05: 0
       Tag06: 0
       Tag07: 0
-    InterpolateTranslation: 1
+    InterpolatePosition: 1
     InterpolateRotation: 0
     EvaluateGrounding: 1
     SnapToGround: 1
     GroundSnappingDistance: 0.3
+    EnhancedGroundPrecision: 0
     MaxGroundedSlopeAngle: 60
     DetectMovementCollisions: 1
     DecollideFromOverlaps: 1
@@ -236,6 +237,7 @@ MonoBehaviour:
       StepHandling: 0
       MaxStepHeight: 0.5
       ExtraStepChecksDistance: 0.1
+      CharacterWidthForStepGroundingCheck: 1
       PreventGroundingWhenMovingTowardsNoGrounding: 1
       HasMaxDownwardSlopeChangeAngle: 0
       MaxDownwardSlopeChangeAngle: 90

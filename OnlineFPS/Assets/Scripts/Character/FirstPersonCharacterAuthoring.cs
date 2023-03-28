@@ -26,18 +26,20 @@ public class FirstPersonCharacterAuthoring : MonoBehaviour
         {
             KinematicCharacterUtilities.BakeCharacter(this, authoring, authoring.CharacterProperties);
 
-            authoring.Character.ViewEntity = GetEntity(authoring.ViewObject);
-            authoring.Character.NameTagSocketEntity = GetEntity(authoring.NameTagSocket);
-            authoring.Character.WeaponSocketEntity = GetEntity(authoring.WeaponSocket);
-            authoring.Character.WeaponAnimationSocketEntity = GetEntity(authoring.WeaponAnimationSocket);
-            authoring.Character.DeathVFX = GetEntity(authoring.DeathVFX);
-            authoring.Character.DeathVFXSpawnPoint = GetEntity(authoring.DeathVFXSpawnPoint);
+            Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+            
+            authoring.Character.ViewEntity = GetEntity(authoring.ViewObject, TransformUsageFlags.Dynamic);
+            authoring.Character.NameTagSocketEntity = GetEntity(authoring.NameTagSocket, TransformUsageFlags.Dynamic);
+            authoring.Character.WeaponSocketEntity = GetEntity(authoring.WeaponSocket, TransformUsageFlags.Dynamic);
+            authoring.Character.WeaponAnimationSocketEntity = GetEntity(authoring.WeaponAnimationSocket, TransformUsageFlags.Dynamic);
+            authoring.Character.DeathVFX = GetEntity(authoring.DeathVFX, TransformUsageFlags.Dynamic);
+            authoring.Character.DeathVFXSpawnPoint = GetEntity(authoring.DeathVFXSpawnPoint, TransformUsageFlags.Dynamic);
         
-            AddComponent(authoring.Character);
-            AddComponent(new FirstPersonCharacterControl());
-            AddComponent(new OwningPlayer());
-            AddComponent(new ActiveWeapon());
-            AddComponent(new CharacterWeaponVisualFeedback());
+            AddComponent(entity, authoring.Character);
+            AddComponent(entity, new FirstPersonCharacterControl());
+            AddComponent(entity, new OwningPlayer());
+            AddComponent(entity, new ActiveWeapon());
+            AddComponent(entity, new CharacterWeaponVisualFeedback());
         }
     }
 }

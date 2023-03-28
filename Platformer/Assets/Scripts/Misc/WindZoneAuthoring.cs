@@ -12,7 +12,8 @@ public class WindZoneAuthoring : MonoBehaviour
     {
         public override void Bake(WindZoneAuthoring authoring)
         {
-            AddComponent(new WindZone { WindForce = authoring.WindForce });
+            Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+            AddComponent(entity, new WindZone { WindForce = authoring.WindForce });
         }
     }
 }

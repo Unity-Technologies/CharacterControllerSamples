@@ -501,7 +501,6 @@ public partial struct StressTestManagerSystem : ISystem
             PhysicsCollider physicsCollider = state.EntityManager.GetComponentData<PhysicsCollider>(entities[i]);
             Unity.Physics.ConvexCollider* collider = (Unity.Physics.ConvexCollider*)physicsCollider.ColliderPtr;
             Unity.Physics.Material material = collider->Material;
-            material.CollisionResponse = singleton.SimulateDynamic ? CollisionResponsePolicy.RaiseTriggerEvents : CollisionResponsePolicy.Collide;
             collider->Material = material;
             state.EntityManager.SetComponentData(entities[i], physicsCollider);
         }

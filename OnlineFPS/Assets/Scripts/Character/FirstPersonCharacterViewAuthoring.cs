@@ -18,7 +18,8 @@ public class FirstPersonCharacterViewAuthoring : MonoBehaviour
                 return;
             }
 
-            AddComponent(new FirstPersonCharacterView { CharacterEntity = GetEntity(authoring.Character) });
+            Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+            AddComponent(entity, new FirstPersonCharacterView { CharacterEntity = GetEntity(authoring.Character, TransformUsageFlags.Dynamic) });
         }
     }
 }

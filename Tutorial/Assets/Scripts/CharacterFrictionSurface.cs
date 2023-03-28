@@ -5,4 +5,4 @@ using Unity.Entities;
 public struct CharacterFrictionSurface : IComponentData
 {
     public float VelocityFactor;
-}
+} 

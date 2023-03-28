@@ -9,6 +9,8 @@ public class PlatformerCharacterAnimationAuthoring : MonoBehaviour
     {
         public override void Bake(PlatformerCharacterAnimationAuthoring authoring)
         {
+            Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+            
             PlatformerCharacterAnimation characterAnimation = new PlatformerCharacterAnimation();
 
             // Set clip indexes
@@ -29,7 +31,7 @@ public class PlatformerCharacterAnimationAuthoring : MonoBehaviour
             characterAnimation.RopeHangClip = 14;
             characterAnimation.SlidingClip = 15;
 
-            AddComponent(characterAnimation);
+            AddComponent(entity, characterAnimation);
         }
     }
 }

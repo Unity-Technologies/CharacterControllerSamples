@@ -19,8 +19,10 @@ public class ThirdPersonCharacterAuthoring : MonoBehaviour
         {
             KinematicCharacterUtilities.BakeCharacter(this, authoring, authoring.CharacterProperties);
 
-            AddComponent(authoring.Character);
-            AddComponent(new ThirdPersonCharacterControl());
+            Entity selfEntity = GetEntity(TransformUsageFlags.None);
+            
+            AddComponent(selfEntity, authoring.Character);
+            AddComponent(selfEntity, new ThirdPersonCharacterControl());
         }
     }
 

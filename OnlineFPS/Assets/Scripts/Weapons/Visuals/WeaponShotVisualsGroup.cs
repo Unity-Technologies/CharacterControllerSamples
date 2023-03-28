@@ -9,12 +9,12 @@ using UnityEngine;
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateAfter(typeof(TransformSystemGroup))] // Updates after transforms, because shots must spawn at the interpolated weapon position
 [UpdateBefore(typeof(EndSimulationEntityCommandBufferSystem))]
-public class WeaponShotVisualsGroup : ComponentSystemGroup
+public partial class WeaponShotVisualsGroup : ComponentSystemGroup
 {
 }
 
 [UpdateInGroup(typeof(WeaponShotVisualsGroup))]
-public class WeaponShotVisualsSpawnECBSystem : EntityCommandBufferSystem
+public partial class WeaponShotVisualsSpawnECBSystem : EntityCommandBufferSystem
 {
     public unsafe struct Singleton : IComponentData, IECBSingleton
     {

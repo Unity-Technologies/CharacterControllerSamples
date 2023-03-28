@@ -10,7 +10,7 @@ public class MovingPlatformAuthoring : MonoBehaviour
     {
         public override void Bake(MovingPlatformAuthoring authoring)
         {
-            AddComponent(authoring.MovingPlatform);
+            AddComponent(GetEntity(TransformUsageFlags.Dynamic), authoring.MovingPlatform); 
         }
     }
 }

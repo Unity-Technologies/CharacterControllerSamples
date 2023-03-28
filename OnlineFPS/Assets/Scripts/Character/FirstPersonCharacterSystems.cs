@@ -194,11 +194,11 @@ public partial struct FirstPersonCharacterVariableUpdateSystem : ISystem
         [ReadOnly] 
         public ComponentLookup<FirstPersonCharacterComponent> FirstPersonCharacterLookup;
 
-        void Execute(ref TransformAspect transformAspect, in FirstPersonCharacterView characterView)
+        void Execute(ref LocalTransform localTransform, in FirstPersonCharacterView characterView)
         {
             if (FirstPersonCharacterLookup.TryGetComponent(characterView.CharacterEntity, out FirstPersonCharacterComponent character))
             {
-                transformAspect.LocalRotation = character.ViewLocalRotation;
+                localTransform.Rotation = character.ViewLocalRotation;
             }
         }
     }

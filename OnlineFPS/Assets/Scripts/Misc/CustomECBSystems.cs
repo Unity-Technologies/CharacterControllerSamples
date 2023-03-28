@@ -10,7 +10,7 @@ using UnityEngine;
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateAfter(typeof(PredictedSimulationSystemGroup))]
 [UpdateBefore(typeof(TransformSystemGroup))]
-public class PostPredictionPreTransformsECBSystem : EntityCommandBufferSystem
+public partial class PostPredictionPreTransformsECBSystem : EntityCommandBufferSystem
 {
     public unsafe struct Singleton : IComponentData, IECBSingleton
     {
@@ -29,7 +29,7 @@ public class PostPredictionPreTransformsECBSystem : EntityCommandBufferSystem
 
         public void SetAllocator(Allocator allocatorIn)
         {
-            allocator = allocatorIn;
+            allocator = allocatorIn; 
         }
     }
     

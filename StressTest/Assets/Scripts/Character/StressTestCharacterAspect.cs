@@ -151,10 +151,7 @@ public readonly partial struct StressTestCharacterAspect : IAspect, IKinematicCh
         ref KinematicCharacterUpdateContext baseContext,
         in BasicHit hit)
     {
-        return KinematicCharacterUtilities.IsHitCollidableOrCharacter(
-            in baseContext.StoredCharacterBodyPropertiesLookup, 
-            hit.Material, 
-            hit.Entity);
+        return PhysicsUtilities.IsCollidable(hit.Material);
     }
 
     public bool IsGroundedOnHit(

@@ -17,6 +17,7 @@ namespace Unity.Physics.Stateful
         {
             public override void Bake(StatefulCollisionEventBufferAuthoring authoring)
             {
+                Entity selfEntity = GetEntity(TransformUsageFlags.None);
                 if (authoring.CalculateDetails)
                 {
                     var dynamicBufferTag = new StatefulCollisionEventDetails
@@ -24,9 +25,9 @@ namespace Unity.Physics.Stateful
                         CalculateDetails = authoring.CalculateDetails
                     };
 
-                    AddComponent(dynamicBufferTag);
+                    AddComponent(selfEntity, dynamicBufferTag);
                 }
-                AddBuffer<StatefulCollisionEvent>();
+                AddBuffer<StatefulCollisionEvent>(selfEntity);
             }
         }
     }

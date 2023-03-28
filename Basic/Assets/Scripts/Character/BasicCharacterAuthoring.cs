@@ -19,8 +19,8 @@ public class BasicCharacterAuthoring : MonoBehaviour
         {
             KinematicCharacterUtilities.BakeCharacter(this, authoring, authoring.CharacterProperties);
 
-            AddComponent(authoring.Character);
-            AddComponent(new BasicCharacterControl());
+            AddComponent(GetEntity(TransformUsageFlags.Dynamic), authoring.Character);
+            AddComponent(GetEntity(TransformUsageFlags.Dynamic), new BasicCharacterControl());
         }
     }
 }

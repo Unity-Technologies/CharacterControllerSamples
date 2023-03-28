@@ -14,19 +14,21 @@ public class OrbitCameraAuthoring : MonoBehaviour
     {
         public override void Bake(OrbitCameraAuthoring authoring)
         {
+            Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+            
             authoring.OrbitCamera.CurrentDistanceFromMovement = authoring.OrbitCamera.TargetDistance;
             authoring.OrbitCamera.CurrentDistanceFromObstruction = authoring.OrbitCamera.TargetDistance;
             authoring.OrbitCamera.PlanarForward = -math.forward();
 
-            AddComponent(authoring.OrbitCamera);
-            AddComponent(new OrbitCameraControl());
-            DynamicBuffer<OrbitCameraIgnoredEntityBufferElement> ignoredEntitiesBuffer = AddBuffer<OrbitCameraIgnoredEntityBufferElement>();
+            AddComponent(entity, authoring.OrbitCamera);
+            AddComponent(entity, new OrbitCameraControl());
+            DynamicBuffer<OrbitCameraIgnoredEntityBufferElement> ignoredEntitiesBuffer = AddBuffer<OrbitCameraIgnoredEntityBufferElement>(entity);
 
             for (int i = 0; i < authoring.IgnoredEntities.Count; i++)
             {
                 ignoredEntitiesBuffer.Add(new OrbitCameraIgnoredEntityBufferElement
                 {
-                    Entity = GetEntity(authoring.IgnoredEntities[i]),
+                    Entity = GetEntity(authoring.IgnoredEntities[i], TransformUsageFlags.None),
                 });
             }
         }

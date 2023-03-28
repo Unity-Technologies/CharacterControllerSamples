@@ -12,8 +12,9 @@ public class ParticleSpawnerAuthoring : MonoBehaviour
     {
         public override void Bake(ParticleSpawnerAuthoring authoring)
         {
-            authoring.ParticleSpawner.ParticlePrefab = GetEntity(authoring.ParticlePrefab);
-            AddComponent(authoring.ParticleSpawner);
+            Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+            authoring.ParticleSpawner.ParticlePrefab = GetEntity(authoring.ParticlePrefab, TransformUsageFlags.Dynamic);
+            AddComponent(entity, authoring.ParticleSpawner);
         }
     }
 }

@@ -11,7 +11,8 @@ public class CharacterFrictionModifierAuthoring : MonoBehaviour
     {
         public override void Bake(CharacterFrictionModifierAuthoring authoring)
         {
-            AddComponent(new CharacterFrictionModifier { Friction = authoring.Friction });
+            Entity entity = GetEntity(TransformUsageFlags.None);
+            AddComponent(entity, new CharacterFrictionModifier { Friction = authoring.Friction });
         }
     }
 }

@@ -224,16 +224,6 @@ public readonly partial struct PlatformerCharacterAspect : IAspect, IKinematicCh
         return geometryCenter;
     }
 
-    public unsafe void SetCollisionResponse(CollisionResponsePolicy collisionResponse)
-    {
-        ref PhysicsCollider physicsCollider = ref CharacterAspect.PhysicsCollider.ValueRW;
-        
-        CapsuleCollider* capsuleCollider = ((CapsuleCollider*)physicsCollider.ColliderPtr);
-        Material mat = capsuleCollider->Material;
-        mat.CollisionResponse = collisionResponse;
-        capsuleCollider->Material = mat;
-    }
-
     public unsafe bool CanStandUp(ref PlatformerCharacterUpdateContext context, ref KinematicCharacterUpdateContext baseContext)
     {
         ref PhysicsCollider physicsCollider = ref CharacterAspect.PhysicsCollider.ValueRW;
@@ -313,10 +303,7 @@ public readonly partial struct PlatformerCharacterAspect : IAspect, IKinematicCh
         ref KinematicCharacterUpdateContext baseContext,
         in BasicHit hit)
     {
-        return KinematicCharacterUtilities.IsHitCollidableOrCharacter(
-            in baseContext.StoredCharacterBodyPropertiesLookup, 
-            hit.Material, 
-            hit.Entity);
+        return PhysicsUtilities.IsCollidable(hit.Material);
     }
 
     public bool IsGroundedOnHit(

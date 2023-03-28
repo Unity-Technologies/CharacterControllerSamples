@@ -12,7 +12,8 @@ public class ConstantRotationAuthoring : MonoBehaviour
     {
         public override void Bake(ConstantRotationAuthoring authoring)
         {
-            AddComponent(authoring.ConstantRotation);
+            Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+            AddComponent(entity, authoring.ConstantRotation);
         }
     }
 }

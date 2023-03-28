@@ -46,10 +46,10 @@ public static class MiscUtilities
         return new EntityQueryBuilder(Allocator.Temp).WithAll<T>().Build(ref state).GetSingletonEntity();
     }
 
-    public static void GetConnectionsArrays(ref SystemState state, Allocator allocator, out NativeArray<Entity> connectionEntities, out NativeArray<NetworkIdComponent> connections)
+    public static void GetConnectionsArrays(ref SystemState state, Allocator allocator, out NativeArray<Entity> connectionEntities, out NativeArray<NetworkId> connections)
     {
-        EntityQuery connectionsQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<NetworkIdComponent>().Build(ref state);
+        EntityQuery connectionsQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<NetworkId>().Build(ref state);
         connectionEntities = connectionsQuery.ToEntityArray(allocator);
-        connections = connectionsQuery.ToComponentDataArray<NetworkIdComponent>(allocator);
+        connections = connectionsQuery.ToComponentDataArray<NetworkId>(allocator);
     }
 }

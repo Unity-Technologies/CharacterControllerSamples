@@ -124,10 +124,10 @@ public class FramerateMenuManager : MonoBehaviour
             GameManagementSystem clientGameManagementSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<GameManagementSystem>();
             if (clientGameManagementSystem != null && clientGameManagementSystem.ClientWorld != null && clientGameManagementSystem.ClientWorld.IsCreated)
             {
-                EntityQuery networkAckQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<NetworkSnapshotAckComponent>().Build(clientGameManagementSystem.ClientWorld.EntityManager);
-                if (networkAckQuery.HasSingleton<NetworkSnapshotAckComponent>())
+                EntityQuery networkAckQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<NetworkSnapshotAck>().Build(clientGameManagementSystem.ClientWorld.EntityManager);
+                if (networkAckQuery.HasSingleton<NetworkSnapshotAck>())
                 {
-                    NetworkSnapshotAckComponent networkAck = networkAckQuery.GetSingleton<NetworkSnapshotAckComponent>();
+                    NetworkSnapshotAck networkAck = networkAckQuery.GetSingleton<NetworkSnapshotAck>();
                     Ping.text = $"Ping: {(int)networkAck.EstimatedRTT}";
                 }
             }

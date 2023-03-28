@@ -15,14 +15,16 @@ public class VehicleAuthoring : MonoBehaviour
     {
         public override void Bake(VehicleAuthoring authoring)
         {
-            AddComponent(authoring.Vehicle);
+            Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+            
+            AddComponent(entity, authoring.Vehicle);
         
-            DynamicBuffer<VehicleWheels> wheelsBuffer = AddBuffer<VehicleWheels>();
+            DynamicBuffer<VehicleWheels> wheelsBuffer = AddBuffer<VehicleWheels>(entity);
             foreach (GameObject wheelGO in authoring.Wheels)
             {
                 wheelsBuffer.Add(new VehicleWheels { 
-                    MeshEntity = GetEntity(wheelGO.GetComponentInChildren<MeshRenderer>().gameObject),
-                    CollisionEntity = GetEntity(wheelGO.GetComponentInChildren<PhysicsShapeAuthoring>().gameObject),
+                    MeshEntity = GetEntity(wheelGO.GetComponentInChildren<MeshRenderer>().gameObject, TransformUsageFlags.Dynamic),
+                    CollisionEntity = GetEntity(wheelGO.GetComponentInChildren<PhysicsShapeAuthoring>().gameObject, TransformUsageFlags.Dynamic),
                 });
             }
         }

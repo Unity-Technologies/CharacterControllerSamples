@@ -11,7 +11,8 @@ public class RenderEnvironmentAuthoring : MonoBehaviour
         {
                 public override void Bake(RenderEnvironmentAuthoring authoring)
                 {
-                        AddComponentObject(new RenderEnvironment
+                        Entity entity = GetEntity(TransformUsageFlags.None);
+                        AddComponentObject(entity, new RenderEnvironment
                         {
                                 LightingSceneIndex = authoring.LightingScene.GetIndexInBuildScenes(),
                         });

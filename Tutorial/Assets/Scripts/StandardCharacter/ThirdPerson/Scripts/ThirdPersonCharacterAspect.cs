@@ -148,7 +148,7 @@ public readonly partial struct ThirdPersonCharacterAspect : IAspect, IKinematicC
         // Add rotation from parent body to the character rotation
         // (this is for allowing a rotating moving platform to rotate your character as well, and handle interpolation properly)
         KinematicCharacterUtilities.AddVariableRateRotationFromFixedRateRotation(ref characterRotation, characterBody.RotationFromParent, baseContext.Time.DeltaTime, characterBody.LastPhysicsUpdateDeltaTime);
-        
+
         // Rotate towards move direction
         if (math.lengthsq(characterControl.MoveVector) > 0f)
         {
@@ -174,10 +174,7 @@ public readonly partial struct ThirdPersonCharacterAspect : IAspect, IKinematicC
         ThirdPersonCharacterComponent characterComponent = CharacterComponent.ValueRO;
         
         // First, see if we'd have to ignore based on the default implementation
-        if (!KinematicCharacterUtilities.IsHitCollidableOrCharacter(
-                in baseContext.StoredCharacterBodyPropertiesLookup, 
-                hit.Material, 
-                hit.Entity))
+        if (!PhysicsUtilities.IsCollidable(hit.Material))
         {
             return false;
         }

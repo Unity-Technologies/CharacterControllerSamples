@@ -11,7 +11,7 @@ public class JumpPadAuthoring : MonoBehaviour
     {
         public override void Bake(JumpPadAuthoring authoring)
         {
-            AddComponent(new JumpPad { JumpForce = authoring.JumpForce });
+            AddComponent(GetEntity(TransformUsageFlags.None), new JumpPad { JumpForce = authoring.JumpForce });
         }
     }
-}
+} 

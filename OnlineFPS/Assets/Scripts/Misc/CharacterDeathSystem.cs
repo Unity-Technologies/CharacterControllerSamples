@@ -27,7 +27,7 @@ public partial struct CharacterDeathServerSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        MiscUtilities.GetConnectionsArrays(ref state, Allocator.TempJob, out NativeArray<Entity> connectionEntities, out NativeArray<NetworkIdComponent> connections);
+        MiscUtilities.GetConnectionsArrays(ref state, Allocator.TempJob, out NativeArray<Entity> connectionEntities, out NativeArray<NetworkId> connections);
         
         CharacterDeathServerJob serverJob = new CharacterDeathServerJob
         {
@@ -49,9 +49,9 @@ public partial struct CharacterDeathServerSystem : ISystem
         public EntityCommandBuffer ECB;
         public GameResources GameResources;
         public NativeArray<Entity> ConnectionEntities;
-        public NativeArray<NetworkIdComponent> Connections;
+        public NativeArray<NetworkId> Connections;
         
-        void Execute(Entity entity, in FirstPersonCharacterComponent character, in Health health, in GhostOwnerComponent ghostOwner)
+        void Execute(Entity entity, in FirstPersonCharacterComponent character, in Health health, in GhostOwner ghostOwner)
         {
             if (health.IsDead())
             {
@@ -72,7 +72,7 @@ public partial struct CharacterDeathServerSystem : ISystem
                     // Send character's owning client a message to start respawn countdown
                     Entity respawnScreenRequestEntity = ECB.CreateEntity();
                     ECB.AddComponent(respawnScreenRequestEntity, new RespawnMessageRequest { Start = true, CountdownTime = GameResources.RespawnTime });
-                    ECB.AddComponent(respawnScreenRequestEntity, new SendRpcCommandRequestComponent { TargetConnection = owningConnectionEntity });
+                    ECB.AddComponent(respawnScreenRequestEntity, new SendRpcCommandRequest { TargetConnection = owningConnectionEntity });
 
                     // Request to spawn character for the owning client
                     Entity spawnCharacterRequestEntity = ECB.CreateEntity();

@@ -252,7 +252,7 @@ public partial class GameManagementSystem : SystemBase
         {
             if (WorldUtilities.IsValidAndCreated(ClientWorld))
             {
-                EntityQuery connectionInGameQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<NetworkIdComponent, NetworkStreamInGame>().Build(ClientWorld.EntityManager);
+                EntityQuery connectionInGameQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<NetworkId, NetworkStreamInGame>().Build(ClientWorld.EntityManager);
                 if (connectionInGameQuery.CalculateEntityCount() == 0)
                 {
                     singleton.MenuState = MenuState.Connecting;

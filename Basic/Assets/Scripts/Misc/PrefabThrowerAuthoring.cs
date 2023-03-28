@@ -14,12 +14,12 @@ public class PrefabThrowerAuthoring : MonoBehaviour
     {
         public override void Bake(PrefabThrowerAuthoring authoring)
         {
-            AddComponent(new PrefabThrower
+            AddComponent(GetEntity(TransformUsageFlags.Dynamic), new PrefabThrower
             {
-                PrefabEntity = GetEntity(authoring.PrefabEntity),
+                PrefabEntity = GetEntity(authoring.PrefabEntity, TransformUsageFlags.Dynamic),
                 ThrowForce = authoring.ThrowForce,
                 InitialEulerAngles = authoring.InitialEulerAngles,
             });
-        }
+        } 
     }
 }

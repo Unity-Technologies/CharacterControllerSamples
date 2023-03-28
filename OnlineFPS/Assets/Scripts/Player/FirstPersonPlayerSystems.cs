@@ -20,7 +20,7 @@ public partial class FirstPersonPlayerInputsSystem : SystemBase
         RequireForUpdate(SystemAPI.QueryBuilder().WithAll<FirstPersonPlayer, FirstPersonPlayerCommands>().Build());
         RequireForUpdate<GameResources>();   
         RequireForUpdate<NetworkTime>();   
-        RequireForUpdate<NetworkIdComponent>();   
+        RequireForUpdate<NetworkId>();   
 
         // Create the input user
         InputActions = new FPSInputActions();
@@ -35,7 +35,7 @@ public partial class FirstPersonPlayerInputsSystem : SystemBase
         NetworkTick tick = SystemAPI.GetSingleton<NetworkTime>().ServerTick;
         FPSInputActions.DefaultMapActions defaultActionsMap = InputActions.DefaultMap;
 
-        foreach (var (playerCommands, player, ghostOwner, entity) in SystemAPI.Query<RefRW<FirstPersonPlayerCommands>, RefRW<FirstPersonPlayer>, GhostOwnerComponent>().WithAll<GhostOwnerIsLocal>().WithEntityAccess())
+        foreach (var (playerCommands, player, ghostOwner, entity) in SystemAPI.Query<RefRW<FirstPersonPlayerCommands>, RefRW<FirstPersonPlayer>, GhostOwner>().WithAll<GhostOwnerIsLocal>().WithEntityAccess())
         {
             // Remember if new tick because some inputs need to be reset when we just started a new tick
             bool isOnNewTick = !player.ValueRW.LastKnownCommandsTick.IsValid || tick.IsNewerThan(player.ValueRW.LastKnownCommandsTick);

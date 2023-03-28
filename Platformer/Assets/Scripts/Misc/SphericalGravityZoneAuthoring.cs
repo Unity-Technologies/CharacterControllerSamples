@@ -11,7 +11,8 @@ public class SphericalGravityZoneAuthoring : MonoBehaviour
     {
         public override void Bake(SphericalGravityZoneAuthoring authoring)
         {
-            AddComponent(new SphericalGravityZone { GravityStrengthAtCenter = authoring.GravityStrengthAtCenter });
+            Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+            AddComponent(entity, new SphericalGravityZone { GravityStrengthAtCenter = authoring.GravityStrengthAtCenter });
         }
     }
 }

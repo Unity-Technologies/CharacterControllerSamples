@@ -9,7 +9,8 @@ public class SpectatorSpawnPointAuthoring : MonoBehaviour
     {
         public override void Bake(SpectatorSpawnPointAuthoring authoring)
         {
-            AddComponent(new SpectatorSpawnPoint());
+            Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+            AddComponent(entity, new SpectatorSpawnPoint());
         }
     }
 }

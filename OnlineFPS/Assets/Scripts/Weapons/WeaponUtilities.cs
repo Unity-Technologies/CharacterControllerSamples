@@ -14,15 +14,15 @@ public static class WeaponUtilities
 {
     public static void AddBasicWeaponBakingComponents<T>(Baker<T> baker) where T : MonoBehaviour
     {
-        baker.AddComponent(new WeaponControl());
-        baker.AddComponent(new WeaponOwner());
-        baker.AddComponent(new WeaponShotSimulationOriginOverride());
-        baker.AddBuffer<WeaponShotIgnoredEntity>();
+        Entity entity = baker.GetEntity(TransformUsageFlags.Dynamic);
+        baker.AddComponent(entity, new WeaponControl());
+        baker.AddComponent(entity, new WeaponOwner());
+        baker.AddComponent(entity, new WeaponShotSimulationOriginOverride());
+        baker.AddBuffer<WeaponShotIgnoredEntity>(entity);
     }
 
     public static bool GetClosestValidWeaponRaycastHit(
         in NativeList<RaycastHit> hits, 
-        in ComponentLookup<StoredKinematicCharacterData> storedKinematicCharacterDataLookup,
         in DynamicBuffer<WeaponShotIgnoredEntity> ignoredEntities,
         out RaycastHit closestValidHit)
     {
@@ -36,7 +36,7 @@ public static class WeaponUtilities
             if (tmpHit.Fraction < closestValidHit.Fraction)
             {
                 // Check collidable
-                if (KinematicCharacterUtilities.IsHitCollidableOrCharacter(in storedKinematicCharacterDataLookup, tmpHit.Material, tmpHit.Entity))
+                if (PhysicsUtilities.IsCollidable(tmpHit.Material))
                 {
                     // Check entity ignore
                     bool entityValid = true;
@@ -68,7 +68,6 @@ public static class WeaponUtilities
         ref NativeList<RaycastHit> Hits,
         in CollisionWorld CollisionWorld,
         in WorldTransformsHelperReadOnly worldTransformsHelper,
-        in ComponentLookup<StoredKinematicCharacterData> StoredKinematicCharacterDataLookup,
         bool computeShotVisuals,
         out bool hitFound,
         out RaycastHit closestValidHit,
@@ -104,7 +103,7 @@ public static class WeaponUtilities
                 Filter = weapon.HitCollisionFilter,
             };
             CollisionWorld.CastRay(rayInput, ref Hits);
-            hitFound = WeaponUtilities.GetClosestValidWeaponRaycastHit(in Hits, in StoredKinematicCharacterDataLookup, in ignoredEntities, out closestValidHit);
+            hitFound = WeaponUtilities.GetClosestValidWeaponRaycastHit(in Hits, in ignoredEntities, out closestValidHit);
     
             // Hit processing
             float hitDistance = weapon.Range;

@@ -85,7 +85,7 @@ public partial struct ClientGameSystem : ISystem
                 LocalGameData localData = SystemAPI.GetSingleton<LocalGameData>();
 
                 // Send join request
-                if (SystemAPI.HasSingleton<NetworkIdComponent>())
+                if (SystemAPI.HasSingleton<NetworkId>())
                 {
                     Entity joinRequestEntity = ecb.CreateEntity();
                     ecb.AddComponent(joinRequestEntity, new JoinRequest
@@ -93,7 +93,7 @@ public partial struct ClientGameSystem : ISystem
                         PlayerName = localData.LocalPlayerName,
                         Spectator = singleton.Spectator,
                     });
-                    ecb.AddComponent(joinRequestEntity, new SendRpcCommandRequestComponent());
+                    ecb.AddComponent(joinRequestEntity, new SendRpcCommandRequest());
                 
                     ecb.DestroyEntity(request.PendingSceneLoadRequest);
                     ecb.DestroyEntity(entity);
@@ -106,15 +106,15 @@ public partial struct ClientGameSystem : ISystem
     {
         EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged);
         
-        if (SystemAPI.HasSingleton<NetworkIdComponent>() && !SystemAPI.HasSingleton<NetworkStreamInGame>())
+        if (SystemAPI.HasSingleton<NetworkId>() && !SystemAPI.HasSingleton<NetworkStreamInGame>())
         {
             singleton.TimeWithoutAConnection = 0f;
             
             // Check for request accept
-            foreach (var (requestAccepted, rpcReceive, entity) in SystemAPI.Query<ServerGameSystem.JoinRequestAccepted, ReceiveRpcCommandRequestComponent>().WithEntityAccess())
+            foreach (var (requestAccepted, rpcReceive, entity) in SystemAPI.Query<ServerGameSystem.JoinRequestAccepted, ReceiveRpcCommandRequest>().WithEntityAccess())
             {
                 // Stream in game
-                ecb.AddComponent(SystemAPI.GetSingletonEntity<NetworkIdComponent>(), new NetworkStreamInGame());
+                ecb.AddComponent(SystemAPI.GetSingletonEntity<NetworkId>(), new NetworkStreamInGame());
 
                 // Spectator mode
                 if (singleton.Spectator)
@@ -139,12 +139,12 @@ public partial struct ClientGameSystem : ISystem
     
     private void HandleCharacterSetupAndDestruction(ref SystemState state, ref Singleton singleton, ref WorldTransformsHelperReadOnly worldTransformsHelper, GameResources gameResources)
     {
-        if (SystemAPI.HasSingleton<NetworkIdComponent>())
+        if (SystemAPI.HasSingleton<NetworkId>())
         {
             EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged);
 
             // Initialize local-owned characters
-            foreach (var (character, owningPlayer, ghostOwner, entity) in SystemAPI.Query<FirstPersonCharacterComponent, OwningPlayer, GhostOwnerComponent>().WithAll<GhostOwnerIsLocal>().WithNone<CharacterClientCleanup>().WithEntityAccess())
+            foreach (var (character, owningPlayer, ghostOwner, entity) in SystemAPI.Query<FirstPersonCharacterComponent, OwningPlayer, GhostOwner>().WithAll<GhostOwnerIsLocal>().WithNone<CharacterClientCleanup>().WithEntityAccess())
             {
                 // Make camera follow character's view
                 ecb.AddComponent(character.ViewEntity, new MainEntityCamera { BaseFoV = character.BaseFoV });
@@ -166,7 +166,7 @@ public partial struct ClientGameSystem : ISystem
             }
             
             // Initialize remote characters
-            foreach (var (character, owningPlayer, ghostOwner, entity) in SystemAPI.Query<FirstPersonCharacterComponent, OwningPlayer, GhostOwnerComponent>().WithNone<GhostOwnerIsLocal>().WithNone<CharacterClientCleanup>().WithEntityAccess())
+            foreach (var (character, owningPlayer, ghostOwner, entity) in SystemAPI.Query<FirstPersonCharacterComponent, OwningPlayer, GhostOwner>().WithNone<GhostOwnerIsLocal>().WithNone<CharacterClientCleanup>().WithEntityAccess())
             {
                 // Spawn nameTag
                 ecb.AddComponent(character.NameTagSocketEntity, new NameTagProxy { PlayerEntity = owningPlayer.Entity });
@@ -205,7 +205,7 @@ public partial struct ClientGameSystem : ISystem
         EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged);
 
         // Check for connection timeout
-        if (!SystemAPI.HasSingleton<NetworkIdComponent>())
+        if (!SystemAPI.HasSingleton<NetworkId>())
         {
             singleton.TimeWithoutAConnection += SystemAPI.Time.DeltaTime;
             if (singleton.TimeWithoutAConnection > gameResources.JoinTimeout)
@@ -220,7 +220,7 @@ public partial struct ClientGameSystem : ISystem
         if (disconnectRequestQuery.CalculateEntityCount() > 0)
         {
             // Add disconnect request to connection
-            foreach (var (connection, entity) in SystemAPI.Query<NetworkIdComponent>().WithNone<NetworkStreamRequestDisconnect>().WithEntityAccess())
+            foreach (var (connection, entity) in SystemAPI.Query<NetworkId>().WithNone<NetworkStreamRequestDisconnect>().WithEntityAccess())
             {
                 ecb.AddComponent(entity, new NetworkStreamRequestDisconnect());
             }
@@ -250,7 +250,7 @@ public partial struct ClientGameSystem : ISystem
     {
         EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged);
 
-        foreach (var (respawnScreenRequest, receiveRPC, entity) in SystemAPI.Query<RespawnMessageRequest, ReceiveRpcCommandRequestComponent>().WithEntityAccess())
+        foreach (var (respawnScreenRequest, receiveRPC, entity) in SystemAPI.Query<RespawnMessageRequest, ReceiveRpcCommandRequest>().WithEntityAccess())
         {
             // Disable crosshair
             Entity crosshairRequestEntity = ecb.CreateEntity();

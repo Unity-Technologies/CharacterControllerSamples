@@ -12,6 +12,7 @@ using Unity.Physics.Extensions;
 using Unity.Physics.Systems;
 using Unity.Transforms;
 using Unity.CharacterController;
+using UnityEngine;
 
 public struct BasicCharacterUpdateContext
 {
@@ -40,6 +41,8 @@ public readonly partial struct BasicCharacterAspect : IAspect, IKinematicCharact
         ref BasicCharacterComponent characterComponent = ref CharacterComponent.ValueRW;
         ref KinematicCharacterBody characterBody = ref CharacterAspect.CharacterBody.ValueRW;
         ref float3 characterPosition = ref CharacterAspect.LocalTransform.ValueRW.Position;
+
+        int bodyIndex = baseContext.PhysicsWorld.GetRigidBodyIndex(CharacterAspect.Entity);
 
         // First phase of default character update
         CharacterAspect.Update_Initialize(in this, ref context, ref baseContext, ref characterBody, baseContext.Time.DeltaTime);
@@ -150,10 +153,7 @@ public readonly partial struct BasicCharacterAspect : IAspect, IKinematicCharact
         ref KinematicCharacterUpdateContext baseContext,
         in BasicHit hit)
     {
-        if (!KinematicCharacterUtilities.IsHitCollidableOrCharacter(
-                in baseContext.StoredCharacterBodyPropertiesLookup,
-                hit.Material,
-                hit.Entity))
+        if (!PhysicsUtilities.IsCollidable(hit.Material))
         {
             return false;
         }

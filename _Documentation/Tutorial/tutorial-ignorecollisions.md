@@ -39,10 +39,7 @@ public readonly partial struct ThirdPersonCharacterAspect : IAspect, IKinematicC
         ThirdPersonCharacterComponent characterComponent = CharacterComponent.ValueRO;
         
         // First, see if we'd have to ignore based on the default implementation
-        if (!KinematicCharacterUtilities.IsHitCollidableOrCharacter(
-                in baseContext.StoredCharacterBodyPropertiesLookup, 
-                hit.Material, 
-                hit.Entity))
+        if (!PhysicsUtilities.IsCollidable(hit.Material))
         {
             return false;
         }

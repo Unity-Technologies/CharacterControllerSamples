@@ -344,7 +344,6 @@ MonoBehaviour:
   NameTagSocket: {fileID: 397833573}
   WeaponSocket: {fileID: 6371560197271105382}
   WeaponAnimationSocket: {fileID: 6371560197096954920}
-  VisualsRootEntity: {fileID: 7074386637805776705}
   DeathVFX: {fileID: 7161354016620288120, guid: 098661ecdda5d864ea4212382582b67a, type: 3}
   DeathVFXSpawnPoint: {fileID: 902680416403865457}
   CharacterProperties:
@@ -470,17 +469,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ComponentOverrides:
   - FullTypeName: FirstPersonCharacterComponent
-    GameObject: {fileID: 1555240849038293811}
+    EntityIndex: 0
     PrefabType: 7
     SendTypeOptimization: -1
     VariantHash: 9096629913290907822
   - FullTypeName: Unity.Physics.PhysicsVelocity
-    GameObject: {fileID: 1555240849038293811}
+    EntityIndex: 0
     PrefabType: -1
     SendTypeOptimization: -1
     VariantHash: 10188360468653526834
   - FullTypeName: Unity.Transforms.LocalTransform
-    GameObject: {fileID: 1555240849038293811}
+    EntityIndex: 0
     PrefabType: -1
     SendTypeOptimization: -1
     VariantHash: 14508826221128411612

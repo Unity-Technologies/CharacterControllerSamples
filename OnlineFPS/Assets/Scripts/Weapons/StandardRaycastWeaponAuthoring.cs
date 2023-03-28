@@ -25,12 +25,14 @@ public class StandardRaycastWeaponAuthoring : MonoBehaviour
         {
             WeaponUtilities.AddBasicWeaponBakingComponents(this);
             
-            AddComponent(new WeaponVisualFeedback(authoring.VisualFeedback));
-            AddComponent(new StandardWeaponFiringMecanism(authoring.FiringMecanism));
-            AddComponent(new StandardRaycastWeapon
+            Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+            
+            AddComponent(entity, new WeaponVisualFeedback(authoring.VisualFeedback));
+            AddComponent(entity, new StandardWeaponFiringMecanism(authoring.FiringMecanism));
+            AddComponent(entity, new StandardRaycastWeapon
             {
-                ShotOrigin = GetEntity(authoring.ShotOrigin),
-                ProjectileVisualPrefab = GetEntity(authoring.ProjectileVisualPrefab),
+                ShotOrigin = GetEntity(authoring.ShotOrigin, TransformUsageFlags.Dynamic),
+                ProjectileVisualPrefab = GetEntity(authoring.ProjectileVisualPrefab, TransformUsageFlags.Dynamic),
                 Range = authoring.Range,
                 Damage = authoring.Damage,
                 SpreadRadians = math.radians(authoring.SpreadDegrees),
@@ -38,8 +40,8 @@ public class StandardRaycastWeaponAuthoring : MonoBehaviour
                 HitCollisionFilter = new CollisionFilter { BelongsTo = CollisionFilter.Default.BelongsTo, CollidesWith = authoring.HitCollisionFilter.Value },
                 Random = Random.CreateFromIndex(0),
             });
-            AddComponent<InterpolationDelay>();
-            AddBuffer<StandardRaycastWeaponShotVFXRequest>();
+            AddComponent<InterpolationDelay>(entity);
+            AddBuffer<StandardRaycastWeaponShotVFXRequest>(entity);
         }
     }
 }

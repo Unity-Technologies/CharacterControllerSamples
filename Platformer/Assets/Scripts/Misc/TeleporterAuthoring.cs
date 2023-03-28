@@ -11,7 +11,8 @@ public class TeleporterAuthoring : MonoBehaviour
     {
         public override void Bake(TeleporterAuthoring authoring)
         {
-            AddComponent(new Teleporter { DestinationEntity = GetEntity(authoring.Destination) });
+            Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+            AddComponent(entity, new Teleporter { DestinationEntity = GetEntity(authoring.Destination, TransformUsageFlags.Dynamic) });
         }
     }
 }

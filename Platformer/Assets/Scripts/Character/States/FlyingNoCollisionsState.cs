@@ -10,25 +10,21 @@ public struct FlyingNoCollisionsState : IPlatformerCharacterState
     {
         ref KinematicCharacterBody characterBody = ref aspect.CharacterAspect.CharacterBody.ValueRW;
         ref KinematicCharacterProperties characterProperties = ref aspect.CharacterAspect.CharacterProperties.ValueRW;
+        ref PhysicsCollider characterCollider = ref aspect.CharacterAspect.PhysicsCollider.ValueRW;
         ref PlatformerCharacterComponent character = ref aspect.Character.ValueRW;
         
         aspect.SetCapsuleGeometry(character.StandingGeometry.ToCapsuleGeometry());
         
-        aspect.SetCollisionResponse(CollisionResponsePolicy.None);
-        characterProperties.EvaluateGrounding = false;
-        characterProperties.DetectMovementCollisions = false;
-        characterProperties.DecollideFromOverlaps = false;
+        KinematicCharacterUtilities.SetCollisionDetectionActive(false, ref characterProperties, ref characterCollider);
         characterBody.IsGrounded = false;
     }
 
     public void OnStateExit(CharacterState nextState, ref PlatformerCharacterUpdateContext context, ref KinematicCharacterUpdateContext baseContext, in PlatformerCharacterAspect aspect)
     {
         ref KinematicCharacterProperties characterProperties = ref aspect.CharacterAspect.CharacterProperties.ValueRW;
+        ref PhysicsCollider characterCollider = ref aspect.CharacterAspect.PhysicsCollider.ValueRW;
         
-        aspect.SetCollisionResponse(CollisionResponsePolicy.RaiseTriggerEvents);
-        characterProperties.EvaluateGrounding = true;
-        characterProperties.DetectMovementCollisions = true;
-        characterProperties.DecollideFromOverlaps = true;
+        KinematicCharacterUtilities.SetCollisionDetectionActive(true, ref characterProperties, ref characterCollider);
     }
 
     public void OnStatePhysicsUpdate(ref PlatformerCharacterUpdateContext context, ref KinematicCharacterUpdateContext baseContext, in PlatformerCharacterAspect aspect)

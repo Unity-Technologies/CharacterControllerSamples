@@ -69,7 +69,7 @@ public partial struct ServerGameSystem : ISystem
         state.RequireForUpdate<GameResources>();
 
         _singletonQuery = new EntityQueryBuilder(Allocator.Temp).WithAllRW<Singleton>().Build(state.EntityManager);
-        _joinRequestQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<ClientGameSystem.JoinRequest, ReceiveRpcCommandRequestComponent>().Build(ref state);
+        _joinRequestQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<ClientGameSystem.JoinRequest, ReceiveRpcCommandRequest>().Build(ref state);
         
         // Auto-create singleton
         uint randomSeed = (uint)DateTime.Now.Millisecond;
@@ -120,7 +120,7 @@ public partial struct ServerGameSystem : ISystem
         {
             EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged);
 
-            foreach (var (netId, entity) in SystemAPI.Query<NetworkIdComponent>().WithNone<ConnectionState>().WithEntityAccess())
+            foreach (var (netId, entity) in SystemAPI.Query<NetworkId>().WithNone<ConnectionState>().WithEntityAccess())
             {
                 ecb.AddComponent(entity, new ConnectionState());
             }
@@ -130,7 +130,7 @@ public partial struct ServerGameSystem : ISystem
         {
             EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged);
 
-            foreach (var (netId, entity) in SystemAPI.Query<NetworkIdComponent>().WithNone<PendingClient>().WithNone<JoinedClient>().WithEntityAccess())
+            foreach (var (netId, entity) in SystemAPI.Query<NetworkId>().WithNone<PendingClient>().WithNone<JoinedClient>().WithEntityAccess())
             {
                 ecb.AddComponent(entity, new PendingClient());
             }
@@ -140,7 +140,7 @@ public partial struct ServerGameSystem : ISystem
         {
             EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged);
 
-            foreach (var (netId, pendingCLient, entity) in SystemAPI.Query<NetworkIdComponent, RefRW<PendingClient>>().WithEntityAccess())
+            foreach (var (netId, pendingCLient, entity) in SystemAPI.Query<NetworkId, RefRW<PendingClient>>().WithEntityAccess())
             {
                 pendingCLient.ValueRW.TimeConnected += SystemAPI.Time.DeltaTime;
                 if (pendingCLient.ValueRW.TimeConnected > gameResources.JoinTimeout)
@@ -158,12 +158,12 @@ public partial struct ServerGameSystem : ISystem
             EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged);
 
             // Process join requests
-            foreach (var (request, rpcReceive, entity) in SystemAPI.Query<ClientGameSystem.JoinRequest, ReceiveRpcCommandRequestComponent>().WithEntityAccess())
+            foreach (var (request, rpcReceive, entity) in SystemAPI.Query<ClientGameSystem.JoinRequest, ReceiveRpcCommandRequest>().WithEntityAccess())
             {
-                if (SystemAPI.HasComponent<NetworkIdComponent>(rpcReceive.SourceConnection) &&
+                if (SystemAPI.HasComponent<NetworkId>(rpcReceive.SourceConnection) &&
                     !SystemAPI.HasComponent<JoinedClient>(rpcReceive.SourceConnection))
                 {
-                    int ownerConnectionId = SystemAPI.GetComponent<NetworkIdComponent>(rpcReceive.SourceConnection).Value;
+                    int ownerConnectionId = SystemAPI.GetComponent<NetworkId>(rpcReceive.SourceConnection).Value;
 
                     // Mark connection as joined
                     ecb.RemoveComponent<PendingClient>(rpcReceive.SourceConnection);
@@ -172,7 +172,7 @@ public partial struct ServerGameSystem : ISystem
                     Entity playerEntity = Entity.Null;
                     // Spawn player
                     playerEntity = ecb.Instantiate(gameResources.PlayerGhost);
-                    ecb.SetComponent(playerEntity, new GhostOwnerComponent { NetworkId = ownerConnectionId });
+                    ecb.SetComponent(playerEntity, new GhostOwner { NetworkId = ownerConnectionId });
                     ecb.AppendToBuffer(rpcReceive.SourceConnection, new ClientOwnedEntities { Entity = playerEntity });
                     
                     // Set player data
@@ -193,7 +193,7 @@ public partial struct ServerGameSystem : ISystem
                     // Accept join request
                     Entity joinRequestAcceptedEntity = state.EntityManager.CreateEntity();
                     ecb.AddComponent(joinRequestAcceptedEntity, new JoinRequestAccepted());
-                    ecb.AddComponent(joinRequestAcceptedEntity, new SendRpcCommandRequestComponent{ TargetConnection = rpcReceive.SourceConnection });
+                    ecb.AddComponent(joinRequestAcceptedEntity, new SendRpcCommandRequest{ TargetConnection = rpcReceive.SourceConnection });
 
                     // Stream in game
                     ecb.AddComponent(rpcReceive.SourceConnection, new NetworkStreamInGame());
@@ -265,16 +265,16 @@ public partial struct ServerGameSystem : ISystem
                 }
                 else
                 {
-                    if (SystemAPI.HasComponent<NetworkIdComponent>(spawnRequest.ValueRW.ForConnection) &&
+                    if (SystemAPI.HasComponent<NetworkId>(spawnRequest.ValueRW.ForConnection) &&
                         SystemAPI.HasComponent<JoinedClient>(spawnRequest.ValueRW.ForConnection))
                     {
-                        int connectionId = SystemAPI.GetComponent<NetworkIdComponent>(spawnRequest.ValueRW.ForConnection).Value;
+                        int connectionId = SystemAPI.GetComponent<NetworkId>(spawnRequest.ValueRW.ForConnection).Value;
                         Entity playerEntity = SystemAPI.GetComponent<JoinedClient>(spawnRequest.ValueRW.ForConnection).PlayerEntity;
                         float3 randomSpawnPosition = spawnPointLtWs[singleton.Random.NextInt(0, spawnPointLtWs.Length - 1)].Position;
 
                         // Spawn character
                         Entity characterEntity = ecb.Instantiate(gameResources.CharacterGhost);
-                        ecb.SetComponent(characterEntity, new GhostOwnerComponent { NetworkId = connectionId });
+                        ecb.SetComponent(characterEntity, new GhostOwner { NetworkId = connectionId });
                         ecb.SetComponent(characterEntity, LocalTransform.FromPosition(randomSpawnPosition));
                         ecb.SetComponent(characterEntity, new OwningPlayer { Entity = playerEntity });
                         ecb.AppendToBuffer(spawnRequest.ValueRW.ForConnection, new ClientOwnedEntities { Entity = characterEntity });
@@ -296,7 +296,7 @@ public partial struct ServerGameSystem : ISystem
                                 break;
                         }
                         Entity weaponEntity = ecb.Instantiate(randomWeaponPrefab);
-                        ecb.SetComponent(weaponEntity, new GhostOwnerComponent { NetworkId = connectionId });
+                        ecb.SetComponent(weaponEntity, new GhostOwner { NetworkId = connectionId });
                         ecb.SetComponent(characterEntity, new ActiveWeapon { Entity = weaponEntity });
                     }
 

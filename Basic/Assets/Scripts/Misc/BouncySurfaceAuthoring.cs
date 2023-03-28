@@ -11,7 +11,7 @@ public class BouncySurfaceAuthoring : MonoBehaviour
     {
         public override void Bake(BouncySurfaceAuthoring authoring)
         {
-            AddComponent(new BouncySurface
+            AddComponent(GetEntity(TransformUsageFlags.None), new BouncySurface
             {
                 BounceEnergyMultiplier = authoring.BounceEnergyMultiplier,
             });

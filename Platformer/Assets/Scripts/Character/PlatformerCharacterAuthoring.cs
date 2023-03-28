@@ -38,20 +38,22 @@ public class PlatformerCharacterAuthoring : MonoBehaviour
         {
             KinematicCharacterUtilities.BakeCharacter(this, authoring, authoring.CharacterProperties);
             
-            authoring.Character.DefaultCameraTargetEntity = GetEntity(authoring.DefaultCameraTarget);
-            authoring.Character.SwimmingCameraTargetEntity = GetEntity(authoring.SwimmingCameraTarget);
-            authoring.Character.ClimbingCameraTargetEntity = GetEntity(authoring.ClimbingCameraTarget);
-            authoring.Character.CrouchingCameraTargetEntity = GetEntity(authoring.CrouchingCameraTarget);
-            authoring.Character.MeshRootEntity = GetEntity(authoring.MeshRoot);
-            authoring.Character.RollballMeshEntity = GetEntity(authoring.RollballMesh);
-            authoring.Character.RopePrefabEntity = GetEntity(authoring.RopePrefab);
+            authoring.Character.DefaultCameraTargetEntity = GetEntity(authoring.DefaultCameraTarget, TransformUsageFlags.Dynamic);
+            authoring.Character.SwimmingCameraTargetEntity = GetEntity(authoring.SwimmingCameraTarget, TransformUsageFlags.Dynamic);
+            authoring.Character.ClimbingCameraTargetEntity = GetEntity(authoring.ClimbingCameraTarget, TransformUsageFlags.Dynamic);
+            authoring.Character.CrouchingCameraTargetEntity = GetEntity(authoring.CrouchingCameraTarget, TransformUsageFlags.Dynamic);
+            authoring.Character.MeshRootEntity = GetEntity(authoring.MeshRoot, TransformUsageFlags.Dynamic);
+            authoring.Character.RollballMeshEntity = GetEntity(authoring.RollballMesh, TransformUsageFlags.Dynamic);
+            authoring.Character.RopePrefabEntity = GetEntity(authoring.RopePrefab, TransformUsageFlags.Dynamic);
             authoring.Character.LocalSwimmingDetectionPoint = authoring.SwimmingDetectionPoint.transform.localPosition;
             authoring.Character.LocalLedgeDetectionPoint = authoring.LedgeDetectionPoint.transform.localPosition;
 
-            AddComponent(authoring.Character);
-            AddComponent(new PlatformerCharacterControl());
-            AddComponent(new PlatformerCharacterStateMachine());
-            AddComponentObject(new PlatformerCharacterHybridData { MeshPrefab = authoring.MeshPrefab });
+            Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+            
+            AddComponent(entity, authoring.Character);
+            AddComponent(entity, new PlatformerCharacterControl());
+            AddComponent(entity, new PlatformerCharacterStateMachine());
+            AddComponentObject(entity, new PlatformerCharacterHybridData { MeshPrefab = authoring.MeshPrefab });
         }
     }
 

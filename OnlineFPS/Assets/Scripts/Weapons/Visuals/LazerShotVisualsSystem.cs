@@ -14,7 +14,7 @@ public partial struct LazerShotVisualsSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<LazerShotVisuals, LocalTransform, PostTransformScale, StandardRaycastWeaponShotVisualsData>().Build());
+        state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<LazerShotVisuals, LocalTransform, PostTransformMatrix, StandardRaycastWeaponShotVisualsData>().Build());
     }
 
     [BurstCompile]

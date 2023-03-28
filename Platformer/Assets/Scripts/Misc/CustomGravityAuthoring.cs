@@ -11,7 +11,8 @@ public class CustomGravityAuthoring : MonoBehaviour
     {
         public override void Bake(CustomGravityAuthoring authoring)
         {
-            AddComponent(new CustomGravity { GravityMultiplier = authoring.GravityMultiplier });
+            Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+            AddComponent(entity, new CustomGravity { GravityMultiplier = authoring.GravityMultiplier });
         }
     }
 }

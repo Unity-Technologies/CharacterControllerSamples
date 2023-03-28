@@ -11,7 +11,8 @@ public class SelfDestructAfterTimeAuthoring : MonoBehaviour
     {
         public override void Bake(SelfDestructAfterTimeAuthoring authoring)
         {
-            AddComponent(new SelfDestructAfterTime
+            Entity entity = GetEntity(TransformUsageFlags.None);
+            AddComponent(entity, new SelfDestructAfterTime
             {
                 LifeTime = authoring.LifeTime,
             });

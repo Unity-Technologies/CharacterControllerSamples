@@ -19,8 +19,10 @@ public class StressTestCharacterAuthoring : MonoBehaviour
         {
             KinematicCharacterUtilities.BakeCharacter(this, authoring, authoring.CharacterProperties);
 
-            AddComponent(authoring.Character);
-            AddComponent(new StressTestCharacterControl());
+            Entity selfEntity = GetEntity(TransformUsageFlags.None);
+            
+            AddComponent(selfEntity, authoring.Character);
+            AddComponent(selfEntity, new StressTestCharacterControl());
         }
     }
 }

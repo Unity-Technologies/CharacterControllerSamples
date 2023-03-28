@@ -11,7 +11,8 @@ public class TestMovingPlatformAuthoring : MonoBehaviour
     {
         public override void Bake(TestMovingPlatformAuthoring authoring)
         {
-            AddComponent(new TestMovingPlatform
+            Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+            AddComponent(entity, new TestMovingPlatform
             {
                 Data = authoring.MovingPlatform,
                 OriginalPosition = authoring.transform.position,

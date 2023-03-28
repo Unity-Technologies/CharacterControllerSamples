@@ -29,7 +29,7 @@ public partial class SpectatorControllerSystem : SystemBase
         GameResources gameResources = SystemAPI.GetSingleton<GameResources>();
         FPSInputActions.DefaultMapActions defaultActionsMap = InputActions.DefaultMap;
 
-        foreach (var (transformAspect, spectatorController) in SystemAPI.Query<TransformAspect, RefRW<SpectatorController>>())
+        foreach (var (localTransform, spectatorController) in SystemAPI.Query<RefRW<LocalTransform>, RefRW<SpectatorController>>())
         {
             float3 moveInput = Vector3.ClampMagnitude(new Vector3(
                 defaultActionsMap.Move.ReadValue<Vector2>().x,
@@ -50,18 +50,18 @@ public partial class SpectatorControllerSystem : SystemBase
             }
 
             // Velocity
-            float3 worldMoveInput = math.mul(transformAspect.LocalRotation, moveInput);
+            float3 worldMoveInput = math.mul(localTransform.ValueRW.Rotation, moveInput);
             float3 targetVelocity = worldMoveInput * spectatorController.ValueRW.Params.MoveSpeed;
             spectatorController.ValueRW.Velocity = math.lerp(spectatorController.ValueRW.Velocity, targetVelocity, spectatorController.ValueRW.Params.MoveSharpness * deltaTime);
-            transformAspect.TranslateWorld(spectatorController.ValueRW.Velocity * deltaTime);
+            localTransform.ValueRW.Position += spectatorController.ValueRW.Velocity * deltaTime;
             
             // Rotation
-            quaternion rotation = transformAspect.LocalRotation;
+            quaternion rotation = localTransform.ValueRW.Rotation;
             quaternion rotationDeltaVertical = quaternion.Euler(math.radians(-lookInput.y) * spectatorController.ValueRW.Params.RotationSpeed, 0f, 0f);
             quaternion rotationDeltaHorizontal = quaternion.Euler(0f, math.radians(lookInput.x) * spectatorController.ValueRW.Params.RotationSpeed, 0f);
             rotation = math.mul(rotation, rotationDeltaVertical); // local rotation
             rotation = math.mul(rotationDeltaHorizontal, rotation); // world rotation
-            transformAspect.LocalRotation = rotation;
+            localTransform.ValueRW.Rotation = rotation;
         }
     }
 }

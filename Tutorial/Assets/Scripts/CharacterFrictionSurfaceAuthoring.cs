@@ -10,7 +10,7 @@ public class CharacterFrictionSurfaceAuthoring : MonoBehaviour
     {
         public override void Bake(CharacterFrictionSurfaceAuthoring authoring)
         {
-            AddComponent(new CharacterFrictionSurface { VelocityFactor = authoring.VelocityFactor });
+            AddComponent(GetEntity(TransformUsageFlags.None), new CharacterFrictionSurface { VelocityFactor = authoring.VelocityFactor });
         }
     }
 }

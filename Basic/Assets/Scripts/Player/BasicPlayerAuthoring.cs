@@ -11,12 +11,13 @@ public class BasicPlayerAuthoring : MonoBehaviour
     {
         public override void Bake(BasicPlayerAuthoring authoring)
         {
-            AddComponent(new BasicPlayer
+            Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+            AddComponent(entity, new BasicPlayer
             {
-                ControlledCharacter = GetEntity(authoring.ControlledCharacter),
-                ControlledCamera = GetEntity(authoring.ControlledCamera),
+                ControlledCharacter = GetEntity(authoring.ControlledCharacter, TransformUsageFlags.Dynamic),
+                ControlledCamera = GetEntity(authoring.ControlledCamera, TransformUsageFlags.Dynamic),
             });
-            AddComponent(new BasicPlayerInputs());
+            AddComponent(entity, new BasicPlayerInputs());
         }
     }
 }

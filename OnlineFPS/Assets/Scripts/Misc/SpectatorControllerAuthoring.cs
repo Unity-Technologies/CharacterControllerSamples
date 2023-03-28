@@ -11,7 +11,8 @@ public class SpectatorControllerAuthoring : MonoBehaviour
     {
         public override void Bake(SpectatorControllerAuthoring authoring)
         {
-            AddComponent(new SpectatorController { Params = authoring.Parameters } );
+            Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+            AddComponent(entity, new SpectatorController { Params = authoring.Parameters } );
         }
     }
 }

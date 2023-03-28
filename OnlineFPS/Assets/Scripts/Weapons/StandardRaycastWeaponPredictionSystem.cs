@@ -47,7 +47,6 @@ public partial struct StandardRaycastWeaponPredictionSystem : ISystem
             NetworkTime = SystemAPI.GetSingleton<NetworkTime>(),
             PhysicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().PhysicsWorld,
             PhysicsWorldHistory = SystemAPI.GetSingleton<PhysicsWorldHistorySingleton>(),
-            StoredKinematicCharacterDataLookup = SystemAPI.GetComponentLookup<StoredKinematicCharacterData>(true),
             HealthLookup = SystemAPI.GetComponentLookup<Health>(false),
             Hits = _hits,
             WorldTransformsHelper = new WorldTransformsHelperReadOnly(ref state),
@@ -63,8 +62,6 @@ public partial struct StandardRaycastWeaponPredictionSystem : ISystem
         public NetworkTime NetworkTime;
         public PhysicsWorld PhysicsWorld;
         public PhysicsWorldHistorySingleton PhysicsWorldHistory;
-        [ReadOnly]
-        public ComponentLookup<StoredKinematicCharacterData> StoredKinematicCharacterDataLookup;
         public ComponentLookup<Health> HealthLookup;
         public NativeList<RaycastHit> Hits;
         public WorldTransformsHelperReadOnly WorldTransformsHelper;
@@ -92,7 +89,6 @@ public partial struct StandardRaycastWeaponPredictionSystem : ISystem
                     ref Hits,
                     in collisionWorld,
                     in WorldTransformsHelper,
-                    in StoredKinematicCharacterDataLookup,
                     computeShotVisuals,
                     out bool hitFound,
                     out RaycastHit closestValidHit,
@@ -198,7 +194,6 @@ public partial struct StandardRaycastWeaponVisualsSystem : ISystem
                     ref Hits,
                     in CollisionWorld,
                     in WorldTransformsHelper,
-                    in StoredKinematicCharacterDataLookup,
                     true,
                     out bool hitFound,
                     out RaycastHit closestValidHit,

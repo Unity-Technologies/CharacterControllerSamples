@@ -14,9 +14,10 @@ public class BulletShotVisualsAuthoring : MonoBehaviour
     {
         public override void Bake(BulletShotVisualsAuthoring authoring)
         {
-            AddComponent(new BulletShotVisuals
+            Entity entity = GetEntity(TransformUsageFlags.Dynamic | TransformUsageFlags.NonUniformScale);
+            AddComponent(entity, new BulletShotVisuals
             {
-                HitVisualsPrefab = GetEntity(authoring.HitVisualsPrefab),
+                HitVisualsPrefab = GetEntity(authoring.HitVisualsPrefab, TransformUsageFlags.Dynamic),
                 Speed = authoring.Speed,
                 StretchFromSpeed = authoring.StretchFromSpeed,
                 MaxStretch = authoring.MaxStretch,

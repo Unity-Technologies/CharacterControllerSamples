@@ -17,7 +17,7 @@ public class GameObjectNameAuthoring : MonoBehaviour
     {
         public override void Bake(GameObjectNameAuthoring authoring)
         {
-            AddComponent(new GameObjectName
+            AddComponent(GetEntity(TransformUsageFlags.None), new GameObjectName
             {
                 Name = new FixedString128Bytes(authoring.gameObject.name),
             });

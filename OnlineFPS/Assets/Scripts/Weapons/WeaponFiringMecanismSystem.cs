@@ -39,7 +39,7 @@ public partial struct WeaponFiringMecanismSystem : ISystem
     {
         public float DeltaTime;
 
-        void Execute(Entity entity, ref StandardWeaponFiringMecanism mecanism, ref WeaponControl weaponControl, in GhostOwnerComponent ghostOwner)
+        void Execute(Entity entity, ref StandardWeaponFiringMecanism mecanism, ref WeaponControl weaponControl, in GhostOwner ghostOwner)
         {
             mecanism.ShotsToFire = 0;
             mecanism.ShotTimer += DeltaTime;

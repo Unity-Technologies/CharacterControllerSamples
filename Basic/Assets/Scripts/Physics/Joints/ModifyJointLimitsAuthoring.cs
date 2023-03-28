@@ -86,7 +86,8 @@ class ModifyJointLimitsBaker : Baker<ModifyJointLimitsAuthoring>
 {
     public override void Bake(ModifyJointLimitsAuthoring authoring)
     {
-        AddComponentObject(new ModifyJointLimitsBakingData
+        Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+        AddComponentObject(entity, new ModifyJointLimitsBakingData
         {
             AngularRangeScalar = authoring.AngularRangeScalar,
             LinearRangeScalar = authoring.LinearRangeScalar

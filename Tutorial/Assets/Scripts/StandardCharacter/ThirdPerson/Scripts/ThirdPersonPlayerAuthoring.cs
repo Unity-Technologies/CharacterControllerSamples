@@ -11,12 +11,14 @@ public class ThirdPersonPlayerAuthoring : MonoBehaviour
     {
         public override void Bake(ThirdPersonPlayerAuthoring authoring)
         {
-            AddComponent(new ThirdPersonPlayer
+            Entity selfEntity = GetEntity(TransformUsageFlags.None);
+        
+            AddComponent(selfEntity, new ThirdPersonPlayer
             {
-                ControlledCharacter = GetEntity(authoring.ControlledCharacter),
-                ControlledCamera = GetEntity(authoring.ControlledCamera),
+                ControlledCharacter = GetEntity(authoring.ControlledCharacter, TransformUsageFlags.None),
+                ControlledCamera = GetEntity(authoring.ControlledCamera, TransformUsageFlags.None),
             });
-            AddComponent(new ThirdPersonPlayerInputs());
+            AddComponent(selfEntity, new ThirdPersonPlayerInputs());
         }
     }
 }

@@ -11,8 +11,9 @@ public class MainEntityCameraAuthoring : MonoBehaviour
     public class Baker : Baker<MainEntityCameraAuthoring>
     {
         public override void Bake(MainEntityCameraAuthoring authoring)
-        {
-            AddComponent(new MainEntityCamera(authoring.FOV));
+        { 
+            Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+            AddComponent(entity, new MainEntityCamera(authoring.FOV));
         }
     }
 }

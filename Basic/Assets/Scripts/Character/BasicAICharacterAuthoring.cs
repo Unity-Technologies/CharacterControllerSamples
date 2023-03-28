@@ -11,7 +11,7 @@ public class BasicAICharacterAuthoring : MonoBehaviour
     {
         public override void Bake(BasicAICharacterAuthoring authoring)
         {
-            AddComponent(authoring.Data);
+            AddComponent(GetEntity(TransformUsageFlags.Dynamic), authoring.Data);
         }
     }
 }

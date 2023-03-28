@@ -8,5 +8,5 @@ using UnityEngine;
 [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.ThinClientSimulation | WorldSystemFilterFlags.ServerSimulation)]
 [UpdateInGroup(typeof(PredictedFixedStepSimulationSystemGroup))]
 [UpdateAfter(typeof(PhysicsSystemGroup))]
-public class WeaponPredictionUpdateGroup : ComponentSystemGroup
+public partial class WeaponPredictionUpdateGroup : ComponentSystemGroup
 { }

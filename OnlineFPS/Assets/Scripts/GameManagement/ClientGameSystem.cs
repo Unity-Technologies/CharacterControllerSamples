@@ -64,12 +64,14 @@ public partial struct ClientGameSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         ref Singleton singleton = ref _singletonQuery.GetSingletonRW<Singleton>().ValueRW;
+        ComponentLookup<LocalTransform> localTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true);
+        ComponentLookup<Parent> parentLookup = SystemAPI.GetComponentLookup<Parent>(true);
+        ComponentLookup<PostTransformMatrix> postTransformMatrixLookup = SystemAPI.GetComponentLookup<PostTransformMatrix>(true);
         GameResources gameResources = SystemAPI.GetSingleton<GameResources>();
-        WorldTransformsHelperReadOnly worldTransformsHelper = new WorldTransformsHelperReadOnly(ref state);
 
         HandleSendJoinRequestOncePendingScenesLoaded(ref state, ref singleton);
         HandlePendingJoinRequest(ref state, ref singleton, gameResources);
-        HandleCharacterSetupAndDestruction(ref state, ref singleton, ref worldTransformsHelper, gameResources);
+        HandleCharacterSetupAndDestruction(ref state, ref singleton, ref localTransformLookup, ref parentLookup, ref postTransformMatrixLookup, gameResources);
         HandleDisconnect(ref state, ref singleton, gameResources);
         HandleRespawnScreen(ref state, ref singleton, gameResources);
     }
@@ -137,7 +139,13 @@ public partial struct ClientGameSystem : ISystem
         }
     }
     
-    private void HandleCharacterSetupAndDestruction(ref SystemState state, ref Singleton singleton, ref WorldTransformsHelperReadOnly worldTransformsHelper, GameResources gameResources)
+    private void HandleCharacterSetupAndDestruction(
+        ref SystemState state, 
+        ref Singleton singleton, 
+        ref ComponentLookup<LocalTransform> localTransformLookup,
+        ref ComponentLookup<Parent> parentLookup,
+        ref ComponentLookup<PostTransformMatrix> postTransformMatrixLookup,
+        GameResources gameResources)
     {
         if (SystemAPI.HasSingleton<NetworkId>())
         {
@@ -162,7 +170,13 @@ public partial struct ClientGameSystem : ISystem
                 ecb.AddComponent(respawnScreenRequestEntity, new RespawnMessageRequest { Start = false });
                 ecb.AddComponent(respawnScreenRequestEntity, new MoveToLocalWorld());
                 
-                InitializeCharacterCommon(entity, ecb, in character, ref worldTransformsHelper);
+                InitializeCharacterCommon(
+                    entity, 
+                    ecb, 
+                    in character,
+                    ref localTransformLookup,
+                    ref parentLookup,
+                    ref postTransformMatrixLookup);
             }
             
             // Initialize remote characters
@@ -171,7 +185,13 @@ public partial struct ClientGameSystem : ISystem
                 // Spawn nameTag
                 ecb.AddComponent(character.NameTagSocketEntity, new NameTagProxy { PlayerEntity = owningPlayer.Entity });
 
-                InitializeCharacterCommon(entity, ecb, in character, ref worldTransformsHelper);
+                InitializeCharacterCommon(
+                    entity, 
+                    ecb, 
+                    in character,
+                    ref localTransformLookup,
+                    ref parentLookup,
+                    ref postTransformMatrixLookup);
             }
             
             // TODO: This wouldn't be compatible with characters despawned due to network relevancy
@@ -190,13 +210,19 @@ public partial struct ClientGameSystem : ISystem
         }
     }
 
-    private void InitializeCharacterCommon(Entity entity, EntityCommandBuffer ecb, in FirstPersonCharacterComponent character, ref WorldTransformsHelperReadOnly worldTransformsHelper)
+    private void InitializeCharacterCommon(
+        Entity entity, 
+        EntityCommandBuffer ecb, 
+        in FirstPersonCharacterComponent character, 
+        ref ComponentLookup<LocalTransform> localTransformLookup,
+        ref ComponentLookup<Parent> parentLookup,
+        ref ComponentLookup<PostTransformMatrix> postTransformMatrixLookup)
     {
-        worldTransformsHelper.TryGetWorldTransformUnscaled(character.DeathVFXSpawnPoint, out RigidTransform deathVFXspawnTransform);
+        TransformHelpers.ComputeWorldTransformMatrix(character.DeathVFXSpawnPoint, out float4x4 deathVFXspawnTransform, ref localTransformLookup, ref parentLookup, ref postTransformMatrixLookup);
         ecb.AddComponent(entity, new CharacterClientCleanup
         {
             DeathVFX = character.DeathVFX,
-            DeathVFXSpawnWorldPosition = deathVFXspawnTransform.pos,
+            DeathVFXSpawnWorldPosition = deathVFXspawnTransform.Translation(),
         });
     }
 

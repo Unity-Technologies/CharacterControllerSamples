@@ -66,8 +66,10 @@ public static class WeaponUtilities
         in WeaponShotSimulationOriginOverride shotSimulationOriginOverride,
         in DynamicBuffer<WeaponShotIgnoredEntity> ignoredEntities,
         ref NativeList<RaycastHit> Hits,
+        ref ComponentLookup<LocalTransform> localTransformLookup,
+        ref ComponentLookup<Parent> parentLookup,
+        ref ComponentLookup<PostTransformMatrix> postTransformMatrixLookup,
         in CollisionWorld CollisionWorld,
-        in WorldTransformsHelperReadOnly worldTransformsHelper,
         bool computeShotVisuals,
         out bool hitFound,
         out RaycastHit closestValidHit,
@@ -80,8 +82,9 @@ public static class WeaponUtilities
         // In a FPS game, it is often desirable for the weapon shot raycast to start from the camera (screen center) rather than from the actual barrel of the weapon mesh.
         // This is because it will precisely match the crosshair at the center of the screen.
         // The shot "Simulation" represents the camera point for the raycast, while the shot "Visual" represents the point where the shot mesh is spawned. 
-        Entity shotSimulationOriginEntity = worldTransformsHelper.HasLocalTransform(shotSimulationOriginOverride.Entity) ? shotSimulationOriginOverride.Entity : weapon.ShotOrigin;
-        worldTransformsHelper.TryGetWorldTransformUnscaled(shotSimulationOriginEntity, out RigidTransform shotSimulationOriginTransform);
+        Entity shotSimulationOriginEntity = localTransformLookup.HasComponent(shotSimulationOriginOverride.Entity) ? shotSimulationOriginOverride.Entity : weapon.ShotOrigin;
+        TransformHelpers.ComputeWorldTransformMatrix(shotSimulationOriginEntity, out float4x4 shotSimulationOriginTransform, ref localTransformLookup, ref parentLookup, ref postTransformMatrixLookup);
+        float3 shotSimulationOriginPosition = shotSimulationOriginTransform.Translation();
     
         // Allow firing multiple projectiles per shot
         for (int s = 0; s < weapon.ProjectilesCount; s++)
@@ -98,8 +101,8 @@ public static class WeaponUtilities
             Hits.Clear();
             RaycastInput rayInput = new RaycastInput
             {
-                Start = shotSimulationOriginTransform.pos,
-                End = shotSimulationOriginTransform.pos + (finalShotSimulationDirection * weapon.Range),
+                Start = shotSimulationOriginPosition,
+                End = shotSimulationOriginPosition + (finalShotSimulationDirection * weapon.Range),
                 Filter = weapon.HitCollisionFilter,
             };
             CollisionWorld.CastRay(rayInput, ref Hits);
@@ -119,7 +122,7 @@ public static class WeaponUtilities
                 shotVisualsData = new StandardRaycastWeaponShotVisualsData
                 {
                     VisualOriginEntity = weapon.ShotOrigin,
-                    SimulationOrigin = shotSimulationOriginTransform.pos,
+                    SimulationOrigin = shotSimulationOriginPosition,
                     SimulationDirection = finalShotSimulationDirection,
                     SimulationUp = shotSimulationOriginTransform.Up(),
                     SimulationHitDistance = hitDistance,

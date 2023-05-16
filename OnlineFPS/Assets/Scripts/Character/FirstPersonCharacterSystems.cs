@@ -99,7 +99,7 @@ public partial struct FirstPersonCharacterPhysicsUpdateSystem : ISystem
         public FirstPersonCharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
     
-        void Execute(ref FirstPersonCharacterAspect characterAspect)
+        void Execute(FirstPersonCharacterAspect characterAspect)
         {
             characterAspect.PhysicsUpdate(ref Context, ref BaseContext);
         }
@@ -172,7 +172,7 @@ public partial struct FirstPersonCharacterVariableUpdateSystem : ISystem
         public FirstPersonCharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
     
-        void Execute(ref FirstPersonCharacterAspect characterAspect)
+        void Execute(FirstPersonCharacterAspect characterAspect)
         {
             characterAspect.VariableUpdate(ref Context, ref BaseContext);
         }

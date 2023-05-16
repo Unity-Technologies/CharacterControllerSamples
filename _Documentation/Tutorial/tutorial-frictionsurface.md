@@ -99,6 +99,6 @@ public readonly partial struct ThirdPersonCharacterAspect : IAspect, IKinematicC
 }
 ```
 
-Finally, you can add a new box object to the Subscene, with a Box `PhysicsShape`, and a `CharacterFrictionSurface` component. If you set the `VelocityFactor` to something like `0.2` on that `CharacterFrictionSurfaceAuthoring` and you press Play, you should see your character move much slower on that surface.
+Finally, you can add a new box object to the Subscene, with a Box collider, and a `CharacterFrictionSurface` component. If you set the `VelocityFactor` to something like `0.2` on that `CharacterFrictionSurfaceAuthoring` and you press Play, you should see your character move much slower on that surface.
 
 ![](../Images/tutorial_friction_surface.gif)

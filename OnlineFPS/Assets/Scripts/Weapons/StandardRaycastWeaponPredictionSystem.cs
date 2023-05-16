@@ -49,7 +49,9 @@ public partial struct StandardRaycastWeaponPredictionSystem : ISystem
             PhysicsWorldHistory = SystemAPI.GetSingleton<PhysicsWorldHistorySingleton>(),
             HealthLookup = SystemAPI.GetComponentLookup<Health>(false),
             Hits = _hits,
-            WorldTransformsHelper = new WorldTransformsHelperReadOnly(ref state),
+            LocalTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true),
+            ParentLookup = SystemAPI.GetComponentLookup<Parent>(true),
+            PostTransformMatrixLookup = SystemAPI.GetComponentLookup<PostTransformMatrix>(true),
         };
         predictionJob.Schedule();
     }
@@ -60,11 +62,18 @@ public partial struct StandardRaycastWeaponPredictionSystem : ISystem
     {
         public bool IsServer;
         public NetworkTime NetworkTime;
+        [ReadOnly]
         public PhysicsWorld PhysicsWorld;
+        [ReadOnly]
         public PhysicsWorldHistorySingleton PhysicsWorldHistory;
         public ComponentLookup<Health> HealthLookup;
+        [ReadOnly]
+        public ComponentLookup<LocalTransform> LocalTransformLookup;
+        [ReadOnly]
+        public ComponentLookup<Parent> ParentLookup;
+        [ReadOnly]
+        public ComponentLookup<PostTransformMatrix> PostTransformMatrixLookup;
         public NativeList<RaycastHit> Hits;
-        public WorldTransformsHelperReadOnly WorldTransformsHelper;
 
         void Execute(
             Entity entity, 
@@ -87,8 +96,10 @@ public partial struct StandardRaycastWeaponPredictionSystem : ISystem
                     in shotSimulationOriginOverride,
                     in ignoredEntities,
                     ref Hits,
+                    ref LocalTransformLookup,
+                    ref ParentLookup,
+                    ref PostTransformMatrixLookup,
                     in collisionWorld,
-                    in WorldTransformsHelper,
                     computeShotVisuals,
                     out bool hitFound,
                     out RaycastHit closestValidHit,
@@ -158,7 +169,9 @@ public partial struct StandardRaycastWeaponVisualsSystem : ISystem
             CollisionWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().CollisionWorld,
             StoredKinematicCharacterDataLookup = SystemAPI.GetComponentLookup<StoredKinematicCharacterData>(true),
             Hits = _hits,
-            WorldTransformsHelper = new WorldTransformsHelperReadOnly(ref state),
+            LocalTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true),
+            ParentLookup = SystemAPI.GetComponentLookup<Parent>(true),
+            PostTransformMatrixLookup = SystemAPI.GetComponentLookup<PostTransformMatrix>(true),
         };
         remoteShotsJob.Schedule();
     }
@@ -167,11 +180,17 @@ public partial struct StandardRaycastWeaponVisualsSystem : ISystem
     [WithNone(typeof(GhostOwnerIsLocal))]
     public partial struct StandardRaycastWeaponRemoteShotsJob : IJobEntity
     {
+        [ReadOnly]
         public CollisionWorld CollisionWorld;
         [ReadOnly]
         public ComponentLookup<StoredKinematicCharacterData> StoredKinematicCharacterDataLookup;
+        [ReadOnly]
+        public ComponentLookup<LocalTransform> LocalTransformLookup;
+        [ReadOnly]
+        public ComponentLookup<Parent> ParentLookup;
+        [ReadOnly]
+        public ComponentLookup<PostTransformMatrix> PostTransformMatrixLookup;
         public NativeList<RaycastHit> Hits;
-        public WorldTransformsHelperReadOnly WorldTransformsHelper;
 
         void Execute(
             Entity entity,
@@ -192,8 +211,10 @@ public partial struct StandardRaycastWeaponVisualsSystem : ISystem
                     in shotSimulationOriginOverride,
                     in ignoredEntities,
                     ref Hits,
+                    ref LocalTransformLookup,
+                    ref ParentLookup,
+                    ref PostTransformMatrixLookup,
                     in CollisionWorld,
-                    in WorldTransformsHelper,
                     true,
                     out bool hitFound,
                     out RaycastHit closestValidHit,

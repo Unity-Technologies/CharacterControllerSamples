@@ -59,7 +59,7 @@ public partial struct ThirdPersonCharacterPhysicsUpdateSystem : ISystem
         public ThirdPersonCharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
     
-        void Execute(ref ThirdPersonCharacterAspect characterAspect)
+        void Execute(ThirdPersonCharacterAspect characterAspect)
         {
             characterAspect.PhysicsUpdate(ref Context, ref BaseContext);
         }
@@ -125,7 +125,7 @@ public partial struct ThirdPersonCharacterVariableUpdateSystem : ISystem
         public ThirdPersonCharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
     
-        void Execute(ref ThirdPersonCharacterAspect characterAspect)
+        void Execute(ThirdPersonCharacterAspect characterAspect)
         {
             characterAspect.VariableUpdate(ref Context, ref BaseContext);
         }

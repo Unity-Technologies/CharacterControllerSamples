@@ -91,7 +91,7 @@ public partial struct PlatformerCharacterPhysicsUpdateSystem : ISystem
         public PlatformerCharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
     
-        void Execute([ChunkIndexInQuery] int chunkIndex, ref PlatformerCharacterAspect characterAspect)
+        void Execute([ChunkIndexInQuery] int chunkIndex, PlatformerCharacterAspect characterAspect)
         {
             Context.SetChunkIndex(chunkIndex);
             characterAspect.PhysicsUpdate(ref Context, ref BaseContext);
@@ -158,7 +158,7 @@ public partial struct PlatformerCharacterVariableUpdateSystem : ISystem
         public PlatformerCharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
     
-        void Execute([ChunkIndexInQuery] int chunkIndex, ref PlatformerCharacterAspect characterAspect)
+        void Execute([ChunkIndexInQuery] int chunkIndex, PlatformerCharacterAspect characterAspect)
         {
             Context.SetChunkIndex(chunkIndex);
             characterAspect.VariableUpdate(ref Context, ref BaseContext);

@@ -58,7 +58,7 @@ public partial struct BasicCharacterPhysicsUpdateSystem : ISystem
         public BasicCharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
     
-        void Execute(ref BasicCharacterAspect characterAspect)
+        void Execute(BasicCharacterAspect characterAspect)
         {
             characterAspect.PhysicsUpdate(ref Context, ref BaseContext);
         }
@@ -123,7 +123,7 @@ public partial struct BasicCharacterVariableUpdateSystem : ISystem
         public BasicCharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
     
-        void Execute(ref BasicCharacterAspect characterAspect)
+        void Execute(BasicCharacterAspect characterAspect)
         {
             characterAspect.VariableUpdate(ref Context, ref BaseContext);
         }

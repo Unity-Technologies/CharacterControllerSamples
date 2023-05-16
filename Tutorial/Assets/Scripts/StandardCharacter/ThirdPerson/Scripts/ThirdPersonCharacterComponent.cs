@@ -4,6 +4,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 using Unity.CharacterController;
+using Unity.Physics;
 using Unity.Physics.Authoring;
 
 [Serializable]

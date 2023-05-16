@@ -93,10 +93,10 @@ This system will make kinematic physics bodies move with a given translation & r
 
 Now, let's set up a moving platform in our scene:
 * Create the `MovingPlatform`, `MovingPlatformAuthoring` and `MovingPlatformSystem` scripts in your project using the code above.
-* Add a new box with a `PhysicsShape` to your subscene. Call this object "MovingPlatform"
-* Make sure that this "MovingPlatform" object also has a `PhysicsBody`. Its `MotionType` must be set to "Kinematic", and its `Smoothing` must be set to "Interpolation"
-* Add a `TrackedTransformAuthoring` component to the "MovingPlatform"
-* Set some parameters in the `MovingPlatform` component
+* Add a new box with a collider and a **kinematic** rigidbody to your subscene. Call this object "MovingPlatform".
+* Make sure that this "MovingPlatform"'s rigidbody uses interpolation (also known as "smoothing" in the custom physics authoring components).
+* Add a `TrackedTransformAuthoring` component to the "MovingPlatform".
+* Set some parameters in the `MovingPlatform` component.
 
 ![](../Images/tutorial_movingplatform_params.png)
 

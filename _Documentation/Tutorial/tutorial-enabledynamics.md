@@ -5,7 +5,7 @@ This character controller supports simulating a dynamic body for characters, whi
 
 By default, the standard characters are already configured to support this. You can read more about the required setup for this here: [Dynamic Body Interaction](https://docs.unity3d.com/Packages/com.unity.charactercontroller@latest/index.html?subfolder=/manual/dynamic-body-interaction.html)
 
-With our character already setup for dynamic rigidbody interactions, we need to add a dynamic box to the scene that we can push with our character. Add a cube to your Subscene, and add a `PhysicsBody` and `PhysicsShape` to it, correctly set-up for being a dynamic body with Interpolation [[Screenshot]](../Images/tutorial_physicsbox.png)
+With our character already setup for dynamic rigidbody interactions, we need to add a dynamic box to the scene that we can push with our character. Add a cube to your Subscene, and add a collider and a rigidbody to it. Make sure the rigidbody is **not** set to "Kinematic".
 
 Press Play, and try to push it. Play with the masses of the character and the box to see how different mass ratios affect the pushing.
 

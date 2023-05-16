@@ -1,5 +1,6 @@
 using System;
 using Unity.Entities;
+using Unity.Physics;
 using Unity.Physics.Authoring;
 
 [Serializable]

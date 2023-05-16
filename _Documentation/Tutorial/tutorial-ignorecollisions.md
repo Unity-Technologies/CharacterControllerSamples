@@ -1,9 +1,11 @@
 
 # Tutorial - Ignore Collisions Tag
 
-We wil now make the character ignore all collisions with colliders that have a certain physics custom tag. 
+We will now make the character ignore all collisions with colliders that have a certain physics custom tag. 
 
-In order to do this, we will first add a box with a `PhysicsShape` and a `PhysicsBody` to the Subscene, and we will assign the custom tag '0' to the "Custom Tags" of its `PhysicsBody`. This '0' tag is the tag we want to ignore collisions with:
+For this section, we will need to import custom physics authoring components in order to be able to set custom tags on rigidbodies. Go to the package manager window, find the "Unity Physics" package, and go to the "Samples" tab of that package. In this window, import the "Custom Physics Authoring" sample.
+
+Once the custom physics authoring components are imported, we will add a box with a `PhysicsShape` and a `PhysicsBody` to the Subscene, and we will assign the custom tag '0' to the "Custom Tags" of its `PhysicsBody`. This '0' tag is the tag we want to ignore collisions with:
 
 ![](../Images/tutorial_box_tag.png)
 

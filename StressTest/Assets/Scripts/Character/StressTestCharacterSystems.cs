@@ -70,7 +70,7 @@ public partial struct StressTestCharacterPhysicsUpdateSystem : ISystem
         public StressTestCharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
     
-        void Execute(ref StressTestCharacterAspect characterAspect)
+        void Execute(StressTestCharacterAspect characterAspect)
         {
             characterAspect.PhysicsUpdate(ref Context, ref BaseContext);
         }
@@ -147,7 +147,7 @@ public partial struct StressTestCharacterVariableUpdateSystem : ISystem
         public StressTestCharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
     
-        void Execute(ref StressTestCharacterAspect characterAspect)
+        void Execute(StressTestCharacterAspect characterAspect)
         {
             characterAspect.VariableUpdate(ref Context, ref BaseContext);
         }

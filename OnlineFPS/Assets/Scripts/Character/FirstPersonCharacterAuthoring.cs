@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
-[RequireComponent(typeof(PhysicsShapeAuthoring))]
 public class FirstPersonCharacterAuthoring : MonoBehaviour
 {
     public GameObject ViewObject;

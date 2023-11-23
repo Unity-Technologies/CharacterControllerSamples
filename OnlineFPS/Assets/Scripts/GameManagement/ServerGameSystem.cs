@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Burst;
+using Unity.CharacterController;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Entities.Serialization;
@@ -13,6 +14,7 @@ using Unity.Transforms;
 using UnityEngine;
 
 [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
+[UpdateInGroup(typeof(PredictedSimulationSystemGroup), OrderFirst = true)]
 [BurstCompile]
 public partial struct ServerGameSystem : ISystem
 {
@@ -24,6 +26,7 @@ public partial struct ServerGameSystem : ISystem
         public bool AcceptJoins;
 
         public int DisconnectionFramesCounter;
+        public NativeHashMap<int, Entity> ConnectionEntityMap;
     }
 
     public struct AcceptJoinsOnceScenesLoadedRequest : IComponentData
@@ -61,15 +64,18 @@ public partial struct ServerGameSystem : ISystem
         public float Delay;
     }
 
-    private EntityQuery _singletonQuery;
     private EntityQuery _joinRequestQuery;
+    private EntityQuery _connectionsQuery;
+    private NativeHashMap<int, Entity> _connectionEntityMap;
 
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<GameResources>();
 
-        _singletonQuery = new EntityQueryBuilder(Allocator.Temp).WithAllRW<Singleton>().Build(state.EntityManager);
         _joinRequestQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<ClientGameSystem.JoinRequest, ReceiveRpcCommandRequest>().Build(ref state);
+        _connectionsQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<NetworkId>().Build(state.EntityManager);
+
+        _connectionEntityMap = new NativeHashMap<int, Entity>(300, Allocator.Persistent);
         
         // Auto-create singleton
         uint randomSeed = (uint)DateTime.Now.Millisecond;
@@ -77,21 +83,30 @@ public partial struct ServerGameSystem : ISystem
         state.EntityManager.AddComponentData(singletonEntity, new Singleton
         {
             Random = Unity.Mathematics.Random.CreateFromIndex(randomSeed),
+            ConnectionEntityMap = this._connectionEntityMap,
         });
     }
 
-    [BurstCompile]
     public void OnDestroy(ref SystemState state)
     {
-        
+        if (_connectionEntityMap.IsCreated)
+        {
+            _connectionEntityMap.Dispose();
+        }
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        ref Singleton singleton = ref _singletonQuery.GetSingletonRW<Singleton>().ValueRW;
+        ref Singleton singleton = ref SystemAPI.GetSingletonRW<Singleton>().ValueRW;
         GameResources gameResources = SystemAPI.GetSingleton<GameResources>();
 
+        if (SystemAPI.HasSingleton<DisableCharacterDynamicContacts>())
+        {
+            state.EntityManager.DestroyEntity(SystemAPI.GetSingletonEntity<DisableCharacterDynamicContacts>());
+        }
+
+        BuildConnectionEntityMap(ref state, ref singleton);
         HandleAcceptJoinsOncePendingScenesAreLoaded(ref state, ref singleton);
         HandleJoinRequests(ref state, ref singleton, gameResources);
         HandlePendingJoinClientTimeout(ref state, ref singleton, gameResources);
@@ -99,6 +114,21 @@ public partial struct ServerGameSystem : ISystem
         HandleSpawnCharacter(ref state, ref singleton, gameResources);
     }
 
+    private void BuildConnectionEntityMap(ref SystemState state, ref Singleton singleton)
+    {
+        NativeArray<Entity> connectionEntities = _connectionsQuery.ToEntityArray(state.WorldUpdateAllocator);
+        NativeArray<NetworkId> connections = _connectionsQuery.ToComponentDataArray<NetworkId>(state.WorldUpdateAllocator);
+        
+        singleton.ConnectionEntityMap.Clear();
+        for (int i = 0; i < connections.Length; i++)
+        {
+            singleton.ConnectionEntityMap.TryAdd(connections[i].Value, connectionEntities[i]);
+        }
+
+        connectionEntities.Dispose(state.Dependency);
+        connections.Dispose(state.Dependency);
+    }
+    
     private void HandleAcceptJoinsOncePendingScenesAreLoaded(ref SystemState state, ref Singleton singleton)
     {
         EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged);
@@ -242,7 +272,7 @@ public partial struct ServerGameSystem : ISystem
                 Entity disposeRequestEntity = ecb.CreateEntity();
                 ecb.AddComponent(disposeRequestEntity, new GameManagementSystem.DisposeServerWorldRequest());
                 ecb.AddComponent(disposeRequestEntity, new MoveToLocalWorld());
-                ecb.DestroyEntity(disconnectRequestQuery);
+                ecb.DestroyEntity(disconnectRequestQuery, EntityQueryCaptureMode.AtRecord);
             }
 
             singleton.DisconnectionFramesCounter++;
@@ -286,13 +316,19 @@ public partial struct ServerGameSystem : ISystem
 
                         // Spawn & assign starting weapon
                         Entity randomWeaponPrefab = default;
-                        switch (singleton.Random.NextInt(0, 2))
+                        switch (singleton.Random.NextInt(0, 4))
                         {
                             case 0:
                                 randomWeaponPrefab = gameResources.MachineGunGhost;
                                 break;
                             case 1:
                                 randomWeaponPrefab = gameResources.RailgunGhost;
+                                break;
+                            case 2:
+                                randomWeaponPrefab = gameResources.RocketLauncherGhost;
+                                break;
+                            case 3:
+                                randomWeaponPrefab = gameResources.ShotgunGhost; 
                                 break;
                         }
                         Entity weaponEntity = ecb.Instantiate(randomWeaponPrefab);

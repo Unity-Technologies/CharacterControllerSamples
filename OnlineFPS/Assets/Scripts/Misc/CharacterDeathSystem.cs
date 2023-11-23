@@ -10,9 +10,72 @@ using Unity.Transforms;
 using UnityEngine;
 
 [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
-[UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateInGroup(typeof(PredictedSimulationSystemGroup))]
+[UpdateAfter(typeof(ProjectilePredictionUpdateGroup))]
 [BurstCompile]
 public partial struct CharacterDeathServerSystem : ISystem
+{
+    [BurstCompile]
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<Health, FirstPersonCharacterComponent>().Build());
+        state.RequireForUpdate<ServerGameSystem.Singleton>();
+    }
+    
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        CharacterDeathServerJob serverJob = new CharacterDeathServerJob
+        {
+            ECB = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged),
+            RespawnTime = SystemAPI.GetSingleton<GameResources>().RespawnTime,
+            DespawnTime = SystemAPI.GetSingleton<GameResources>().PolledEventsTimeout,
+            ConnectionEntityMap = SystemAPI.GetSingletonRW<ServerGameSystem.Singleton>().ValueRO.ConnectionEntityMap,
+        };
+        state.Dependency = serverJob.Schedule(state.Dependency);
+    }
+
+    [BurstCompile]
+    [WithAll(typeof(Simulate))]
+    [WithNone(typeof(DelayedDespawn))]
+    public partial struct CharacterDeathServerJob : IJobEntity
+    {
+        public EntityCommandBuffer ECB;
+        public float RespawnTime;
+        public float DespawnTime;
+        [ReadOnly]
+        public NativeHashMap<int, Entity> ConnectionEntityMap;
+
+        void Execute(Entity entity, in FirstPersonCharacterComponent character, in Health health, in GhostOwner ghostOwner)
+        {
+            if (health.IsDead())
+            {
+                if(ConnectionEntityMap.TryGetValue(ghostOwner.NetworkId, out Entity owningConnectionEntity) && owningConnectionEntity != Entity.Null)
+                {
+                    // Send character's owning client a message to start respawn countdown
+                    Entity respawnScreenRequestEntity = ECB.CreateEntity();
+                    ECB.AddComponent(respawnScreenRequestEntity, new RespawnMessageRequest { Start = true, CountdownTime = RespawnTime });
+                    ECB.AddComponent(respawnScreenRequestEntity, new SendRpcCommandRequest { TargetConnection = owningConnectionEntity });
+
+                    // Request to spawn character for the owning client
+                    Entity spawnCharacterRequestEntity = ECB.CreateEntity();
+                    ECB.AddComponent(spawnCharacterRequestEntity, new ServerGameSystem.CharacterSpawnRequest { ForConnection = owningConnectionEntity, Delay = RespawnTime });
+                }
+                
+                // Activate delayed despawn
+                ECB.AddComponent(entity, new DelayedDespawn
+                {
+                    Timer = DespawnTime,
+                });
+            }
+        }
+    }
+}
+
+[WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.ServerSimulation)]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[BurstCompile]
+public partial struct CharacterDeathClientSystem : ISystem
 {
     [BurstCompile]
     public void OnCreate(ref SystemState state)
@@ -21,108 +84,35 @@ public partial struct CharacterDeathServerSystem : ISystem
     }
 
     [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    { }
-
-    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        MiscUtilities.GetConnectionsArrays(ref state, Allocator.TempJob, out NativeArray<Entity> connectionEntities, out NativeArray<NetworkId> connections);
-        
-        CharacterDeathServerJob serverJob = new CharacterDeathServerJob
+        CharacterDeathClientJob job = new CharacterDeathClientJob
         {
             ECB = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged),
-            GameResources = SystemAPI.GetSingleton<GameResources>(),
-            ConnectionEntities = connectionEntities,
-            Connections = connections,
-        };
-        state.Dependency = serverJob.Schedule(state.Dependency);
-
-        connectionEntities.Dispose(state.Dependency);
-        connections.Dispose(state.Dependency);
-    }
-
-    [BurstCompile]
-    [WithAll(typeof(Simulate))]
-    public partial struct CharacterDeathServerJob : IJobEntity
-    {
-        public EntityCommandBuffer ECB;
-        public GameResources GameResources;
-        public NativeArray<Entity> ConnectionEntities;
-        public NativeArray<NetworkId> Connections;
-        
-        void Execute(Entity entity, in FirstPersonCharacterComponent character, in Health health, in GhostOwner ghostOwner)
-        {
-            if (health.IsDead())
-            {
-                // TODO: we could do something more efficient for this
-                // Find the entity of the owning connection
-                Entity owningConnectionEntity = Entity.Null;
-                for (int i = 0; i < Connections.Length; i++)
-                {
-                    if (Connections[i].Value == ghostOwner.NetworkId)
-                    {
-                        owningConnectionEntity = ConnectionEntities[i];
-                        break;
-                    }
-                }
-                
-                if (owningConnectionEntity != Entity.Null)
-                {
-                    // Send character's owning client a message to start respawn countdown
-                    Entity respawnScreenRequestEntity = ECB.CreateEntity();
-                    ECB.AddComponent(respawnScreenRequestEntity, new RespawnMessageRequest { Start = true, CountdownTime = GameResources.RespawnTime });
-                    ECB.AddComponent(respawnScreenRequestEntity, new SendRpcCommandRequest { TargetConnection = owningConnectionEntity });
-
-                    // Request to spawn character for the owning client
-                    Entity spawnCharacterRequestEntity = ECB.CreateEntity();
-                    ECB.AddComponent(spawnCharacterRequestEntity, new ServerGameSystem.CharacterSpawnRequest { ForConnection = owningConnectionEntity, Delay = GameResources.RespawnTime });
-                }
-                
-                ECB.DestroyEntity(entity);
-            }
-        }
-    }
-}
-
-[WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
-[UpdateInGroup(typeof(SimulationSystemGroup))]
-[UpdateAfter(typeof(TransformSystemGroup))]
-[BurstCompile]
-public partial struct CharacterDeathClientSystem : ISystem
-{
-    [BurstCompile]
-    public void OnCreate(ref SystemState state)
-    {
-        state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<Health, FirstPersonCharacterComponent, CharacterClientCleanup>().Build());
-    }
-
-    [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    { }
-
-    [BurstCompile]
-    public void OnUpdate(ref SystemState state)
-    {
-        CharacterDeathVFXSpawnPointJob job = new CharacterDeathVFXSpawnPointJob
-        {
-            LtWLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true),
+            LocalToWorldLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true),
         };
         state.Dependency = job.Schedule(state.Dependency);
     }
 
     [BurstCompile]
-    [WithAll(typeof(Simulate))]
-    public partial struct CharacterDeathVFXSpawnPointJob : IJobEntity
+    public partial struct CharacterDeathClientJob : IJobEntity
     {
-        [ReadOnly]
-        public ComponentLookup<LocalToWorld> LtWLookup;
+        public EntityCommandBuffer ECB;
+        [ReadOnly] public ComponentLookup<LocalToWorld> LocalToWorldLookup;
 
-        void Execute(ref CharacterClientCleanup characterCleanup, in FirstPersonCharacterComponent character)
+        void Execute(Entity entity, ref FirstPersonCharacterComponent character, in Health health)
         {
-            if (LtWLookup.TryGetComponent(character.DeathVFXSpawnPoint, out LocalToWorld spawnPointLtW))
+            if (health.IsDead() && character.HasProcessedDeath == 0)
             {
-                characterCleanup.DeathVFXSpawnWorldPosition = spawnPointLtW.Position;
+                ECB.AddComponent(entity, new DelayedDespawn());
+
+                if (LocalToWorldLookup.TryGetComponent(character.DeathVFXSpawnPoint, out LocalToWorld deathVFXLtW))
+                {
+                    Entity deathVFXEntity = ECB.Instantiate(character.DeathVFX);
+                    ECB.SetComponent(deathVFXEntity, LocalTransform.FromPositionRotation(deathVFXLtW.Position, deathVFXLtW.Rotation));
+                }
+
+                character.HasProcessedDeath = 1;
             }
         }
     }

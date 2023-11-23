@@ -9,7 +9,6 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityMesh = UnityEngine.Mesh;
 
 namespace Unity.Physics.Authoring
 {
@@ -84,10 +83,10 @@ namespace Unity.Physics.Authoring
         ConvexHullGenerationParameters m_ConvexHullGenerationParameters = ConvexHullGenerationParameters.Default.ToAuthoring();
 
         // TODO: remove this accessor in favor of GetRawVertices() when blob data is serializable
-        internal UnityMesh CustomMesh => m_CustomMesh;
+        internal UnityEngine.Mesh CustomMesh => m_CustomMesh;
         [SerializeField]
         [Tooltip("If no custom mesh is specified, then one will be generated using this body's rendered meshes.")]
-        UnityMesh m_CustomMesh;
+        UnityEngine.Mesh m_CustomMesh;
 
         public bool ForceUnique { get => m_ForceUnique; set => m_ForceUnique = value; }
         [SerializeField]
@@ -186,7 +185,7 @@ namespace Unity.Physics.Authoring
             height = props.Height;
         }
 
-        internal CapsuleGeometryAuthoring GetCapsuleProperties()
+        public CapsuleGeometryAuthoring GetCapsuleProperties()
         {
             GetCylindricalProperties(
                 m_Capsule, out var center, out var height, out var radius, out var orientationEuler, m_ShapeType != ShapeType.Capsule
@@ -270,10 +269,10 @@ namespace Unity.Physics.Authoring
         static readonly List<Vector3> s_Vertices = new List<Vector3>(65535);
         static readonly List<int> s_Indices = new List<int>(65535);
 
-        static UnityMesh ReusableBakeMesh =>
+        static UnityEngine.Mesh ReusableBakeMesh =>
             s_ReusableBakeMesh ??
-            (s_ReusableBakeMesh = new UnityMesh { hideFlags = HideFlags.HideAndDontSave });
-        static UnityMesh s_ReusableBakeMesh;
+            (s_ReusableBakeMesh = new UnityEngine.Mesh { hideFlags = HideFlags.HideAndDontSave });
+        static UnityEngine.Mesh s_ReusableBakeMesh;
 
         public void GetConvexHullProperties(NativeList<float3> pointCloud) =>
             GetConvexHullProperties(pointCloud, true, default, default, default, default);
@@ -281,7 +280,7 @@ namespace Unity.Physics.Authoring
         internal void GetConvexHullProperties(
             NativeList<float3> pointCloud, bool validate,
             NativeList<HashableShapeInputs> inputs, NativeList<int> allSkinIndices, NativeList<float> allBlendShapeWeights,
-            HashSet<UnityMesh> meshAssets
+            HashSet<UnityEngine.Mesh> meshAssets
         )
         {
             if (pointCloud.IsCreated)
@@ -436,7 +435,7 @@ namespace Unity.Physics.Authoring
             GetMeshProperties(vertices, triangles, true, default);
 
         internal void GetMeshProperties(
-            NativeList<float3> vertices, NativeList<int3> triangles, bool validate, NativeList<HashableShapeInputs> inputs, HashSet<UnityMesh> meshAssets = null
+            NativeList<float3> vertices, NativeList<int3> triangles, bool validate, NativeList<HashableShapeInputs> inputs, HashSet<UnityEngine.Mesh> meshAssets = null
         )
         {
             if (vertices.IsCreated)
@@ -474,8 +473,8 @@ namespace Unity.Physics.Authoring
         }
 
         void AppendMeshPropertiesToNativeBuffers(
-            float4x4 localToWorld, UnityMesh mesh, NativeList<float3> vertices, NativeList<int3> triangles, bool validate,
-            NativeList<HashableShapeInputs> inputs, HashSet<UnityMesh> meshAssets
+            float4x4 localToWorld, UnityEngine.Mesh mesh, NativeList<float3> vertices, NativeList<int3> triangles, bool validate,
+            NativeList<HashableShapeInputs> inputs, HashSet<UnityEngine.Mesh> meshAssets
         )
         {
             if (mesh == null || validate && !mesh.IsValidForConversion(gameObject))
@@ -487,8 +486,8 @@ namespace Unity.Physics.Authoring
         }
 
         internal static void AppendMeshPropertiesToNativeBuffers(
-            float4x4 childToShape, UnityMesh mesh, NativeList<float3> vertices, NativeList<int3> triangles,
-            NativeList<HashableShapeInputs> inputs, HashSet<UnityMesh> meshAssets
+            float4x4 childToShape, UnityEngine.Mesh mesh, NativeList<float3> vertices, NativeList<int3> triangles,
+            NativeList<HashableShapeInputs> inputs, HashSet<UnityEngine.Mesh> meshAssets
         )
         {
             var offset = 0u;
@@ -496,7 +495,7 @@ namespace Unity.Physics.Authoring
             // TODO: when min spec is 2020.1, collect all meshes and their data via single Burst job rather than one at a time
             using (var meshData = UnityEditor.MeshUtility.AcquireReadOnlyMeshData(mesh))
 #else
-            using (var meshData = UnityMesh.AcquireReadOnlyMeshData(mesh))
+            using (var meshData = UnityEngine.Mesh.AcquireReadOnlyMeshData(mesh))
 #endif
             {
                 if (vertices.IsCreated)
@@ -611,7 +610,7 @@ namespace Unity.Physics.Authoring
             SyncSphereProperties();
         }
 
-        internal void SetCapsule(CapsuleGeometryAuthoring geometry)
+        public void SetCapsule(CapsuleGeometryAuthoring geometry)
         {
             m_ShapeType = ShapeType.Capsule;
             m_PrimitiveCenter = geometry.Center;
@@ -704,7 +703,7 @@ namespace Unity.Physics.Authoring
             SetConvexHull(hullGenerationParameters);
         }
 
-        public void SetConvexHull(ConvexHullGenerationParameters hullGenerationParameters, UnityMesh customMesh = null)
+        public void SetConvexHull(ConvexHullGenerationParameters hullGenerationParameters, UnityEngine.Mesh customMesh = null)
         {
             m_ShapeType = ShapeType.ConvexHull;
             m_CustomMesh = customMesh;
@@ -712,7 +711,7 @@ namespace Unity.Physics.Authoring
             m_ConvexHullGenerationParameters = hullGenerationParameters;
         }
 
-        public void SetMesh(UnityMesh mesh = null)
+        public void SetMesh(UnityEngine.Mesh mesh = null)
         {
             m_ShapeType = ShapeType.Mesh;
             m_CustomMesh = mesh;

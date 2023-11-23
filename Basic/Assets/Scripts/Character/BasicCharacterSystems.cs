@@ -74,7 +74,10 @@ public partial struct BasicCharacterPhysicsUpdateSystem : ISystem
     }
 }
 
-[UpdateInGroup(typeof(KinematicCharacterVariableUpdateGroup))]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateAfter(typeof(FixedStepSimulationSystemGroup))]
+[UpdateAfter(typeof(BasicPlayerVariableStepControlSystem))]
+[UpdateBefore(typeof(TransformSystemGroup))]
 [BurstCompile]
 public partial struct BasicCharacterVariableUpdateSystem : ISystem
 {

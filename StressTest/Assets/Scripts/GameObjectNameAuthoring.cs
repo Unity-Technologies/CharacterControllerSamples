@@ -8,7 +8,7 @@ using UnityEngine;
 [Serializable]
 public struct GameObjectName : IComponentData
 {
-    public FixedString128Bytes Name;
+    public FixedString128Bytes Value;
 }
 
 public class GameObjectNameAuthoring : MonoBehaviour
@@ -19,7 +19,7 @@ public class GameObjectNameAuthoring : MonoBehaviour
         {
             AddComponent(GetEntity(TransformUsageFlags.None), new GameObjectName
             {
-                Name = new FixedString128Bytes(authoring.gameObject.name),
+                Value = new FixedString128Bytes(authoring.gameObject.name),
             });
         }
     }

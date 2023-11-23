@@ -27,6 +27,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1.09, z: -3.54}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -43,26 +44,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70c323b4be4b1fa4089d1a1fd2872754, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  FollowedCharacter: {fileID: 0}
+  RotationSpeed: 2
+  MaxVAngle: 89
+  MinVAngle: -89
+  RotateWithCharacterParent: 1
+  StartDistance: 5
+  MinDistance: 0
+  MaxDistance: 10
+  DistanceMovementSpeed: 1
+  DistanceMovementSharpness: 20
+  ObstructionRadius: 0.1
+  ObstructionInnerSmoothingSharpness: 3.4028235e+38
+  ObstructionOuterSmoothingSharpness: 5
+  PreventFixedUpdateJitter: 1
   IgnoredEntities: []
-  OrbitCamera:
-    RotationSpeed: 2.4
-    MaxVAngle: 89
-    MinVAngle: -89
-    RotateWithCharacterParent: 1
-    TargetDistance: 5
-    MinDistance: 0
-    MaxDistance: 10
-    DistanceMovementSpeed: 0.5
-    DistanceMovementSharpness: 20
-    ObstructionRadius: 0.1
-    ObstructionInnerSmoothingSharpness: 3.4028235e+38
-    ObstructionOuterSmoothingSharpness: 5
-    PreventFixedUpdateJitter: 1
-    CurrentDistanceFromMovement: 5
-    CurrentDistanceFromObstruction: 5
-    PitchAngle: 0
-    PlanarForward:
-      x: -0
-      y: -0
-      z: -1

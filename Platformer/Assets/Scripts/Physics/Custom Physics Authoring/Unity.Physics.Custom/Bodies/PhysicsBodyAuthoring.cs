@@ -72,7 +72,7 @@ namespace Unity.Physics.Authoring
 #pragma warning restore 618
         }
         [SerializeField]
-        [Tooltip("Default mass distribution is based on the shapes associated with this body.")]
+        [Tooltip("Override default mass distribution based on the shapes associated with this body by the specified mass distribution, assuming unit mass.")]
         bool m_OverrideDefaultMassDistribution;
 
         public MassDistribution CustomMassDistribution

@@ -1,4 +1,5 @@
 using System;
+using System.Windows.Input;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -13,8 +14,6 @@ public struct FirstPersonPlayer : IComponentData
     [GhostField()]
     public Entity ControlledCharacter;
 
-    public NetworkTick LastKnownCommandsTick;
-    public FirstPersonPlayerCommands LastKnownCommands;
     public bool IsAutoMoving;
 }
 

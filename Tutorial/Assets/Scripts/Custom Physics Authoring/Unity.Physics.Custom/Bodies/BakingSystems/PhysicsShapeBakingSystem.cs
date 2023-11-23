@@ -5,15 +5,13 @@ using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Profiling;
-using LegacyCollider = UnityEngine.Collider;
-using UnityMesh = UnityEngine.Mesh;
 
 namespace Unity.Physics.Authoring
 {
     class PhysicsShapeBaker : BaseColliderBaker<PhysicsShapeAuthoring>
     {
         public static List<PhysicsShapeAuthoring> physicsShapeComponents = new List<PhysicsShapeAuthoring>();
-        public static List<LegacyCollider> legacyColliderComponents = new List<LegacyCollider>();
+        public static List<UnityEngine.Collider> colliderComponents = new List<UnityEngine.Collider>();
 
         bool ShouldConvertShape(PhysicsShapeAuthoring authoring)
         {
@@ -82,22 +80,25 @@ namespace Unity.Physics.Authoring
                 BodyFromShape = ColliderInstanceBaking.GetCompoundFromChild(shapeTransform, bodyTransform),
             };
 
-            var data = GenerateComputationData(shape, instance, colliderEntity);
+            ForceUniqueColliderAuthoring forceUniqueComponent = body.GetComponent<ForceUniqueColliderAuthoring>();
+            bool isForceUniqueComponentPresent = forceUniqueComponent != null;
+
+            var data = GenerateComputationData(shape, bodyTransform, instance, colliderEntity, isForceUniqueComponentPresent);
 
             data.Instance.ConvertedAuthoringInstanceID = shapeInstanceID;
             data.Instance.ConvertedBodyInstanceID = bodyTransform.GetInstanceID();
 
             var rb = FindFirstEnabledAncestor(shapeGameObject, PhysicsShapeExtensions_NonBursted.s_RigidbodiesBuffer);
             var pb = FindFirstEnabledAncestor(shapeGameObject, PhysicsShapeExtensions_NonBursted.s_PhysicsBodiesBuffer);
-            // The LegacyRigidBody cannot know about the ShapeAuthoringComponent. We need to take responsibility of baking the collider.
+            // The Rigidbody cannot know about the Physics Shape Component. We need to take responsibility of baking the collider.
             if (rb || (!rb && !pb) && body == shapeGameObject)
             {
                 GetComponents(physicsShapeComponents);
-                GetComponents(legacyColliderComponents);
+                GetComponents(colliderComponents);
                 // We need to check that there are no other colliders in the same object, if so, only the first one should do this, otherwise there will be 2 bakers adding this to the entity
                 // This will be needed to trigger BuildCompoundColliderBakingSystem
                 // If they are legacy Colliders and PhysicsShapeAuthoring in the same object, the PhysicsShapeAuthoring will add this
-                if (legacyColliderComponents.Count == 0 && physicsShapeComponents.Count > 0 && physicsShapeComponents[0].GetInstanceID() == shapeInstanceID)
+                if (colliderComponents.Count == 0 && physicsShapeComponents.Count > 0 && physicsShapeComponents[0].GetInstanceID() == shapeInstanceID)
                 {
                     var entity = GetEntity(TransformUsageFlags.Dynamic);
 
@@ -116,7 +117,6 @@ namespace Unity.Physics.Authoring
                     });
                     AddComponent<PhysicsRootBaked>(entity);
                     AddComponent<PhysicsCollider>(entity);
-                    AddBuffer<PhysicsColliderKeyEntityPair>(entity);
                 }
             }
 
@@ -165,7 +165,7 @@ namespace Unity.Physics.Authoring
 
         bool GetMeshes(PhysicsShapeAuthoring shape, out List<UnityEngine.Mesh> meshes, out List<float4x4> childrenToShape)
         {
-            meshes = new List<UnityMesh>();
+            meshes = new List<UnityEngine.Mesh>();
             childrenToShape = new List<float4x4>();
 
             if (shape.CustomMesh != null)
@@ -173,33 +173,36 @@ namespace Unity.Physics.Authoring
                 meshes.Add(shape.CustomMesh);
                 childrenToShape.Add(float4x4.identity);
             }
-
-            // Try to get all the meshes in the children
-            var meshFilters = GetComponentsInChildren<MeshFilter>();
-
-            foreach (var meshFilter in meshFilters)
+            else
             {
-                if (meshFilter != null && meshFilter.sharedMesh != null)
+                // Try to get all the meshes in the children
+                var meshFilters = GetComponentsInChildren<MeshFilter>();
+
+                foreach (var meshFilter in meshFilters)
                 {
-                    var shapeAuthoring = GetComponent<PhysicsShapeAuthoring>(meshFilter);
-                    if (shapeAuthoring != null && shapeAuthoring != shape)
+                    if (meshFilter != null && meshFilter.sharedMesh != null)
                     {
-                        // Skip this case, since it will be treated independently
-                        continue;
+                        var shapeAuthoring = GetComponent<PhysicsShapeAuthoring>(meshFilter);
+                        if (shapeAuthoring != null && shapeAuthoring != shape)
+                        {
+                            // Skip this case, since it will be treated independently
+                            continue;
+                        }
+
+                        meshes.Add(meshFilter.sharedMesh);
+
+                        // Don't calculate the children to shape if not needed, to avoid approximation that could prevent collider to be shared
+                        if (shape.transform.localToWorldMatrix.Equals(meshFilter.transform.localToWorldMatrix))
+                            childrenToShape.Add(float4x4.identity);
+                        else
+                        {
+                            var transform = math.mul(shape.transform.worldToLocalMatrix,
+                                meshFilter.transform.localToWorldMatrix);
+                            childrenToShape.Add(transform);
+                        }
+
+                        DependsOn(meshes.Last());
                     }
-
-                    meshes.Add(meshFilter.sharedMesh);
-
-                    // Don't calculate the children to shape if not needed, to avoid approximation that could prevent collider to be shared
-                    if (shape.transform.localToWorldMatrix.Equals(meshFilter.transform.localToWorldMatrix))
-                        childrenToShape.Add(float4x4.identity);
-                    else
-                    {
-                        var transform = math.mul(shape.transform.worldToLocalMatrix, meshFilter.transform.localToWorldMatrix);
-                        childrenToShape.Add(transform);
-                    }
-
-                    DependsOn(meshes.Last());
                 }
             }
 
@@ -250,18 +253,60 @@ namespace Unity.Physics.Authoring
             return mesh;
         }
 
-        private ShapeComputationDataBaking GenerateComputationData(PhysicsShapeAuthoring shape, ColliderInstanceBaking colliderInstance, Entity colliderEntity)
+        private ShapeComputationDataBaking GenerateComputationData(PhysicsShapeAuthoring shape, Transform bodyTransform, ColliderInstanceBaking colliderInstance, Entity colliderEntity, bool isForceUniqueComponentPresent)
         {
+            bool isUnique = isForceUniqueComponentPresent || shape.ForceUnique;
             var res = new ShapeComputationDataBaking
             {
                 Instance = colliderInstance,
                 Material = ProduceMaterial(shape),
                 CollisionFilter = ProduceCollisionFilter(shape),
-                ForceUniqueIdentifier = shape.ForceUnique ? (uint)shape.GetInstanceID() : 0u
+                ForceUniqueIdentifier = isUnique ? (uint)shape.GetInstanceID() : 0u
             };
 
-            var transform = shape.transform;
-            var localToWorld = transform.localToWorldMatrix;
+            var shapeTransform = shape.transform;
+            var localToWorld = (float4x4)shapeTransform.localToWorldMatrix;
+            var bodyLocalToWorld = (float4x4)bodyTransform.transform.localToWorldMatrix;
+
+            // We don't bake pure uniform scales into colliders since edit-time uniform scales
+            // are baked into the entity's LocalTransform.Scale property, unless the shape has non-identity scale
+            // relative to its contained body. In this case we need to bake all scales into the collider geometry.
+            var relativeTransform = math.mul(math.inverse(bodyLocalToWorld), localToWorld);
+
+            var hasNonIdentityScaleRelativeToBody = relativeTransform.HasNonIdentityScale();
+            var hasShearRelativeToBody = relativeTransform.HasShear();
+            var bakeUniformScale = hasNonIdentityScaleRelativeToBody || hasShearRelativeToBody;
+
+            // If the body transform has purely uniform scale, and there is any scale or shear between the body and the shape,
+            // then we need to extract the uniform body scale from the shape transform before baking
+            // to prevent the shape from being scaled by the body's uniform scale twice. This is because pure top level body uniform scales
+            // are not baked into collider geometry but represented by the body entity's LocalTransform.Scale property.
+            if (bakeUniformScale)
+            {
+                var bodyHasShear = bodyLocalToWorld.HasShear();
+                var bodyHasNonUniformScale = bodyLocalToWorld.HasNonUniformScale();
+                if (!bodyHasShear && !bodyHasNonUniformScale)
+                {
+                    // extract uniform scale of body and remove it from the shape transform
+                    var bodyScale = bodyLocalToWorld.DecomposeScale();
+                    var bodyScaleInverse = 1 / bodyScale;
+                    localToWorld = math.mul(localToWorld, float4x4.Scale(bodyScaleInverse));
+                }
+            }
+
+            // bake uniform scale only if required (see above), and always bake shear and non-uniform scales into the collider geometry
+            var colliderBakeMatrix = float4x4.identity;
+            if (bakeUniformScale || localToWorld.HasShear() || localToWorld.HasNonUniformScale())
+            {
+                var rigidBodyTransform = Math.DecomposeRigidBodyTransform(localToWorld);
+                colliderBakeMatrix = math.mul(math.inverse(new float4x4(rigidBodyTransform)), localToWorld);
+                // make sure we have a valid transformation matrix
+                colliderBakeMatrix.c0[3] = 0;
+                colliderBakeMatrix.c1[3] = 0;
+                colliderBakeMatrix.c2[3] = 0;
+                colliderBakeMatrix.c3[3] = 1;
+            }
+
             var shapeToWorld = shape.GetShapeToWorldMatrix();
             EulerAngles orientation;
 
@@ -271,33 +316,33 @@ namespace Unity.Physics.Authoring
                 case ShapeType.Box:
                 {
                     res.BoxProperties = shape.GetBoxProperties(out orientation)
-                        .BakeToBodySpace(localToWorld, shapeToWorld, orientation);
+                        .BakeToBodySpace(localToWorld, shapeToWorld, orientation, bakeUniformScale);
                     break;
                 }
                 case ShapeType.Capsule:
                 {
                     res.CapsuleProperties = shape.GetCapsuleProperties()
-                        .BakeToBodySpace(localToWorld, shapeToWorld)
+                        .BakeToBodySpace(localToWorld, shapeToWorld, bakeUniformScale)
                         .ToRuntime();
                     break;
                 }
                 case ShapeType.Sphere:
                 {
                     res.SphereProperties = shape.GetSphereProperties(out orientation)
-                        .BakeToBodySpace(localToWorld, shapeToWorld, ref orientation);
+                        .BakeToBodySpace(localToWorld, shapeToWorld, ref orientation, bakeUniformScale);
                     break;
                 }
                 case ShapeType.Cylinder:
                 {
                     res.CylinderProperties = shape.GetCylinderProperties(out orientation)
-                        .BakeToBodySpace(localToWorld, shapeToWorld, orientation);
+                        .BakeToBodySpace(localToWorld, shapeToWorld, orientation, bakeUniformScale);
                     break;
                 }
                 case ShapeType.Plane:
                 {
                     shape.GetPlaneProperties(out var center, out var size, out orientation);
                     PhysicsShapeExtensions.BakeToBodySpace(
-                        center, size, orientation, localToWorld, shapeToWorld,
+                        center, size, orientation, colliderBakeMatrix,
                         out res.PlaneVertices.c0, out res.PlaneVertices.c1, out res.PlaneVertices.c2, out res.PlaneVertices.c3
                     );
                     break;
@@ -308,7 +353,7 @@ namespace Unity.Physics.Authoring
                     res.ConvexHullProperties.Material = res.Material;
                     res.ConvexHullProperties.GenerationParameters = shape.ConvexHullGenerationParameters.ToRunTime();
 
-                    CreateMeshAuthoringData(shape, colliderEntity);
+                    CreateMeshAuthoringData(shape, colliderBakeMatrix, colliderEntity);
                     break;
                 }
                 case ShapeType.Mesh:
@@ -316,7 +361,7 @@ namespace Unity.Physics.Authoring
                     res.MeshProperties.Filter = res.CollisionFilter;
                     res.MeshProperties.Material = res.Material;
 
-                    CreateMeshAuthoringData(shape, colliderEntity);
+                    CreateMeshAuthoringData(shape, colliderBakeMatrix, colliderEntity);
                     break;
                 }
             }
@@ -324,7 +369,7 @@ namespace Unity.Physics.Authoring
             return res;
         }
 
-        private void CreateMeshAuthoringData(PhysicsShapeAuthoring shape, Entity colliderEntity)
+        private void CreateMeshAuthoringData(PhysicsShapeAuthoring shape, float4x4 colliderBakeMatrix, Entity colliderEntity)
         {
             if (GetMeshes(shape, out var meshes, out var childrenToShape))
             {
@@ -337,12 +382,11 @@ namespace Unity.Physics.Authoring
                     );
                 }
 
-                var bakeFromShape = shape.GetLocalToShapeMatrix();
                 var meshBakingData = new PhysicsMeshAuthoringData()
                 {
                     Convex = shape.ShapeType == ShapeType.ConvexHull,
                     Mesh = mesh,
-                    BakeFromShape = bakeFromShape,
+                    BakeFromShape = colliderBakeMatrix,
                     MeshBounds = mesh.bounds,
                     ChildToShape = float4x4.identity
                 };

@@ -106,7 +106,7 @@ public class StressTestManager : MonoBehaviour
                 {
                     EnvironmentPrefabDropdown.AddOptions(new List<Dropdown.OptionData>
                     {
-                        new Dropdown.OptionData(_entityManager.GetComponentData<GameObjectName>(environmentPrefabs[i].Prefab).Name.Value),
+                        new Dropdown.OptionData(_entityManager.GetComponentData<GameObjectName>(environmentPrefabs[i].Prefab).Value.Value),
                     });
                 }
 

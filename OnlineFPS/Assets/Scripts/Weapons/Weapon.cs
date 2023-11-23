@@ -94,8 +94,6 @@ public struct WeaponVisualFeedback : IComponentData
         RecoilMaxFOVKick = authoring.RecoilMaxFOVKick;
         RecoilFOVKickSharpness = authoring.RecoilFOVKickSharpness;
         RecoilFOVKickRestitutionSharpness = authoring.RecoilFOVKickRestitutionSharpness;
-
-        ShotFeedbackRequests = 0;
     }
     
     public float WeaponBobHAmount;
@@ -117,16 +115,14 @@ public struct WeaponVisualFeedback : IComponentData
     public float RecoilMaxFOVKick;
     public float RecoilFOVKickSharpness;
     public float RecoilFOVKickRestitutionSharpness;
-
-    public int ShotFeedbackRequests;
 }
 
 [Serializable]
 [GhostComponent(OwnerSendType = SendToOwnerType.SendToNonOwner)]
 public struct WeaponControl : IComponentData
 {
-    public bool FirePressed;
-    public bool FireReleased;
+    public bool ShootPressed;
+    public bool ShootReleased;
     public bool AimHeld;
 }
 

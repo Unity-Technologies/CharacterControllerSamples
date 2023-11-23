@@ -12,6 +12,7 @@ public class GameResourcesAuthoring : MonoBehaviour
     public int SendRate = 60;
     public int MaxSimulationStepsPerFrame = 4;
     public float JoinTimeout = 10f;
+    public float PolledEventsTimeout = 0.4f;
     
     [Header("General Parameters")] 
     public float RespawnTime = 4f;
@@ -26,6 +27,8 @@ public class GameResourcesAuthoring : MonoBehaviour
     public GameObject CharacterGhost;
     public GameObject RailgunGhost;
     public GameObject MachineGunGhost;
+    public GameObject RocketLauncherGhost;
+    public GameObject ShotgunGhost;
     
     [Header("Other Prefabs")] 
     public GameObject SpectatorPrefab;
@@ -41,6 +44,7 @@ public class GameResourcesAuthoring : MonoBehaviour
                 SendRate = authoring.SendRate,
                 MaxSimulationStepsPerFrame = authoring.MaxSimulationStepsPerFrame,
                 JoinTimeout = authoring.JoinTimeout,
+                PolledEventsTimeout = authoring.PolledEventsTimeout,
                 
                 RespawnTime = authoring.RespawnTime,
             
@@ -52,6 +56,8 @@ public class GameResourcesAuthoring : MonoBehaviour
                 CharacterGhost = GetEntity(authoring.CharacterGhost, TransformUsageFlags.Dynamic),
                 RailgunGhost = GetEntity(authoring.RailgunGhost, TransformUsageFlags.Dynamic),
                 MachineGunGhost = GetEntity(authoring.MachineGunGhost, TransformUsageFlags.Dynamic),
+                RocketLauncherGhost = GetEntity(authoring.RocketLauncherGhost, TransformUsageFlags.Dynamic),
+                ShotgunGhost = GetEntity(authoring.ShotgunGhost, TransformUsageFlags.Dynamic),
             
                 SpectatorPrefab = GetEntity(authoring.SpectatorPrefab, TransformUsageFlags.Dynamic),
             });

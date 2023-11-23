@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Burst;
+using Unity.CharacterController;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -57,21 +58,19 @@ public partial struct ClientGameSystem : ISystem
     }
 
     [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    { }
-
-    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         ref Singleton singleton = ref _singletonQuery.GetSingletonRW<Singleton>().ValueRW;
-        ComponentLookup<LocalTransform> localTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true);
-        ComponentLookup<Parent> parentLookup = SystemAPI.GetComponentLookup<Parent>(true);
-        ComponentLookup<PostTransformMatrix> postTransformMatrixLookup = SystemAPI.GetComponentLookup<PostTransformMatrix>(true);
         GameResources gameResources = SystemAPI.GetSingleton<GameResources>();
+
+        if (SystemAPI.HasSingleton<DisableCharacterDynamicContacts>())
+        {
+            state.EntityManager.DestroyEntity(SystemAPI.GetSingletonEntity<DisableCharacterDynamicContacts>());
+        }
 
         HandleSendJoinRequestOncePendingScenesLoaded(ref state, ref singleton);
         HandlePendingJoinRequest(ref state, ref singleton, gameResources);
-        HandleCharacterSetupAndDestruction(ref state, ref singleton, ref localTransformLookup, ref parentLookup, ref postTransformMatrixLookup, gameResources);
+        HandleCharacterSetupAndDestruction(ref state);
         HandleDisconnect(ref state, ref singleton, gameResources);
         HandleRespawnScreen(ref state, ref singleton, gameResources);
     }
@@ -139,26 +138,21 @@ public partial struct ClientGameSystem : ISystem
         }
     }
     
-    private void HandleCharacterSetupAndDestruction(
-        ref SystemState state, 
-        ref Singleton singleton, 
-        ref ComponentLookup<LocalTransform> localTransformLookup,
-        ref ComponentLookup<Parent> parentLookup,
-        ref ComponentLookup<PostTransformMatrix> postTransformMatrixLookup,
-        GameResources gameResources)
+    private void HandleCharacterSetupAndDestruction(ref SystemState state)
     {
         if (SystemAPI.HasSingleton<NetworkId>())
         {
             EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged);
 
             // Initialize local-owned characters
-            foreach (var (character, owningPlayer, ghostOwner, entity) in SystemAPI.Query<FirstPersonCharacterComponent, OwningPlayer, GhostOwner>().WithAll<GhostOwnerIsLocal>().WithNone<CharacterClientCleanup>().WithEntityAccess())
+            foreach (var (character, owningPlayer, ghostOwner, entity) in SystemAPI.Query<FirstPersonCharacterComponent, OwningPlayer, GhostOwner>().WithAll<GhostOwnerIsLocal>().WithNone<CharacterInitialized>().WithEntityAccess())
             {
                 // Make camera follow character's view
                 ecb.AddComponent(character.ViewEntity, new MainEntityCamera { BaseFoV = character.BaseFoV });
 
                 // Make local character meshes rendering be shadow-only
-                MiscUtilities.SetShadowModeInHierarchy(state.EntityManager, ecb, entity, SystemAPI.GetBufferLookup<Child>(), UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly);
+                BufferLookup<Child> childBufferLookup = SystemAPI.GetBufferLookup<Child>();
+                MiscUtilities.SetShadowModeInHierarchy(state.EntityManager, ecb, entity, ref childBufferLookup, UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly);
 
                 // Enable crosshair
                 Entity crosshairRequestEntity = ecb.CreateEntity();
@@ -170,60 +164,20 @@ public partial struct ClientGameSystem : ISystem
                 ecb.AddComponent(respawnScreenRequestEntity, new RespawnMessageRequest { Start = false });
                 ecb.AddComponent(respawnScreenRequestEntity, new MoveToLocalWorld());
                 
-                InitializeCharacterCommon(
-                    entity, 
-                    ecb, 
-                    in character,
-                    ref localTransformLookup,
-                    ref parentLookup,
-                    ref postTransformMatrixLookup);
+                // Mark initialized
+                ecb.AddComponent<CharacterInitialized>(entity);
             }
             
             // Initialize remote characters
-            foreach (var (character, owningPlayer, ghostOwner, entity) in SystemAPI.Query<FirstPersonCharacterComponent, OwningPlayer, GhostOwner>().WithNone<GhostOwnerIsLocal>().WithNone<CharacterClientCleanup>().WithEntityAccess())
+            foreach (var (character, owningPlayer, ghostOwner, entity) in SystemAPI.Query<FirstPersonCharacterComponent, OwningPlayer, GhostOwner>().WithNone<GhostOwnerIsLocal>().WithNone<CharacterInitialized>().WithEntityAccess())
             {
                 // Spawn nameTag
                 ecb.AddComponent(character.NameTagSocketEntity, new NameTagProxy { PlayerEntity = owningPlayer.Entity });
-
-                InitializeCharacterCommon(
-                    entity, 
-                    ecb, 
-                    in character,
-                    ref localTransformLookup,
-                    ref parentLookup,
-                    ref postTransformMatrixLookup);
-            }
-            
-            // TODO: This wouldn't be compatible with characters despawned due to network relevancy
-            // Handle destroyed characters
-            foreach (var (characterCleanup, entity) in SystemAPI.Query<CharacterClientCleanup>().WithNone<FirstPersonCharacterComponent>().WithEntityAccess())
-            {
-                // Spawn death VFX
-                if(SystemAPI.Exists(characterCleanup.DeathVFX))
-                {
-                    Entity deathVFXEntity = ecb.Instantiate(characterCleanup.DeathVFX);
-                    ecb.SetComponent(deathVFXEntity, LocalTransform.FromPositionRotation(characterCleanup.DeathVFXSpawnWorldPosition, quaternion.identity));
-                }
                 
-                ecb.RemoveComponent<CharacterClientCleanup>(entity);
+                // Mark initialized
+                ecb.AddComponent<CharacterInitialized>(entity);
             }
         }
-    }
-
-    private void InitializeCharacterCommon(
-        Entity entity, 
-        EntityCommandBuffer ecb, 
-        in FirstPersonCharacterComponent character, 
-        ref ComponentLookup<LocalTransform> localTransformLookup,
-        ref ComponentLookup<Parent> parentLookup,
-        ref ComponentLookup<PostTransformMatrix> postTransformMatrixLookup)
-    {
-        TransformHelpers.ComputeWorldTransformMatrix(character.DeathVFXSpawnPoint, out float4x4 deathVFXspawnTransform, ref localTransformLookup, ref parentLookup, ref postTransformMatrixLookup);
-        ecb.AddComponent(entity, new CharacterClientCleanup
-        {
-            DeathVFX = character.DeathVFX,
-            DeathVFXSpawnWorldPosition = deathVFXspawnTransform.Translation(),
-        });
     }
 
     private void HandleDisconnect(ref SystemState state, ref Singleton singleton, GameResources gameResources)
@@ -265,7 +219,7 @@ public partial struct ClientGameSystem : ISystem
                 Entity disposeRequestEntity = ecb.CreateEntity();
                 ecb.AddComponent(disposeRequestEntity, new GameManagementSystem.DisposeClientWorldRequest());
                 ecb.AddComponent(disposeRequestEntity, new MoveToLocalWorld());
-                ecb.DestroyEntity(disconnectRequestQuery);
+                ecb.DestroyEntity(disconnectRequestQuery, EntityQueryCaptureMode.AtRecord);
             }
             
             singleton.DisconnectionFramesCounter++;

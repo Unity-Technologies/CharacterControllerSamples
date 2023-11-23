@@ -11,7 +11,8 @@
                     "id": "1b319d9c-b705-46f9-b440-deabe5108883",
                     "expectedControlType": "",
                     "processors": "Clamp(max=1)",
-                    "interactions": ""
+                    "interactions": "",
+                    "initialStateCheck": true
                 },
                 {
                     "name": "LookDelta",
@@ -19,7 +20,8 @@
                     "id": "9ac4461b-a0bd-43bc-9258-03bf2a17ca60",
                     "expectedControlType": "Vector2",
                     "processors": "",
-                    "interactions": ""
+                    "interactions": "",
+                    "initialStateCheck": true
                 },
                 {
                     "name": "LookConst",
@@ -27,7 +29,8 @@
                     "id": "2c9dbca0-7b97-44f8-ae57-87c7bca92d66",
                     "expectedControlType": "",
                     "processors": "",
-                    "interactions": ""
+                    "interactions": "",
+                    "initialStateCheck": true
                 },
                 {
                     "name": "Scroll",
@@ -35,7 +38,8 @@
                     "id": "b58e7016-1fbe-440f-851d-fe5dc0b9bdf5",
                     "expectedControlType": "Analog",
                     "processors": "",
-                    "interactions": ""
+                    "interactions": "",
+                    "initialStateCheck": true
                 },
                 {
                     "name": "Jump",
@@ -43,7 +47,8 @@
                     "id": "73c5ed6d-6e83-4693-857f-7a639b926770",
                     "expectedControlType": "Button",
                     "processors": "",
-                    "interactions": ""
+                    "interactions": "",
+                    "initialStateCheck": true
                 }
             ],
             "bindings": [

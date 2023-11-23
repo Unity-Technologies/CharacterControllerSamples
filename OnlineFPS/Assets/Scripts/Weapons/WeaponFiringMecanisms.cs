@@ -6,7 +6,7 @@ using Unity.NetCode;
 using UnityEngine;
 
 [Serializable]
-[GhostComponent()]
+[GhostComponent(SendTypeOptimization = GhostSendType.OnlyPredictedClients)]
 public struct StandardWeaponFiringMecanism : IComponentData, IEnableableComponent
 {
     [Serializable]
@@ -46,4 +46,15 @@ public struct StandardWeaponFiringMecanism : IComponentData, IEnableableComponen
     [GhostField()]
     public bool IsFiring;
     public uint ShotsToFire;
+    
+}
+
+[Serializable]
+[GhostComponent()]
+public struct WeaponShotVisuals : IComponentData
+{
+    [GhostField]
+    public uint TotalShotsCount;
+    public uint LastTotalShotsCount;
+    public byte ShotsCountInitialized;
 }

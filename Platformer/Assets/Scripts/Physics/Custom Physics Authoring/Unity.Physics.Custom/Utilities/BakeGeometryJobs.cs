@@ -22,13 +22,13 @@ namespace Unity.Physics.Authoring
         {
             public NativeArray<BoxGeometry> Box;
 
-            // TODO: make members PascalCase after merging static query fixes
-            public float4x4 localToWorld;
-            public float4x4 shapeToWorld;
-            public EulerAngles orientation;
+            public float4x4 LocalToWorld;
+            public float4x4 ShapeToWorld;
+            public EulerAngles Orientation;
+            public bool BakeUniformScale;
 
             public static float4x4 GetBakeToShape(float4x4 localToWorld, float4x4 shapeToWorld, ref float3 center,
-                ref EulerAngles orientation)
+                ref EulerAngles orientation, bool bakeUniformScale = true)
             {
                 float4x4 bakeToShape;
                 float4x4 rotationMatrix = float4x4.identity;
@@ -53,7 +53,7 @@ namespace Unity.Physics.Authoring
                 }
 
                 bakeToShape = GetPrimitiveBakeToShapeMatrix(localToWorld, shapeToWorld, ref center,
-                    ref orientation, 1f, basisPriority);
+                    ref orientation, 1f, basisPriority, bakeUniformScale);
 
                 bakeToShape = math.mul(bakeToShape, rotationMatrix);
                 return bakeToShape;
@@ -65,7 +65,7 @@ namespace Unity.Physics.Authoring
                 var size = Box[0].Size;
                 var bevelRadius = Box[0].BevelRadius;
 
-                var bakeToShape = GetBakeToShape(localToWorld, shapeToWorld, ref center, ref orientation);
+                var bakeToShape = GetBakeToShape(LocalToWorld, ShapeToWorld, ref center, ref Orientation, BakeUniformScale);
                 bakeToShape = math.mul(bakeToShape, float4x4.Scale(size));
 
                 var scale = bakeToShape.DecomposeScale();
@@ -75,9 +75,9 @@ namespace Unity.Physics.Authoring
                 Box[0] = new BoxGeometry
                 {
                     Center = center,
-                    Orientation = orientation,
+                    Orientation = Orientation,
                     Size = size,
-                    BevelRadius = math.clamp(bevelRadius, 0f, 0.5f * math.cmin(size))
+                    BevelRadius = math.clamp(bevelRadius, 0f, 0.5f * math.cmin(size)),
                 };
             }
         }
@@ -89,12 +89,12 @@ namespace Unity.Physics.Authoring
         {
             public NativeArray<CapsuleGeometryAuthoring> Capsule;
 
-            // TODO: make members PascalCase after merging static query fixes
-            public float4x4 localToWorld;
-            public float4x4 shapeToWorld;
+            public float4x4 LocalToWorld;
+            public float4x4 ShapeToWorld;
+            public bool BakeUniformScale;
 
             public static float4x4 GetBakeToShape(float4x4 localToWorld, float4x4 shapeToWorld, ref float3 center,
-                ref EulerAngles orientation)
+                ref EulerAngles orientation, bool bakeUniformScale = true)
             {
                 var basisPriority = k_DefaultAxisPriority;
                 var sheared = localToWorld.HasShear();
@@ -111,7 +111,7 @@ namespace Unity.Physics.Authoring
                 }
 
                 return GetPrimitiveBakeToShapeMatrix(localToWorld, shapeToWorld, ref center, ref orientation, 1f,
-                    basisPriority);
+                    basisPriority, bakeUniformScale);
             }
 
             public void Execute()
@@ -121,7 +121,7 @@ namespace Unity.Physics.Authoring
                 var height = Capsule[0].Height;
                 var orientationEuler = Capsule[0].OrientationEuler;
 
-                var bakeToShape = GetBakeToShape(localToWorld, shapeToWorld, ref center, ref orientationEuler);
+                var bakeToShape = GetBakeToShape(LocalToWorld, ShapeToWorld, ref center, ref orientationEuler, BakeUniformScale);
                 var scale = bakeToShape.DecomposeScale();
 
                 radius *= math.cmax(scale.xy);
@@ -145,13 +145,13 @@ namespace Unity.Physics.Authoring
         {
             public NativeArray<CylinderGeometry> Cylinder;
 
-            // TODO: make members PascalCase after merging static query fixes
-            public float4x4 localToWorld;
-            public float4x4 shapeToWorld;
-            public EulerAngles orientation;
+            public float4x4 LocalToWorld;
+            public float4x4 ShapeToWorld;
+            public EulerAngles Orientation;
+            public bool BakeUniformScale;
 
             public static float4x4 GetBakeToShape(float4x4 localToWorld, float4x4 shapeToWorld, ref float3 center,
-                ref EulerAngles orientation)
+                ref EulerAngles orientation, bool bakeUniformScale = true)
             {
                 var basisPriority = k_DefaultAxisPriority;
                 var sheared = localToWorld.HasShear();
@@ -168,7 +168,7 @@ namespace Unity.Physics.Authoring
                 }
 
                 return GetPrimitiveBakeToShapeMatrix(localToWorld, shapeToWorld, ref center, ref orientation, 1f,
-                    basisPriority);
+                    basisPriority, bakeUniformScale);
             }
 
             public void Execute()
@@ -178,7 +178,7 @@ namespace Unity.Physics.Authoring
                 var radius = Cylinder[0].Radius;
                 var bevelRadius = Cylinder[0].BevelRadius;
 
-                var bakeToShape = GetBakeToShape(localToWorld, shapeToWorld, ref center, ref orientation);
+                var bakeToShape = GetBakeToShape(LocalToWorld, ShapeToWorld, ref center, ref Orientation, BakeUniformScale);
                 var scale = bakeToShape.DecomposeScale();
 
                 height *= scale.z;
@@ -187,7 +187,7 @@ namespace Unity.Physics.Authoring
                 Cylinder[0] = new CylinderGeometry
                 {
                     Center = center,
-                    Orientation = orientation,
+                    Orientation = Orientation,
                     Height = height,
                     Radius = radius,
                     BevelRadius = math.min(bevelRadius, math.min(height * 0.5f, radius)),
@@ -197,7 +197,7 @@ namespace Unity.Physics.Authoring
         }
 
         internal static CylinderGeometry BakeToBodySpace(
-            this CylinderGeometry cylinder, float4x4 localToWorld, float4x4 shapeToWorld, EulerAngles orientation
+            this CylinderGeometry cylinder, float4x4 localToWorld, float4x4 shapeToWorld, EulerAngles orientation, bool bakeUniformScale = true
         )
         {
             using (var geometry = new NativeArray<CylinderGeometry>(1, Allocator.TempJob) { [0] = cylinder })
@@ -205,9 +205,10 @@ namespace Unity.Physics.Authoring
                 var job = new BakeCylinderJob
                 {
                     Cylinder = geometry,
-                    localToWorld = localToWorld,
-                    shapeToWorld = shapeToWorld,
-                    orientation = orientation
+                    LocalToWorld = localToWorld,
+                    ShapeToWorld = shapeToWorld,
+                    Orientation = orientation,
+                    BakeUniformScale = bakeUniformScale
                 };
                 job.Run();
                 return geometry[0];
@@ -223,9 +224,9 @@ namespace Unity.Physics.Authoring
         {
             public NativeArray<SphereGeometry> Sphere;
             public NativeArray<EulerAngles> Orientation;
-            // TODO: make members PascalCase after merging static query fixes
-            public float4x4 localToWorld;
-            public float4x4 shapeToWorld;
+            public float4x4 LocalToWorld;
+            public float4x4 ShapeToWorld;
+            public bool BakeUniformScale;
 
             public void Execute()
             {
@@ -233,9 +234,9 @@ namespace Unity.Physics.Authoring
                 var radius = Sphere[0].Radius;
                 var orientation = Orientation[0];
 
-                var basisToWorld = GetBasisToWorldMatrix(localToWorld, center, orientation, 1f);
+                var basisToWorld = GetBasisToWorldMatrix(LocalToWorld, center, orientation, 1f);
                 var basisPriority = basisToWorld.HasShear() ? GetBasisAxisPriority(basisToWorld) : k_DefaultAxisPriority;
-                var bakeToShape = GetPrimitiveBakeToShapeMatrix(localToWorld, shapeToWorld, ref center, ref orientation, 1f, basisPriority);
+                var bakeToShape = GetPrimitiveBakeToShapeMatrix(LocalToWorld, ShapeToWorld, ref center, ref orientation, 1f, basisPriority, BakeUniformScale);
 
                 radius *= math.cmax(bakeToShape.DecomposeScale());
 
@@ -249,7 +250,7 @@ namespace Unity.Physics.Authoring
         }
 
         internal static SphereGeometry BakeToBodySpace(
-            this SphereGeometry sphere, float4x4 localToWorld, float4x4 shapeToWorld, ref EulerAngles orientation
+            this SphereGeometry sphere, float4x4 localToWorld, float4x4 shapeToWorld, ref EulerAngles orientation, bool bakeUniformScale = true
         )
         {
             using (var geometry = new NativeArray<SphereGeometry>(1, Allocator.TempJob) { [0] = sphere })
@@ -259,8 +260,9 @@ namespace Unity.Physics.Authoring
                 {
                     Sphere = geometry,
                     Orientation = outOrientation,
-                    localToWorld = localToWorld,
-                    shapeToWorld = shapeToWorld
+                    LocalToWorld = localToWorld,
+                    ShapeToWorld = shapeToWorld,
+                    BakeUniformScale = bakeUniformScale
                 };
                 job.Run();
                 orientation = outOrientation[0];
@@ -276,28 +278,25 @@ namespace Unity.Physics.Authoring
         struct BakePlaneJob : IJob
         {
             public NativeArray<float3x4> Vertices;
-            // TODO: make members PascalCase after merging static query fixes
-            public float3 center;
-            public float2 size;
-            public EulerAngles orientation;
-            public float4x4 localToWorld;
-            public float4x4 shapeToWorld;
+            public float3 Center;
+            public float2 Size;
+            public EulerAngles Orientation;
+            public float4x4 BakeFromShape;
 
             public void Execute()
             {
                 var v = Vertices[0];
-                GetPlanePoints(center, size, orientation, out v.c0, out v.c1, out v.c2, out v.c3);
-                var localToShape = math.mul(math.inverse(shapeToWorld), localToWorld);
-                v.c0 = math.mul(localToShape, new float4(v.c0, 1f)).xyz;
-                v.c1 = math.mul(localToShape, new float4(v.c1, 1f)).xyz;
-                v.c2 = math.mul(localToShape, new float4(v.c2, 1f)).xyz;
-                v.c3 = math.mul(localToShape, new float4(v.c3, 1f)).xyz;
+                GetPlanePoints(Center, Size, Orientation, out v.c0, out v.c1, out v.c2, out v.c3);
+                v.c0 = math.mul(BakeFromShape, new float4(v.c0, 1f)).xyz;
+                v.c1 = math.mul(BakeFromShape, new float4(v.c1, 1f)).xyz;
+                v.c2 = math.mul(BakeFromShape, new float4(v.c2, 1f)).xyz;
+                v.c3 = math.mul(BakeFromShape, new float4(v.c3, 1f)).xyz;
                 Vertices[0] = v;
             }
         }
 
         internal static void BakeToBodySpace(
-            float3 center, float2 size, EulerAngles orientation, float4x4 localToWorld, float4x4 shapeToWorld,
+            float3 center, float2 size, EulerAngles orientation, float4x4 bakeFromShape,
             out float3 vertex0, out float3 vertex1, out float3 vertex2, out float3 vertex3
         )
         {
@@ -306,11 +305,10 @@ namespace Unity.Physics.Authoring
                 var job = new BakePlaneJob
                 {
                     Vertices = geometry,
-                    center = center,
-                    size = size,
-                    orientation = orientation,
-                    localToWorld = localToWorld,
-                    shapeToWorld = shapeToWorld
+                    Center = center,
+                    Size = size,
+                    Orientation = orientation,
+                    BakeFromShape = bakeFromShape
                 };
                 job.Run();
                 vertex0 = geometry[0].c0;

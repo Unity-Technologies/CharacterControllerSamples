@@ -41,9 +41,7 @@ public readonly partial struct BasicCharacterAspect : IAspect, IKinematicCharact
         ref BasicCharacterComponent characterComponent = ref CharacterComponent.ValueRW;
         ref KinematicCharacterBody characterBody = ref CharacterAspect.CharacterBody.ValueRW;
         ref float3 characterPosition = ref CharacterAspect.LocalTransform.ValueRW.Position;
-
-        int bodyIndex = baseContext.PhysicsWorld.GetRigidBodyIndex(CharacterAspect.Entity);
-
+        
         // First phase of default character update
         CharacterAspect.Update_Initialize(in this, ref context, ref baseContext, ref characterBody, baseContext.Time.DeltaTime);
         CharacterAspect.Update_ParentMovement(in this, ref context, ref baseContext, ref characterBody, ref characterPosition, characterBody.WasGroundedBeforeCharacterUpdate);

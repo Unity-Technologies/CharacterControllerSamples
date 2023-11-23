@@ -5,6 +5,8 @@ We will now go over the implementation of very rudimentary AI characters.
 
 We want to have characters that detect human-controlled characters at a distance, and start moving towards them as long as they are in their detection range. We will also demonstrate how we can structure things so that we don't have to create an entirely new character controller for AIs, and we can simply reuse the same that our player character uses.
 
+For this section, we will need to import custom physics authoring components (if they're not already imported) in order to be able to set custom tags on rigidbodies. Go to the package manager window, find the "Unity Physics" package, and go to the "Samples" tab of that package. In this window, import the "Custom Physics Authoring" sample.
+
 Let's first create our `AIController` component & authoring. This component represents an "AI Brain" that controls a specific character:
 ```cs
 using System;

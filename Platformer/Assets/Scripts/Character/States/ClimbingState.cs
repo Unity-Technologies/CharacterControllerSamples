@@ -200,6 +200,7 @@ public struct ClimbingState : IPlatformerCharacterState
         ref PlatformerCharacterComponent character = ref aspect.Character.ValueRW;
         ref float3 characterPosition = ref aspect.CharacterAspect.LocalTransform.ValueRW.Position;
         ref quaternion characterRotation = ref aspect.CharacterAspect.LocalTransform.ValueRW.Rotation;
+        float characterScale = aspect.CharacterAspect.LocalTransform.ValueRO.Scale;
 
         aspect.CharacterAspect.CalculateDistanceAllCollisions(
             in aspect,
@@ -207,6 +208,7 @@ public struct ClimbingState : IPlatformerCharacterState
             ref baseContext,
             characterPosition,
             characterRotation,
+            characterScale,
             0f,
             characterProperties.ShouldIgnoreDynamicBodies(),
             out baseContext.TmpDistanceHits);

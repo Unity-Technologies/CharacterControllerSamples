@@ -19,24 +19,22 @@ public partial class ThirdPersonPlayerInputsSystem : SystemBase
     
     protected override void OnUpdate()
     {
-        uint fixedTick = SystemAPI.GetSingleton<FixedTickSystem.Singleton>().Tick;
+        uint tick = SystemAPI.GetSingleton<FixedTickSystem.Singleton>().Tick;
 
         foreach (var (playerInputs, player) in SystemAPI.Query<RefRW<ThirdPersonPlayerInputs>, ThirdPersonPlayer>())
         {
-            playerInputs.ValueRW.MoveInput = new float2();
-            playerInputs.ValueRW.MoveInput.y += Input.GetKey(KeyCode.W) ? 1f : 0f;
-            playerInputs.ValueRW.MoveInput.y += Input.GetKey(KeyCode.S) ? -1f : 0f;
-            playerInputs.ValueRW.MoveInput.x += Input.GetKey(KeyCode.D) ? 1f : 0f;
-            playerInputs.ValueRW.MoveInput.x += Input.GetKey(KeyCode.A) ? -1f : 0f;
-            
+            playerInputs.ValueRW.MoveInput = new float2
+            {
+                x = (Input.GetKey(KeyCode.D) ? 1f : 0f) + (Input.GetKey(KeyCode.A) ? -1f : 0f),
+                y = (Input.GetKey(KeyCode.W) ? 1f : 0f) + (Input.GetKey(KeyCode.S) ? -1f : 0f),
+            };
+
             playerInputs.ValueRW.CameraLookInput = new float2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
             playerInputs.ValueRW.CameraZoomInput = -Input.mouseScrollDelta.y;
-            
-            // For button presses that need to be queried during fixed update, use the "FixedInputEvent" helper struct.
-            // This is part of a strategy for proper handling of button press events that are consumed during the fixed update group
+
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                playerInputs.ValueRW.JumpPressed.Set(fixedTick);
+                playerInputs.ValueRW.JumpPressed.Set(tick);
             }
             
             playerInputs.ValueRW.SprintHeld = Input.GetKey(KeyCode.LeftShift);
@@ -47,8 +45,8 @@ public partial class ThirdPersonPlayerInputsSystem : SystemBase
 /// <summary>
 /// Apply inputs that need to be read at a variable rate
 /// </summary>
-[UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
-[UpdateBefore(typeof(FixedStepSimulationSystemGroup))]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateAfter(typeof(FixedStepSimulationSystemGroup))]
 [BurstCompile]
 public partial struct ThirdPersonPlayerVariableStepControlSystem : ISystem
 {
@@ -57,10 +55,7 @@ public partial struct ThirdPersonPlayerVariableStepControlSystem : ISystem
     {
         state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<ThirdPersonPlayer, ThirdPersonPlayerInputs>().Build());
     }
-
-    public void OnDestroy(ref SystemState state)
-    { }
-
+    
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
@@ -71,9 +66,9 @@ public partial struct ThirdPersonPlayerVariableStepControlSystem : ISystem
                 OrbitCameraControl cameraControl = SystemAPI.GetComponent<OrbitCameraControl>(player.ControlledCamera);
                 
                 cameraControl.FollowedCharacterEntity = player.ControlledCharacter;
-                cameraControl.Look = playerInputs.CameraLookInput;
-                cameraControl.Zoom = playerInputs.CameraZoomInput;
-
+                cameraControl.LookDegreesDelta = playerInputs.CameraLookInput;
+                cameraControl.ZoomDelta = playerInputs.CameraZoomInput;
+                
                 SystemAPI.SetComponent(player.ControlledCamera, cameraControl);
             }
         }
@@ -101,7 +96,7 @@ public partial struct ThirdPersonPlayerFixedStepControlSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        uint fixedTick = SystemAPI.GetSingleton<FixedTickSystem.Singleton>().Tick;
+        uint tick = SystemAPI.GetSingleton<FixedTickSystem.Singleton>().Tick;
 
         foreach (var (playerInputs, player) in SystemAPI.Query<RefRW<ThirdPersonPlayerInputs>, ThirdPersonPlayer>().WithAll<Simulate>())
         {
@@ -111,15 +106,19 @@ public partial struct ThirdPersonPlayerFixedStepControlSystem : ISystem
 
                 float3 characterUp = MathUtilities.GetUpFromRotation(SystemAPI.GetComponent<LocalTransform>(player.ControlledCharacter).Rotation);
                 
-                // Get camera rotation data, since our movement is relative to it
+                // Get camera rotation, since our movement is relative to it.
                 quaternion cameraRotation = quaternion.identity;
-                if (SystemAPI.HasComponent<LocalTransform>(player.ControlledCamera))
+                if (SystemAPI.HasComponent<OrbitCamera>(player.ControlledCamera))
                 {
-                    cameraRotation = SystemAPI.GetComponent<LocalTransform>(player.ControlledCamera).Rotation;
+                    // Camera rotation is calculated rather than gotten from transform, because this allows us to 
+                    // reduce the size of the camera ghost state in a netcode prediction context.
+                    // If not using netcode prediction, we could simply get rotation from transform here instead.
+                    OrbitCamera orbitCamera = SystemAPI.GetComponent<OrbitCamera>(player.ControlledCamera);
+                    cameraRotation = OrbitCameraUtilities.CalculateCameraRotation(characterUp, orbitCamera.PlanarForward, orbitCamera.PitchAngle);
                 }
                 float3 cameraForwardOnUpPlane = math.normalizesafe(MathUtilities.ProjectOnPlane(MathUtilities.GetForwardFromRotation(cameraRotation), characterUp));
                 float3 cameraRight = MathUtilities.GetRightFromRotation(cameraRotation);
-
+ 
                 // Move
                 characterControl.MoveVector = (playerInputs.ValueRW.MoveInput.y * cameraForwardOnUpPlane) + (playerInputs.ValueRW.MoveInput.x * cameraRight);
                 characterControl.MoveVector = MathUtilities.ClampToMaxLength(characterControl.MoveVector, 1f);
@@ -127,7 +126,7 @@ public partial struct ThirdPersonPlayerFixedStepControlSystem : ISystem
                 // Jump
                 // We use the "FixedInputEvent" helper struct here to detect if the event needs to be processed.
                 // This is part of a strategy for proper handling of button press events that are consumed during the fixed update group.
-                characterControl.Jump = playerInputs.ValueRW.JumpPressed.IsSet(fixedTick);
+                characterControl.Jump = playerInputs.ValueRW.JumpPressed.IsSet(tick);
 
                 // Sprint
                 characterControl.Sprint = playerInputs.ValueRW.SprintHeld;

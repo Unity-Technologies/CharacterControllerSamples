@@ -44,50 +44,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70c323b4be4b1fa4089d1a1fd2872754, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  RotationSpeed: 2
+  MaxVAngle: 89
+  MinVAngle: -89
+  RotateWithCharacterParent: 1
+  StartDistance: 2.5
+  MinDistance: 1
+  MaxDistance: 10
+  DistanceMovementSpeed: 0.1
+  DistanceMovementSharpness: 20
+  ObstructionRadius: 0.1
+  ObstructionInnerSmoothingSharpness: 3.4028235e+38
+  ObstructionOuterSmoothingSharpness: 5
+  PreventFixedUpdateJitter: 1
+  CameraTargetTransitionTime: 0.4
   IgnoredEntities: []
-  OrbitCamera:
-    RotationSpeed: 2.4
-    MaxVAngle: 89
-    MinVAngle: -89
-    RotateWithCharacterParent: 1
-    TargetDistance: 2.5
-    MinDistance: 1
-    MaxDistance: 5
-    DistanceMovementSpeed: 0.1
-    DistanceMovementSharpness: 20
-    ObstructionRadius: 0.1
-    ObstructionInnerSmoothingSharpness: 3.4028235e+38
-    ObstructionOuterSmoothingSharpness: 5
-    PreventFixedUpdateJitter: 1
-    CameraTargetTransitionTime: 0.5
-    CurrentDistanceFromMovement: 5
-    CurrentDistanceFromObstruction: 5
-    PitchAngle: 0
-    PlanarForward:
-      x: -0
-      y: -0
-      z: -1
-    CameraTargetTransitionStartTime: 0
-    CameraTargetTransform:
-      rot:
-        value:
-          x: 0
-          y: 0
-          z: 0
-          w: 0
-      pos:
-        x: 0
-        y: 0
-        z: 0
-    CameraTargetTransitionFromTransform:
-      rot:
-        value:
-          x: 0
-          y: 0
-          z: 0
-          w: 0
-      pos:
-        x: 0
-        y: 0
-        z: 0
-    PreviousCalculateUpFromGravity: 0

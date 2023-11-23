@@ -3,14 +3,12 @@ using System.Linq;
 using Unity.Physics.Authoring;
 using UnityEditor;
 using UnityEngine;
-using UnityObject = UnityEngine.Object;
-using LegacyRigidBody = UnityEngine.Rigidbody;
 
 namespace Unity.Physics.Editor
 {
     static class StatusMessageUtility
     {
-        public static MessageType GetHierarchyStatusMessage(IReadOnlyList<UnityObject> targets, out string statusMessage)
+        public static MessageType GetHierarchyStatusMessage(IReadOnlyList<UnityEngine.Object> targets, out string statusMessage)
         {
             statusMessage = string.Empty;
             if (targets.Count == 0)
@@ -31,9 +29,9 @@ namespace Unity.Physics.Editor
                 // only bodies (both explicit and implicit static bodies) will emit a message
                 if (
                     targetType == typeof(PhysicsBodyAuthoring)
-                    || targetType == typeof(LegacyRigidBody)
+                    || targetType == typeof(Rigidbody)
                     || c.GetComponent<PhysicsBodyAuthoring>() == null
-                    && c.GetComponent<LegacyRigidBody>() == null
+                    && c.GetComponent<Rigidbody>() == null
                 )
                     ++numChildTargets;
             }

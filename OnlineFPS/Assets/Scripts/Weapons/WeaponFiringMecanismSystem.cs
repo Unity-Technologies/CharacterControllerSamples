@@ -20,10 +20,6 @@ public partial struct WeaponFiringMecanismSystem : ISystem
     }
 
     [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    { }
-
-    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         StandardWeaponFiringMecanismJob standardMecanismJob = new StandardWeaponFiringMecanismJob
@@ -39,13 +35,13 @@ public partial struct WeaponFiringMecanismSystem : ISystem
     {
         public float DeltaTime;
 
-        void Execute(Entity entity, ref StandardWeaponFiringMecanism mecanism, ref WeaponControl weaponControl, in GhostOwner ghostOwner)
+        void Execute(Entity entity, ref StandardWeaponFiringMecanism mecanism, ref WeaponControl weaponControl, ref WeaponShotVisuals weaponShotVisuals, in GhostOwner ghostOwner)
         {
             mecanism.ShotsToFire = 0;
             mecanism.ShotTimer += DeltaTime;
 
             // Detect starting to fire
-            if (weaponControl.FirePressed)
+            if (weaponControl.ShootPressed)
             {
                 mecanism.IsFiring = true;
             }
@@ -76,10 +72,61 @@ public partial struct WeaponFiringMecanismSystem : ISystem
             }
 
             // Detect stopping fire
-            if (!mecanism.Automatic || weaponControl.FireReleased)
+            if (!mecanism.Automatic || weaponControl.ShootReleased)
             {
                 mecanism.IsFiring = false;
             }
+            
+            weaponShotVisuals.TotalShotsCount += mecanism.ShotsToFire;
+        }
+    }
+}
+
+[UpdateInGroup(typeof(WeaponShotVisualsGroup))]
+[UpdateBefore(typeof(WeaponShotVisualsSpawnECBSystem))]
+[WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
+[BurstCompile]
+public partial struct WeaponFiringMecanismVisualsSystem : ISystem
+{
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        StandardWeaponFiringMecanismVisualsJob standardMecanismVisualsJob = new StandardWeaponFiringMecanismVisualsJob
+        {
+            CharacterWeaponVisualFeedbackLookup = SystemAPI.GetComponentLookup<CharacterWeaponVisualFeedback>(false),
+        };
+        state.Dependency = standardMecanismVisualsJob.Schedule(state.Dependency);
+    }
+
+    [BurstCompile]
+    [WithAll(typeof(Simulate))]
+    public partial struct StandardWeaponFiringMecanismVisualsJob : IJobEntity
+    {
+        public ComponentLookup<CharacterWeaponVisualFeedback> CharacterWeaponVisualFeedbackLookup;
+
+        void Execute(
+            ref WeaponVisualFeedback weaponFeedback,
+            ref WeaponShotVisuals weaponShotVisuals,
+            ref WeaponOwner weaponOwner)
+        {
+            // This prevents false visual feedbacks when a ghost is re-spawned die to relevancy
+            if (weaponShotVisuals.ShotsCountInitialized == 0)
+            {
+                weaponShotVisuals.LastTotalShotsCount = weaponShotVisuals.TotalShotsCount;
+                weaponShotVisuals.ShotsCountInitialized = 1;
+            }
+            
+            for (uint i = weaponShotVisuals.LastTotalShotsCount; i < weaponShotVisuals.TotalShotsCount; i++)
+            {
+                if (CharacterWeaponVisualFeedbackLookup.TryGetComponent(weaponOwner.Entity, out CharacterWeaponVisualFeedback characterFeedback))
+                {
+                    characterFeedback.CurrentRecoil += weaponFeedback.RecoilStrength;
+                    characterFeedback.TargetRecoilFOVKick += weaponFeedback.RecoilFOVKick;
+
+                    CharacterWeaponVisualFeedbackLookup[weaponOwner.Entity] = characterFeedback;
+                }
+            }
+            weaponShotVisuals.LastTotalShotsCount = weaponShotVisuals.TotalShotsCount;
         }
     }
 }

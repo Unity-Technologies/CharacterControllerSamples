@@ -230,6 +230,7 @@ public readonly partial struct PlatformerCharacterAspect : IAspect, IKinematicCh
         ref PlatformerCharacterComponent character = ref Character.ValueRW;
         ref float3 characterPosition = ref CharacterAspect.LocalTransform.ValueRW.Position;
         ref quaternion characterRotation = ref CharacterAspect.LocalTransform.ValueRW.Rotation;
+        float characterScale = CharacterAspect.LocalTransform.ValueRO.Scale;
         ref KinematicCharacterProperties characterProperties = ref CharacterAspect.CharacterProperties.ValueRW;
         
         // Overlap test with standing geometry to see if we have space to stand
@@ -245,6 +246,7 @@ public readonly partial struct PlatformerCharacterAspect : IAspect, IKinematicCh
                 ref baseContext,
                 characterPosition,
                 characterRotation,
+                characterScale,
                 0f,
                 characterProperties.ShouldIgnoreDynamicBodies(),
                 out DistanceHit hit))

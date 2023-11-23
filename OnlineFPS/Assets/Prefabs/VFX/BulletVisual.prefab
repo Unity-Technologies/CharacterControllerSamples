@@ -97,6 +97,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   HitVisualsPrefab: {fileID: 7161354016620288120, guid: 0ed0bd70df6afca45b0777db4a3b2e37, type: 3}
-  Speed: 1000
+  Speed: 500
   StretchFromSpeed: 1
   MaxStretch: 6

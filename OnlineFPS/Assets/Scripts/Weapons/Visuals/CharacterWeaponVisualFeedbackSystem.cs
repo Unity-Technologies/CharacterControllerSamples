@@ -16,14 +16,6 @@ using UnityEngine;
 public partial struct CharacterWeaponVisualFeedbackSystem : ISystem
 {
     [BurstCompile]
-    public void OnCreate(ref SystemState state)
-    { }
-
-    [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    { }
-
-    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         CharacterWeaponVisualFeedbackJob job = new CharacterWeaponVisualFeedbackJob
@@ -35,7 +27,7 @@ public partial struct CharacterWeaponVisualFeedbackSystem : ISystem
             LocalTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(false),
             MainEntityCameraLookup = SystemAPI.GetComponentLookup<MainEntityCamera>(false),
         };
-        job.Schedule();
+        state.Dependency = job.Schedule(state.Dependency);
     }
 
     [BurstCompile]

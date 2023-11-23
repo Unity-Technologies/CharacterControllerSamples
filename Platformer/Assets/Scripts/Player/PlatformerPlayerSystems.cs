@@ -100,8 +100,8 @@ public partial struct PlatformerPlayerVariableStepControlSystem : ISystem
                 OrbitCameraControl cameraControl = SystemAPI.GetComponent<OrbitCameraControl>(player.ControlledCamera);
                 
                 cameraControl.FollowedCharacterEntity = player.ControlledCharacter;
-                cameraControl.Look = playerInputs.Look;
-                cameraControl.Zoom = playerInputs.CameraZoom;
+                cameraControl.LookDegreesDelta = playerInputs.Look;
+                cameraControl.ZoomDelta = playerInputs.CameraZoom;
 
                 SystemAPI.SetComponent(player.ControlledCamera, cameraControl);
             }

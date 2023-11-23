@@ -32,10 +32,6 @@ public partial struct ParticleSystem : ISystem
     }
 
     [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    { }
-
-    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         ParticleSpawnersJob spawnerJob = new ParticleSpawnersJob
@@ -44,14 +40,14 @@ public partial struct ParticleSystem : ISystem
             SingletonEntity = SystemAPI.GetSingletonEntity<Singleton>(),
             SingletonLookup = SystemAPI.GetComponentLookup<Singleton>(false),
         };
-        spawnerJob.Schedule();
+        state.Dependency = spawnerJob.Schedule(state.Dependency);
 
         ParticlesJob particleJob = new ParticlesJob
         {
             DeltaTime = SystemAPI.Time.DeltaTime,
             ECB = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
         };
-        particleJob.ScheduleParallel();
+        state.Dependency = particleJob.ScheduleParallel(state.Dependency);
     }
 
     [BurstCompile]

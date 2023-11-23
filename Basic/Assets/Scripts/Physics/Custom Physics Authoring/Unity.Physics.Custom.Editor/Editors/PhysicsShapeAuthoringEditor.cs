@@ -8,12 +8,10 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Physics.Authoring;
+using Unity.Physics.Extensions;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
-using UnityMesh = UnityEngine.Mesh;
-using Unity.Physics.Extensions;
-using LegacyRigidBody = UnityEngine.Rigidbody;
 
 namespace Unity.Physics.Editor
 {
@@ -166,7 +164,7 @@ namespace Unity.Physics.Editor
             m_NumImplicitStatic = targets.Cast<PhysicsShapeAuthoring>().Count(
                 shape => shape.GetPrimaryBody() == shape.gameObject
                 && shape.GetComponent<PhysicsBodyAuthoring>() == null
-                && shape.GetComponent<LegacyRigidBody>() == null
+                && shape.GetComponent<Rigidbody>() == null
             );
 
             Undo.undoRedoPerformed += Repaint;
@@ -463,7 +461,7 @@ namespace Unity.Physics.Editor
                 // if a custom mesh is assigned, only check it
                 using (var so = new SerializedObject(shape))
                 {
-                    var customMesh = so.FindProperty(m_CustomMesh.propertyPath).objectReferenceValue as UnityMesh;
+                    var customMesh = so.FindProperty(m_CustomMesh.propertyPath).objectReferenceValue as UnityEngine.Mesh;
                     if (customMesh != null)
                     {
                         m_GeometryState |= GetGeometryState(customMesh, shape.gameObject);
@@ -496,7 +494,7 @@ namespace Unity.Physics.Editor
             skinnedPoints.Dispose();
         }
 
-        static GeometryState GetGeometryState(UnityMesh mesh, GameObject host)
+        static GeometryState GetGeometryState(UnityEngine.Mesh mesh, GameObject host)
         {
             if (mesh == null)
                 return GeometryState.NoGeometry;

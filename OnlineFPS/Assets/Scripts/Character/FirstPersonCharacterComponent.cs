@@ -33,15 +33,17 @@ public struct FirstPersonCharacterComponent : IComponentData
     public float ViewRollSharpness;
     
     [HideInInspector]
-    [GhostField(Smoothing = SmoothingAction.InterpolateAndExtrapolate)]
+    [GhostField(Quantization = 1000, Smoothing = SmoothingAction.InterpolateAndExtrapolate)]
     public float CharacterYDegrees;
     [HideInInspector]
-    [GhostField(Smoothing = SmoothingAction.InterpolateAndExtrapolate)]
+    [GhostField(Quantization = 1000, Smoothing = SmoothingAction.InterpolateAndExtrapolate)]
     public float ViewPitchDegrees;
     [HideInInspector]
     public quaternion ViewLocalRotation;
     [HideInInspector]
     public float ViewRollDegrees;
+    [HideInInspector]
+    public byte HasProcessedDeath;
 
     public static FirstPersonCharacterComponent GetDefault()
     {
@@ -65,6 +67,9 @@ public struct FirstPersonCharacterComponent : IComponentData
     }
 }
 
+public struct CharacterInitialized : IComponentData
+{ }
+
 [Serializable]
 public struct FirstPersonCharacterControl : IComponentData
 {
@@ -77,13 +82,6 @@ public struct FirstPersonCharacterControl : IComponentData
 public struct FirstPersonCharacterView : IComponentData
 {
     public Entity CharacterEntity;
-}
-
-[Serializable]
-public struct CharacterClientCleanup : ICleanupComponentData
-{
-    public Entity DeathVFX;
-    public float3 DeathVFXSpawnWorldPosition;
 }
 
 [Serializable]

@@ -50,16 +50,6 @@ public partial struct VehicleSystem : ISystem
     }
 
     [BurstCompile]
-    public void OnCreate(ref SystemState state)
-    {
-    }
-
-    [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    {
-    }
-
-    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         float fwdInput = (Input.GetKey(KeyCode.UpArrow) ? 1f : 0f) + (Input.GetKey(KeyCode.DownArrow) ? -1f : 0f);
@@ -74,7 +64,7 @@ public partial struct VehicleSystem : ISystem
             LocalTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(false),
             PhysicsColliderLookup = SystemAPI.GetComponentLookup<PhysicsCollider>(true),
         };
-        job.Schedule();
+        state.Dependency = job.Schedule(state.Dependency);
     }
 
     [BurstCompile]
@@ -83,9 +73,11 @@ public partial struct VehicleSystem : ISystem
         public float DeltaTime;
         public float FwdInput;
         public float SideInput;
+        [ReadOnly] 
         public CollisionWorld CollisionWorld;
         public ComponentLookup<LocalTransform> LocalTransformLookup;
-        [ReadOnly] public ComponentLookup<PhysicsCollider> PhysicsColliderLookup;
+        [ReadOnly] 
+        public ComponentLookup<PhysicsCollider> PhysicsColliderLookup;
 
         void Execute(Entity entity, ref PhysicsVelocity physicsVelocity, in Vehicle vehicle, in PhysicsMass physicsMass, in DynamicBuffer<VehicleWheels> vehicleWheelsBuffer)
         {

@@ -6,19 +6,12 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
-[UpdateInGroup(typeof(SimulationSystemGroup))]
-[UpdateBefore(typeof(TransformSystemGroup))]
+[UpdateInGroup(typeof(WeaponShotVisualsGroup))]
+[UpdateBefore(typeof(WeaponFiringMecanismVisualsSystem))]
+[WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
 [BurstCompile]
 public partial struct MachineGunVisualsSystem : ISystem
 {
-    [BurstCompile]
-    public void OnCreate(ref SystemState state)
-    { }
-
-    [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    { }
-
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
@@ -27,7 +20,7 @@ public partial struct MachineGunVisualsSystem : ISystem
             DeltaTime = SystemAPI.Time.DeltaTime,
             LocalTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(false),
         };
-        job.Schedule();
+        state.Dependency = job.Schedule(state.Dependency);
     }
 
     [BurstCompile]
@@ -36,11 +29,11 @@ public partial struct MachineGunVisualsSystem : ISystem
         public float DeltaTime;
         public ComponentLookup<LocalTransform> LocalTransformLookup;
 
-        void Execute(Entity entity, ref MachineGunVisuals visuals, in StandardWeaponFiringMecanism firingMecanism)
+        void Execute(Entity entity, ref MachineGunVisuals visuals, in WeaponShotVisuals weaponShotVisuals)
         {
             if (LocalTransformLookup.TryGetComponent(visuals.BarrelEntity, out LocalTransform localTransform))
             {
-                if (firingMecanism.ShotsToFire > 0)
+                if (weaponShotVisuals.LastTotalShotsCount < weaponShotVisuals.TotalShotsCount)
                 {
                     visuals.CurrentSpinVelocity = visuals.SpinVelocity;
                 }

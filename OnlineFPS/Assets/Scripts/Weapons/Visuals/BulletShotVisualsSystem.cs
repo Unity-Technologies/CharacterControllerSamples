@@ -18,10 +18,6 @@ public partial struct BulletShotVisualsSystem : ISystem
     }
 
     [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    { }
-
-    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         BulletShotVisualsJob job = new BulletShotVisualsJob
@@ -29,7 +25,7 @@ public partial struct BulletShotVisualsSystem : ISystem
             DeltaTime = SystemAPI.Time.DeltaTime,
             ECB = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
         };
-        job.ScheduleParallel();
+        state.Dependency = job.ScheduleParallel(state.Dependency);
     }
 
     [BurstCompile]
@@ -43,14 +39,11 @@ public partial struct BulletShotVisualsSystem : ISystem
             if (!shotVisuals.IsInitialized)
             {
                 // Hit VFX
-                if (shotData.Hit.Entity != Entity.Null)
+                if (shotData.DidHit == 1)
                 {
                     Entity hitVisualsEntity = ECB.Instantiate(chunkIndexInQuery, shotVisuals.HitVisualsPrefab);
-                    ECB.SetComponent(chunkIndexInQuery, hitVisualsEntity, LocalTransform.FromPositionRotation(shotData.Hit.Position, quaternion.LookRotationSafe(shotData.Hit.SurfaceNormal, math.up())));
+                    ECB.SetComponent(chunkIndexInQuery, hitVisualsEntity, LocalTransform.FromPositionRotation(shotData.EndPoint, quaternion.LookRotationSafe(shotData.HitNormal, math.up())));
                 }
-
-                // Orient bullet
-                localTransform.Rotation = quaternion.LookRotationSafe(shotData.SimulationDirection, math.up());
 
                 shotVisuals.IsInitialized = true;
             }
@@ -64,14 +57,14 @@ public partial struct BulletShotVisualsSystem : ISystem
             float zScale = math.clamp(shotVisuals.Speed * shotVisuals.StretchFromSpeed, 0f, math.min(shotVisuals.DistanceTraveled, shotVisuals.MaxStretch));
 
             // On reached hit
-            if (shotVisuals.DistanceTraveled >= shotData.SimulationHitDistance)
+            if (shotVisuals.DistanceTraveled >= shotData.GetLength())
             {
                 // clamp position to max dist
-                float preClampDistFromOrigin = math.length(localTransform.Position - shotData.SolvedVisualOrigin);
-                localTransform.Position = shotData.SolvedVisualOrigin + shotData.SolvedVisualOriginToHit;
+                float preClampDistFromOrigin = math.length(localTransform.Position - shotData.StartPoint);
+                localTransform.Position = shotData.EndPoint;
 
                 // adjust scale stretch for clamped pos
-                zScale *= math.length(localTransform.Position - shotData.SolvedVisualOrigin) / preClampDistFromOrigin;
+                zScale *= math.length(localTransform.Position - shotData.StartPoint) / preClampDistFromOrigin;
 
                 ECB.DestroyEntity(chunkIndexInQuery, entity);
             }

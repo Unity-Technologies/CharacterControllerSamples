@@ -28,7 +28,7 @@ public partial class BasicPlayerInputsSystem : SystemBase
     protected override void OnUpdate()
     {
         BasicInputActions.DefaultMapActions defaultMapActions = InputActions.DefaultMap;
-        uint fixedTick = SystemAPI.GetSingleton<FixedTickSystem.Singleton>().Tick;
+        uint tick = SystemAPI.GetSingleton<FixedTickSystem.Singleton>().Tick;
         
         foreach (var (playerInputs, player) in SystemAPI.Query<RefRW<BasicPlayerInputs>, BasicPlayer>())
         {
@@ -46,14 +46,14 @@ public partial class BasicPlayerInputsSystem : SystemBase
             
             if (defaultMapActions.Jump.WasPressedThisFrame())
             {
-                playerInputs.ValueRW.JumpPressed.Set(fixedTick);
+                playerInputs.ValueRW.JumpPressed.Set(tick);
             }
         }
     }
 }
 
-[UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
-[UpdateBefore(typeof(FixedStepSimulationSystemGroup))]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateAfter(typeof(FixedStepSimulationSystemGroup))]
 [BurstCompile]
 public partial struct BasicPlayerVariableStepControlSystem : ISystem
 {
@@ -62,10 +62,6 @@ public partial struct BasicPlayerVariableStepControlSystem : ISystem
     {
         state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<BasicPlayer, BasicPlayerInputs>().Build());
     }
-
-    [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    { }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
@@ -77,8 +73,8 @@ public partial struct BasicPlayerVariableStepControlSystem : ISystem
                 OrbitCameraControl cameraControl = SystemAPI.GetComponent<OrbitCameraControl>(player.ControlledCamera);
                 
                 cameraControl.FollowedCharacterEntity = player.ControlledCharacter;
-                cameraControl.Look = playerInputs.CameraLookInput;
-                cameraControl.Zoom = playerInputs.CameraZoomInput;
+                cameraControl.LookDegreesDelta = playerInputs.CameraLookInput;
+                cameraControl.ZoomDelta = playerInputs.CameraZoomInput;
 
                 SystemAPI.SetComponent(player.ControlledCamera, cameraControl);
             }
@@ -97,12 +93,9 @@ public partial struct BasicFixedStepPlayerControlSystem : ISystem
         state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<BasicPlayer, BasicPlayerInputs>().Build());
     }
 
-    public void OnDestroy(ref SystemState state)
-    { }
-
     public void OnUpdate(ref SystemState state)
     {
-        uint fixedTick = SystemAPI.GetSingleton<FixedTickSystem.Singleton>().Tick;
+        uint tick = SystemAPI.GetSingleton<FixedTickSystem.Singleton>().Tick;
         
         foreach (var (playerInputs, player) in SystemAPI.Query<RefRW<BasicPlayerInputs>, BasicPlayer>().WithAll<Simulate>())
         {
@@ -112,11 +105,15 @@ public partial struct BasicFixedStepPlayerControlSystem : ISystem
 
                 float3 characterUp = MathUtilities.GetUpFromRotation(SystemAPI.GetComponent<LocalTransform>(player.ControlledCharacter).Rotation);
                 
-                // Get camera rotation data, since our movement is relative to it
+                // Get camera rotation, since our movement is relative to it.
                 quaternion cameraRotation = quaternion.identity;
-                if (SystemAPI.HasComponent<LocalTransform>(player.ControlledCamera))
+                if (SystemAPI.HasComponent<OrbitCamera>(player.ControlledCamera))
                 {
-                    cameraRotation = SystemAPI.GetComponent<LocalTransform>(player.ControlledCamera).Rotation;
+                    // Camera rotation is calculated rather than gotten from transform, because this allows us to 
+                    // reduce the size of the camera ghost state in a netcode prediction context.
+                    // If not using netcode prediction, we could simply get rotation from transform here instead.
+                    OrbitCamera orbitCamera = SystemAPI.GetComponent<OrbitCamera>(player.ControlledCamera);
+                    cameraRotation = OrbitCameraUtilities.CalculateCameraRotation(characterUp, orbitCamera.PlanarForward, orbitCamera.PitchAngle);
                 }
                 float3 cameraForwardOnUpPlane = math.normalizesafe(MathUtilities.ProjectOnPlane(MathUtilities.GetForwardFromRotation(cameraRotation), characterUp));
                 float3 cameraRight = MathUtilities.GetRightFromRotation(cameraRotation);
@@ -128,7 +125,7 @@ public partial struct BasicFixedStepPlayerControlSystem : ISystem
                 // Jump
                 // We detect a jump event if the jump counter has changed since the last fixed update.
                 // This is part of a strategy for proper handling of button press events that are consumed during the fixed update group
-                characterControl.Jump = playerInputs.ValueRW.JumpPressed.IsSet(fixedTick);
+                characterControl.Jump = playerInputs.ValueRW.JumpPressed.IsSet(tick);
 
                 SystemAPI.SetComponent(player.ControlledCharacter, characterControl);
             }

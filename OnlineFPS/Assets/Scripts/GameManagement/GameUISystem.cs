@@ -39,6 +39,8 @@ public static class VisualElementExtensions
 }
 
 [WorldSystemFilter(WorldSystemFilterFlags.LocalSimulation)]
+[UpdateInGroup(typeof(InitializationSystemGroup))]
+[UpdateBefore(typeof(GameManagementSystem))]
 public partial class GameUISystem : SystemBase
 {
     private FPSInputActions InputActions;

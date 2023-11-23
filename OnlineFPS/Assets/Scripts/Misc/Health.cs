@@ -10,7 +10,7 @@ using UnityEngine;
 public struct Health : IComponentData
 {
     public float MaxHealth;
-    [GhostField()]
+    [GhostField(Quantization = 100)]
     public float CurrentHealth;
 
     public bool IsDead()

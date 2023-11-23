@@ -1,11 +1,10 @@
 using System.Collections.Generic;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Physics.Extensions;
 using Unity.Physics.GraphicsIntegration;
+using Unity.Transforms;
 using UnityEngine;
-
-using LegacyRigidbody = UnityEngine.Rigidbody;
-using LegacyCollider = UnityEngine.Collider;
 
 namespace Unity.Physics.Authoring
 {
@@ -26,7 +25,7 @@ namespace Unity.Physics.Authoring
         public override void Bake(PhysicsBodyAuthoring authoring)
         {
             // Priority is to Legacy Components. Ignore if baked by Legacy.
-            if (GetComponent<LegacyRigidbody>()  || GetComponent<LegacyCollider>())
+            if (GetComponent<Rigidbody>()  || GetComponent<UnityEngine.Collider>())
             {
                 return;
             }
@@ -67,7 +66,6 @@ namespace Unity.Physics.Authoring
                 });
                 AddComponent<PhysicsRootBaked>(entity);
                 AddComponent<PhysicsCollider>(entity);
-                AddBuffer<PhysicsColliderKeyEntityPair>(entity);
             }
 
             if (authoring.MotionType == BodyMotionType.Static || IsStatic())
@@ -128,27 +126,72 @@ namespace Unity.Physics.Authoring
     [RequireMatchingQueriesForUpdate]
     [UpdateAfter(typeof(EndColliderBakingSystem))]
     [WorldSystemFilter(WorldSystemFilterFlags.BakingSystem)]
-    public partial class PhysicsBodyBakingSystem : SystemBase
+    public partial struct PhysicsBodyBakingSystem : ISystem
     {
-        protected override void OnUpdate()
+        public void OnUpdate(ref SystemState state)
         {
-            // Fill in the MassProperties based on the potential calculated value by BuildCompoundColliderBakingSystem
-            foreach (var(physicsMass, bodyData, collider) in
-                     SystemAPI.Query<RefRW<PhysicsMass>, RefRO<PhysicsBodyAuthoringData>, RefRO<PhysicsCollider>>().WithOptions(EntityQueryOptions.IncludePrefab | EntityQueryOptions.IncludeDisabledEntities))
-            {
-                // Build mass component
-                var massProperties = collider.ValueRO.MassProperties;
-                if (bodyData.ValueRO.OverrideDefaultMassDistribution)
-                {
-                    massProperties.MassDistribution = bodyData.ValueRO.CustomMassDistribution;
-                    // Increase the angular expansion factor to account for the shift in center of mass
-                    massProperties.AngularExpansionFactor += math.length(massProperties.MassDistribution.Transform.pos - bodyData.ValueRO.CustomMassDistribution.Transform.pos);
-                }
+            var entityManager = state.EntityManager;
 
-                physicsMass.ValueRW = bodyData.ValueRO.IsDynamic ?
-                    PhysicsMass.CreateDynamic(massProperties, bodyData.ValueRO.Mass) :
-                    PhysicsMass.CreateKinematic(massProperties);
+            // Fill in the mass properties based on custom mass properties for bodies without colliders
+            foreach (var(physicsMass, bodyData, entity) in
+                     SystemAPI.Query<RefRW<PhysicsMass>, RefRO<PhysicsBodyAuthoringData>>()
+                         .WithNone<PhysicsCollider>()
+                         .WithEntityAccess()
+                         .WithOptions(EntityQueryOptions.IncludePrefab | EntityQueryOptions.IncludeDisabledEntities))
+            {
+                physicsMass.ValueRW = CreatePhysicsMass(entityManager, entity, bodyData.ValueRO, MassProperties.UnitSphere);
             }
+
+            // Fill in the mass properties based on collider and custom mass properties if provided.
+            foreach (var(physicsMass, bodyData, collider, entity) in
+                     SystemAPI.Query<RefRW<PhysicsMass>, RefRO<PhysicsBodyAuthoringData>, RefRO<PhysicsCollider>>()
+                         .WithEntityAccess()
+                         .WithOptions(EntityQueryOptions.IncludePrefab | EntityQueryOptions.IncludeDisabledEntities))
+            {
+                physicsMass.ValueRW = CreatePhysicsMass(entityManager, entity, bodyData.ValueRO,
+                    collider.ValueRO.MassProperties, true);
+            }
+        }
+
+        private PhysicsMass CreatePhysicsMass(EntityManager entityManager, in Entity entity,
+            in PhysicsBodyAuthoringData inBodyData, in MassProperties inMassProperties, in bool hasCollider = false)
+        {
+            var massProperties = inMassProperties;
+            var scale = 1f;
+
+            // Scale the provided mass properties by the LocalTransform.Scale value to create the correct
+            // initial mass distribution for the rigid body.
+            if (entityManager.HasComponent<LocalTransform>(entity))
+            {
+                var localTransform = entityManager.GetComponentData<LocalTransform>(entity);
+                scale = localTransform.Scale;
+
+                massProperties.Scale(scale);
+            }
+
+            // Override the mass properties with user-provided values if specified
+            if (inBodyData.OverrideDefaultMassDistribution)
+            {
+                massProperties.MassDistribution = inBodyData.CustomMassDistribution;
+                if (hasCollider)
+                {
+                    // Increase the angular expansion factor to account for the shift in center of mass
+                    massProperties.AngularExpansionFactor += math.length(massProperties.MassDistribution.Transform.pos -
+                        inBodyData.CustomMassDistribution.Transform.pos);
+                }
+            }
+
+            // Create the physics mass properties. Among others, this scales the unit mass inertia tensor
+            // by the scalar mass of the rigid body.
+            var physicsMass = inBodyData.IsDynamic ?
+                PhysicsMass.CreateDynamic(massProperties, inBodyData.Mass) :
+                PhysicsMass.CreateKinematic(massProperties);
+
+            // Now, apply inverse scale to the final, baked physics mass properties in order to prevent invalid simulated mass properties
+            // caused by runtime scaling of the mass properties later on while building the physics world.
+            physicsMass = physicsMass.ApplyScale(math.rcp(scale));
+
+            return physicsMass;
         }
     }
 }

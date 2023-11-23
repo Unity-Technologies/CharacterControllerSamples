@@ -1,19 +1,16 @@
 
 # OnlineFPS Sample - Game Management
 
-## Connection Menu
-The game's main menu allows you to join or host a game. Here's how this menu is implemented:
-* A `UI` gameObject is present in the scene, Under it, there is a `UIDocument` named `Menu` for the connection menu. This uses UI Toolkit
-* The `UI` gameObject has a `UIReferences` monobehaviour on it. It holds references to UI documents
-* On Start, the `UIReferences` monobehaviour gets the `GameUISystem` and calls `SetUIReferences` on it. This is what gives the `GameUISystem` the necessary UI references that it needs to find in the scene
-* `GameUISystem` handles all UI logic. If finds all UI element references in various UI documents, and subscribes methods to UI events such as button clicks or value changes. Based on the state of the game, it also handles showing/hiding certain UI elements
-    * Joining is handled by creating an entity with a `GameManagementSystem.JoinRequest` component in `GameUISystem.JoinButtonPressed`. These requests are processed by the `GameManagementSystem` later
-    * Hosting is handled by creating an entity with a `GameManagementSystem.HostRequest` component in `GameUISystem.HostButtonPressed`. These requests are processed by the `GameManagementSystem` later
-
-
 ## Game Management
 
-`GameManagementSystem` updates in the default GameObject world, and is mainly responsible for handling joining, hosting, and disconnecting. It creates/destroys server & client worlds as needed, loads the game scene, etc...
+There are different ECS worlds in this sample game:
+* The default world: always present, and mostly handles general game state (menu, in-game, etc...), client/server world management, and UI.
+* Client world: only exists during gameplay
+* Server world: only exists during gameplay
+
+`GameManagementSystem` updates in the default world and is mainly responsible for handling joining, hosting, and disconnecting. It creates/destroys server & client worlds as needed, loads the game scene, receives requests from the Client world to toggle activation of UI elements, etc...
+
+`GameUISystem` updates in the default world and handles all UI logic. It keeps references to various UI elements based on a `UIReferences` monobehaviour that registers itself into this system on start.
 
 `ServerGameSystem` updates in the server world, and has the following responsibilities:
 * Handle join requests from clients (`HandleAcceptJoinsOncePendingScenesAreLoaded`, `HandleJoinRequests`, `HandlePendingJoinClientTimeout`)

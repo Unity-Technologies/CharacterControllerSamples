@@ -51,7 +51,7 @@ namespace Unity.Physics.Authoring
         }
 
         internal static CapsuleGeometryAuthoring BakeToBodySpace(
-            this CapsuleGeometryAuthoring capsule, float4x4 localToWorld, float4x4 shapeToWorld
+            this CapsuleGeometryAuthoring capsule, float4x4 localToWorld, float4x4 shapeToWorld, bool bakeUniformScale = true
         )
         {
             using (var geometry = new NativeArray<CapsuleGeometryAuthoring>(1, Allocator.TempJob) { [0] = capsule })
@@ -59,8 +59,9 @@ namespace Unity.Physics.Authoring
                 var job = new BakeCapsuleJob
                 {
                     Capsule = geometry,
-                    localToWorld = localToWorld,
-                    shapeToWorld = shapeToWorld
+                    LocalToWorld = localToWorld,
+                    ShapeToWorld = shapeToWorld,
+                    BakeUniformScale = bakeUniformScale
                 };
                 job.Run();
                 return geometry[0];

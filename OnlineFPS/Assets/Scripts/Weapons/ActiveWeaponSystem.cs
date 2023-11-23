@@ -9,17 +9,10 @@ using UnityEngine;
 
 [UpdateInGroup(typeof(PredictedSimulationSystemGroup), OrderFirst = true)]
 [UpdateBefore(typeof(PredictedFixedStepSimulationSystemGroup))]
+[WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation | WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.ThinClientSimulation)]
 [BurstCompile]
 public partial struct ActiveWeaponSystem : ISystem
 {
-    [BurstCompile]
-    public void OnCreate(ref SystemState state)
-    { }
-
-    [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    { }
-
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
@@ -32,7 +25,7 @@ public partial struct ActiveWeaponSystem : ISystem
             LinkedEntityGroupLookup = SystemAPI.GetBufferLookup<LinkedEntityGroup>(false),
             WeaponShotIgnoredEntityLookup = SystemAPI.GetBufferLookup<WeaponShotIgnoredEntity>(false),
         };
-        setupJob.Schedule();
+        state.Dependency = setupJob.Schedule(state.Dependency);
     }
 
     [BurstCompile]

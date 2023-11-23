@@ -7,10 +7,7 @@ The tutorial can be followed without downloading the final project, but the comp
 
 Note 1: Throughout this tutorial, the code samples will often have chunks of excluded code in order to show only the important parts that you need to add or modify. The `// (...)` represents excluded code.
 
-Note 2: For a more general DOTS tutorial, you may consult the [DOTS Tutorial](https://github.com/Unity-Technologies/dots-tutorial)
-
-
-## Tutorial Sections
+Note 2: For a more general DOTS tutorial, you may consult the various samples and tutorials in the [EntityComponentSystemSamples](https://github.com/Unity-Technologies/EntityComponentSystemSamples/)
 
 1. [Project Setup](./Tutorial/tutorial-setup.md)
 1. [Standard Character Setup](./Tutorial/tutorial-charactersetup.md)
@@ -24,3 +21,10 @@ Note 2: For a more general DOTS tutorial, you may consult the [DOTS Tutorial](ht
 1. [Friction Surfaces](./Tutorial/tutorial-frictionsurface.md)
 1. [Jump Pad (add forces to character)](./Tutorial/tutorial-jumppad.md)
 1. [AI Character](./Tutorial/tutorial-ai.md)
+
+
+# Netcode tutorial
+
+The following tutorial goes over all the steps required in order make the Standard Characters compatible with netcode prediction:
+
+* [Networking the Standard Characters](./Tutorial/tutorial-netcodecharacters.md)

@@ -10,8 +10,14 @@ using UnityEngine;
 using Random = Unity.Mathematics.Random;
 using RaycastHit = Unity.Physics.RaycastHit;
 
+public enum RaycastProjectileVisualsSyncMode
+{
+    Precise,
+    Efficient,
+}
+
 [Serializable]
-[GhostComponent()]
+[GhostComponent(SendTypeOptimization = GhostSendType.OnlyPredictedClients)]
 public struct StandardRaycastWeapon : IComponentData, IEnableableComponent
 {
     public Entity ShotOrigin;
@@ -21,32 +27,54 @@ public struct StandardRaycastWeapon : IComponentData, IEnableableComponent
     public float Damage;
     public float SpreadRadians;
     public int ProjectilesCount;
-    public CollisionFilter HitCollisionFilter;
+    public RaycastProjectileVisualsSyncMode ProjectileVisualsSyncMode;
 
     // Calculation data
     [GhostField()]
     public Random Random;
-    [GhostField()]
-    public uint RemoteShotsCount;
-    public uint LastRemoteShotsCount;
+
+    public uint LastProcessedVisualsTick;
 }
 
 [Serializable]
+[GhostComponent(OwnerSendType = SendToOwnerType.SendToNonOwner)]
 public struct StandardRaycastWeaponShotVFXRequest : IBufferElementData
 {
-    public StandardRaycastWeaponShotVisualsData ShotVisualsData;
+    [GhostField]
+    public uint Tick;
+    [GhostField]
+    public byte DidHit;
+    [GhostField]
+    public float3 EndPoint;
+    [GhostField]
+    public float3 HitNormal;
+}
+
+[Serializable]
+[GhostComponent(OwnerSendType = SendToOwnerType.SendToNonOwner)]
+public struct StandardRaycastWeaponShotVFXData : IComponentData
+{
+    [GhostField]
+    public uint ProjectileSpawnCount;
+    public uint LastProjectileSpawnCount;
+    public byte IsInitialized;
 }
 
 [Serializable]
 public struct StandardRaycastWeaponShotVisualsData : IComponentData
 {
-    public Entity VisualOriginEntity;
-    public float3 SimulationOrigin;
-    public float3 SimulationDirection;
-    public float3 SimulationUp;
-    public float SimulationHitDistance;
-    public RaycastHit Hit;
+    public byte DidHit;
+    public float3 StartPoint;
+    public float3 EndPoint;
+    public float3 HitNormal;
 
-    public float3 SolvedVisualOrigin;
-    public float3 SolvedVisualOriginToHit;
+    public float GetLength()
+    {
+        return math.length(EndPoint - StartPoint);
+    }
+
+    public float3 GetDirection()
+    {
+        return math.normalizesafe(EndPoint - StartPoint);
+    }
 }

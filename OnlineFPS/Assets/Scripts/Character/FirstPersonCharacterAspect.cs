@@ -128,18 +128,6 @@ public readonly partial struct FirstPersonCharacterAspect : IAspect, IKinematicC
         // (this is for allowing a rotating moving platform to rotate your character as well, and handle interpolation properly)
         KinematicCharacterUtilities.AddVariableRateRotationFromFixedRateRotation(ref characterRotation, characterBody.RotationFromParent, baseContext.Time.DeltaTime, characterBody.LastPhysicsUpdateDeltaTime);
 
-        // View roll angles
-        {
-            float3 characterRight = MathUtilities.GetRightFromRotation(characterRotation);
-            float characterMaxSpeed = characterBody.IsGrounded ? characterComponent.GroundMaxSpeed : characterComponent.AirMaxSpeed;
-            float3 characterLateralVelocity = math.projectsafe(characterBody.RelativeVelocity, characterRight);
-            float characterLateralVelocityRatio = math.clamp(math.length(characterLateralVelocity) / characterMaxSpeed, 0f, 1f);
-            bool velocityIsRight = math.dot(characterBody.RelativeVelocity, characterRight) > 0f;
-            float targetTiltAngle = math.lerp(0f, characterComponent.ViewRollAmount, characterLateralVelocityRatio);
-            targetTiltAngle = velocityIsRight ? -targetTiltAngle : targetTiltAngle;
-            characterComponent.ViewRollDegrees = math.lerp(characterComponent.ViewRollDegrees, targetTiltAngle, math.saturate(characterComponent.ViewRollSharpness * baseContext.Time.DeltaTime));
-        }
-        
         // Handle aiming look sensitivity
         if (context.WeaponControlLookup.TryGetComponent(activeWeapon.Entity, out WeaponControl weaponControl))
         {
@@ -158,7 +146,7 @@ public readonly partial struct FirstPersonCharacterAspect : IAspect, IKinematicC
             ref characterComponent.CharacterYDegrees,
             math.up(),
             characterControl.LookYawPitchDegrees,
-            characterComponent.ViewRollDegrees,
+            0, // don't include roll angle in simulation
             characterComponent.MinViewAngle, 
             characterComponent.MaxViewAngle,
             out characterRotation,

@@ -18,10 +18,6 @@ public partial struct LazerShotVisualsSystem : ISystem
     }
 
     [BurstCompile]
-    public void OnDestroy(ref SystemState state)
-    { }
-
-    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         LazerShotVisualsJob job = new LazerShotVisualsJob
@@ -29,7 +25,7 @@ public partial struct LazerShotVisualsSystem : ISystem
             ElapsedTime = (float)SystemAPI.Time.ElapsedTime,
             ECB = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged),
         };
-        job.Schedule();
+        state.Dependency = job.Schedule(state.Dependency);
     }
 
     [BurstCompile]
@@ -45,16 +41,13 @@ public partial struct LazerShotVisualsSystem : ISystem
                 shotVisuals.StartTime = ElapsedTime;
                 
                 // Scale
-                shotVisuals.StartingScale = new float3(shotVisuals.Width, shotVisuals.Width, math.length(shotData.SolvedVisualOriginToHit));
-                
-                // Orientation
-                localTransform.Rotation = quaternion.LookRotationSafe(math.normalizesafe(shotData.SolvedVisualOriginToHit), shotData.SimulationUp);
+                shotVisuals.StartingScale = new float3(shotVisuals.Width, shotVisuals.Width, shotData.GetLength());
                     
                 // Hit VFX
-                if (shotData.Hit.Entity != Entity.Null)
+                if (shotData.DidHit == 1)
                 {
                     Entity hitVisualsEntity = ECB.Instantiate(shotVisuals.HitVisualsPrefab);
-                    ECB.SetComponent(hitVisualsEntity, LocalTransform.FromPositionRotation(shotData.Hit.Position, quaternion.LookRotationSafe(shotData.Hit.SurfaceNormal, math.up())));
+                    ECB.SetComponent(hitVisualsEntity, LocalTransform.FromPositionRotation(shotData.EndPoint, quaternion.LookRotationSafe(shotData.HitNormal, math.up())));
                 }
 
                 shotVisuals.HasInitialized = true;

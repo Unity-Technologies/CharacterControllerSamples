@@ -9,7 +9,6 @@ using Unity.Physics.Authoring;
 using Unity.Physics.Extensions;
 using Unity.Physics.Systems;
 using UnityEngine;
-using LegacyJoint = UnityEngine.Joint;
 using FloatRange = Unity.Physics.Math.FloatRange;
 
 namespace Unity.Physics.Authoring
@@ -168,8 +167,7 @@ namespace Unity.Physics.Authoring
 
     // apply an animated effect to the limits on supported types of joints
     [RequireMatchingQueriesForUpdate]
-    [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
-    [UpdateAfter(typeof(PhysicsSystemGroup))]
+    [UpdateInGroup(typeof(PhysicsSystemGroup), OrderLast = true)]
     partial struct ModifyJointLimitsSystem : ISystem
     {
         public void OnUpdate(ref SystemState state)

@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System.Linq;
 using UnityEditor;
+using UnityEditor.Build;
 
 namespace Unity.Physics.Authoring
 {
@@ -11,14 +12,14 @@ namespace Unity.Physics.Authoring
 
         static EditorInitialization()
         {
-            var definesStr = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+            var fromBuildTargetGroup = NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+            var definesStr = PlayerSettings.GetScriptingDefineSymbols(fromBuildTargetGroup);
             var defines = definesStr.Split(';').ToList();
             var found = defines.Find(define => define.Equals(k_CustomDefine));
             if (found == null)
             {
                 defines.Add(k_CustomDefine);
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup,
-                    string.Join(";", defines.ToArray()));
+                PlayerSettings.SetScriptingDefineSymbols(fromBuildTargetGroup, string.Join(";", defines.ToArray()));
             }
         }
     }

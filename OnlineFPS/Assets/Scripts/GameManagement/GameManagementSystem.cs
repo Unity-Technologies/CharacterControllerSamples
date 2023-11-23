@@ -110,8 +110,18 @@ public partial class GameManagementSystem : SystemBase
                 ServerWorld = NetCodeBootstrap.CreateServerWorld("ServerWorld");
                 
                 // Tickrate
-                Entity tickRateEntity = serverECB.CreateEntity();
-                serverECB.AddComponent(tickRateEntity, gameResources.GetClientServerTickRate());
+                {
+                    EntityQuery tickRateSingletonQuery = new EntityQueryBuilder(Allocator.Temp).WithAllRW<ClientServerTickRate>().Build(ServerWorld.EntityManager);
+                    if (tickRateSingletonQuery.HasSingleton<ClientServerTickRate>())
+                    {
+                        serverECB.SetComponent(tickRateSingletonQuery.GetSingletonEntity(), gameResources.GetClientServerTickRate());
+                    }
+                    else
+                    {
+                        Entity tickRateEntity = serverECB.CreateEntity();
+                        serverECB.AddComponent(tickRateEntity, gameResources.GetClientServerTickRate());
+                    }
+                }
 
                 // Listen to endpoint
                 EntityQuery serverNetworkDriverQuery = new EntityQueryBuilder(Allocator.Temp).WithAllRW<NetworkStreamDriver>().Build(ServerWorld.EntityManager);
@@ -155,10 +165,6 @@ public partial class GameManagementSystem : SystemBase
             {
                 // Create client world
                 ClientWorld = NetCodeBootstrap.CreateClientWorld("ClientWorld");
-
-                // Tickrate
-                Entity tickRateEntity = clientECB.CreateEntity();
-                clientECB.AddComponent(tickRateEntity, gameResources.GetClientServerTickRate());
                 
                 // Connect to endpoint
                 EntityQuery clientNetworkDriverQuery = new EntityQueryBuilder(Allocator.Temp).WithAllRW<NetworkStreamDriver>().Build(ClientWorld.EntityManager);
@@ -218,7 +224,7 @@ public partial class GameManagementSystem : SystemBase
                 ecb.AddComponent(disconnectServerRequestEntity, new MoveToServerWorld());
             }
         }
-        ecb.DestroyEntity(disconnectRequestQuery);
+        ecb.DestroyEntity(disconnectRequestQuery, EntityQueryCaptureMode.AtRecord);
     }
 
     private void HandleDisposeClientServerWorldsAndReturnToMenu(ref Singleton singleton, ref EntityCommandBuffer ecb)

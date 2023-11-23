@@ -11,16 +11,16 @@ public partial class DefaultVariantSystem : DefaultVariantSystemBase
 {
     protected override void RegisterDefaultVariants(Dictionary<ComponentType, Rule> defaultVariants)
     {
-        defaultVariants.Add(typeof(LocalTransform), Rule.ForAll(typeof(TransformDefaultVariant)));
+        defaultVariants.Add(typeof(LocalTransform), Rule.ForAll(typeof(DontSerializeVariant)));
         defaultVariants.Add(typeof(KinematicCharacterBody), Rule.ForAll(typeof(KinematicCharacterBody_GhostVariant)));
     }
 }
 
 [GhostComponentVariation(typeof(KinematicCharacterBody))]
-[GhostComponent()]
+[GhostComponent(SendTypeOptimization = GhostSendType.OnlyPredictedClients)]
 public struct KinematicCharacterBody_GhostVariant
 {
-    [GhostField()]
+    [GhostField(Quantization = 1000)]
     public float3 RelativeVelocity;
     [GhostField()]
     public bool IsGrounded;
@@ -31,12 +31,4 @@ public struct KinematicCharacterBody_GhostVariant
 [GhostComponent(PrefabType = GhostPrefabType.PredictedClient)]
 public struct CharacterInterpolation_GhostVariant
 {
-}
-
-[GhostComponentVariation(typeof(LocalTransform))]
-[GhostComponent()]
-public struct LocalTransform_Character
-{
-    [GhostField(Smoothing = SmoothingAction.InterpolateAndExtrapolate)]
-    public float3 Position;
 }

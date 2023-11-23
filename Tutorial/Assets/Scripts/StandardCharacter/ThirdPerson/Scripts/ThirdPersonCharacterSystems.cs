@@ -75,7 +75,10 @@ public partial struct ThirdPersonCharacterPhysicsUpdateSystem : ISystem
     }
 }
 
-[UpdateInGroup(typeof(KinematicCharacterVariableUpdateGroup))]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateAfter(typeof(FixedStepSimulationSystemGroup))]
+[UpdateAfter(typeof(ThirdPersonPlayerVariableStepControlSystem))]
+[UpdateBefore(typeof(TransformSystemGroup))]
 [BurstCompile]
 public partial struct ThirdPersonCharacterVariableUpdateSystem : ISystem
 {

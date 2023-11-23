@@ -283,6 +283,7 @@ public struct LedgeGrabState : IPlatformerCharacterState
         ref KinematicCharacterBody characterBody = ref aspect.CharacterAspect.CharacterBody.ValueRW;
         ref KinematicCharacterProperties characterProperties = ref aspect.CharacterAspect.CharacterProperties.ValueRW;
         ref PlatformerCharacterComponent character = ref aspect.Character.ValueRW;
+        float characterScale = aspect.CharacterAspect.LocalTransform.ValueRO.Scale;
 
         float3 currentCharacterForward = MathUtilities.GetForwardFromRotation(atCharacterRotation);
         float3 currentCharacterRight = MathUtilities.GetRightFromRotation(atCharacterRotation);
@@ -298,6 +299,7 @@ public struct LedgeGrabState : IPlatformerCharacterState
                 ref baseContext,
                 atCharacterTranslation,
                 atCharacterRotation,
+                characterScale,
                 currentCharacterForward,
                 forwardDepthOfLedgeDetectionPoint,
                 false,
@@ -313,6 +315,7 @@ public struct LedgeGrabState : IPlatformerCharacterState
                     ref baseContext,
                     atCharacterTranslation,
                     atCharacterRotation,
+                    characterScale,
                     0f,
                     characterProperties.ShouldIgnoreDynamicBodies(),
                     out DistanceHit closestOverlapHit))
@@ -425,6 +428,7 @@ public struct LedgeGrabState : IPlatformerCharacterState
                 ref baseContext,
                 startPointOfSurfaceObstructionDetectionCast,
                 atCharacterRotation,
+                characterScale,
                 -characterBody.GroundingUp,
                 character.LedgeSurfaceObstructionProbingHeight + ledgeProbingToleranceOffset,
                 false,

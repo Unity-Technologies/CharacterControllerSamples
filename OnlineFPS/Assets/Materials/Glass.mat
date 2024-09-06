@@ -25,7 +25,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  version: 4
+  version: 9
 --- !u!21 &2100000
 Material:
   serializedVersion: 8
@@ -38,7 +38,6 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
-  - _ALPHAPREMULTIPLY_ON
   - _CLEARCOAT
   - _SURFACE_TYPE_TRANSPARENT
   m_InvalidKeywords: []
@@ -50,14 +49,13 @@ Material:
     MotionVector: User
     RenderType: Transparent
   disabledShaderPasses:
-  - MOTIONVECTORS
+  - DepthOnly
   - DistortionVectors
   - TransparentDepthPrepass
   - TransparentDepthPostpass
   - TransparentBackface
   - RayTracingPrepass
   - SHADOWCASTER
-  - DepthOnly
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
@@ -262,7 +260,7 @@ Material:
     - _Anisotropy: 0
     - _Blend: 0
     - _BlendMode: 0
-    - _BlendModePreserveSpecular: 1
+    - _BlendModePreserveSpecular: 0
     - _BlendOp: 0
     - _BumpScale: 1
     - _ClearCoat: 1
@@ -359,7 +357,7 @@ Material:
     - _SpecularAAThreshold: 0.2
     - _SpecularHighlights: 1
     - _SpecularOcclusionMode: 1
-    - _SrcBlend: 1
+    - _SrcBlend: 5
     - _SrcBlendAlpha: 1
     - _StencilRef: 0
     - _StencilRefDepth: 8
@@ -424,3 +422,4 @@ Material:
     - _UVMappingMask: {r: 1, g: 0, b: 0, a: 0}
     - _UVMappingMaskEmissive: {r: 1, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1

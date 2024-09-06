@@ -164,7 +164,7 @@ Now that we've defined ghost fields for internal components of the character pac
 We must now alter the input handling and update groups of some of our systems in order to make them compatible with netcode prediction.
 
 First, copy the following utility class into your project. This will help simplify the process of handling inputs that represent a "delta" that depends on frame time rather than a constant input value (for example: mouse movement delta). These have special considerations for netcode:
-[NetworkInputUtilities](./tutorial-netcodecharacters-inpututil.md)
+[InputDeltaUtilities](./tutorial-netcodecharacters-inpututil.md)
 
 Then, follow these guides in order to convert the character input handling systems and update orders:
 * [Commands and Prediction - Third Person](./tutorial-netcodecharacters-prediction-thirdperson.md)

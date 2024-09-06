@@ -3,5 +3,9 @@ using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine;
 
-public struct SpectatorSpawnPoint : IComponentData
-{ }
+namespace OnlineFPS
+{
+    public struct SpectatorSpawnPoint : IComponentData
+    {
+    }
+}

@@ -1,47 +1,46 @@
 
 ```cs
-using Unity.Entities;
 using Unity.Mathematics;
-using Unity.NetCode;
 
-public static class NetworkInputUtilities
+public static class InputDeltaUtilities
 {
-    public const float DefaultWrapAroundValue = 1000f;
+    public const float InputWrapAroundValue = 2000f;
     
-    public static void GetCurrentAndPreviousTick(NetworkTime networkTimeSingleton, out NetworkTick currentTick, out NetworkTick previousTick)
+    public static void AddInputDelta(ref float input, float addedDelta)
     {
-        currentTick = networkTimeSingleton.ServerTick;
-        previousTick = currentTick;
-        previousTick.Decrement();
-    }
-
-    public static void GetCurrentAndPreviousTickInputs<T>(DynamicBuffer<InputBufferData<T>> inputsBuffer, NetworkTick currentTick, NetworkTick previousTick, out T currentTickInputs, out T previousTickInputs) where T : unmanaged, IInputComponentData
-    {
-        currentTickInputs = default;
-        previousTickInputs = default;
-        if (inputsBuffer.GetDataAtTick(currentTick, out InputBufferData<T> currentTickInputData))
-        {
-            currentTickInputs = currentTickInputData.InternalInput;
-        }
-        if (inputsBuffer.GetDataAtTick(previousTick, out InputBufferData<T> previousTickInputData))
-        {
-            previousTickInputs = previousTickInputData.InternalInput;
-        }
+        input = math.fmod(input + addedDelta, InputWrapAroundValue);
     }
     
-    public static void AddInputDelta(ref float input, float addedDelta, float wrapAroundValue = DefaultWrapAroundValue)
+    public static void AddInputDelta(ref float2 input, float2 addedDelta)
     {
-        input = math.fmod(input + addedDelta, wrapAroundValue);
+        input = math.fmod(input + addedDelta, InputWrapAroundValue);
     }
     
-    public static float GetInputDelta(float currentTickValue, float previousTickValue, float wrapAroundValue = DefaultWrapAroundValue)
+    public static float GetInputDelta(float currentValue, float previousValue)
     {
-        float delta = currentTickValue - previousTickValue;
+        float delta = currentValue - previousValue;
         
         // When delta is very large, consider that the input has wrapped around
-        if(math.abs(delta) > (wrapAroundValue * 0.5f))
+        if(math.abs(delta) > (InputWrapAroundValue * 0.5f))
         {
-            delta += (math.sign(previousTickValue - currentTickValue) * wrapAroundValue);
+            delta += (math.sign(previousValue - currentValue) * InputWrapAroundValue);
+        }
+
+        return delta;
+    }
+    
+    public static float2 GetInputDelta(float2 currentValue, float2 previousValue)
+    {
+        float2 delta = currentValue - previousValue;
+        
+        // When delta is very large, consider that the input has wrapped around
+        if(math.abs(delta.x) > (InputWrapAroundValue * 0.5f))
+        {
+            delta.x += (math.sign(previousValue.x - currentValue.x) * InputWrapAroundValue);
+        }
+        if(math.abs(delta.y) > (InputWrapAroundValue * 0.5f))
+        {
+            delta.y += (math.sign(previousValue.y - currentValue.y) * InputWrapAroundValue);
         }
 
         return delta;

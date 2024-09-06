@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 8865010581420108017}
   - component: {fileID: 6692964146818784315}
   - component: {fileID: 6162112195921244101}
+  - component: {fileID: 8147234898669316303}
   - component: {fileID: -6765965966868395423}
   - component: {fileID: -1851313708835495806}
   - component: {fileID: -6337258574022047128}
@@ -63,6 +64,9 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -100,7 +104,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c16549610bfe4458aa9389201d072bb6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &-6765965966868395423
+--- !u!114 &8147234898669316303
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -109,12 +113,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 5179934649230605806}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f94e83cecd576dc4e8d9fded65b3865b, type: 3}
+  m_Script: {fileID: 11500000, guid: c0ce4c856e86508419032ac135fe111b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  FiringMecanism:
-    AutoFire: 0
-    FiringRate: 1.5
+  ShotOrigin: {fileID: 6328546748666097053}
+  Automatic: 0
+  FiringRate: 1.5
+  SpreadDegrees: 0
+  ProjectilesPerShot: 1
   VisualFeedback:
     WeaponBobHAmount: 0.08
     WeaponBobVAmount: 0.06
@@ -132,13 +138,20 @@ MonoBehaviour:
     RecoilMaxFOVKick: 12
     RecoilFOVKickSharpness: 150
     RecoilFOVKickRestitutionSharpness: 20
-  ProjectileVisualsSyncMode: 0
-  ShotOrigin: {fileID: 6328546748666097053}
-  ProjectileVisualPrefab: {fileID: 7460990098522836823, guid: 1e149f3ed7b84c2428267a2168c1f9e1, type: 3}
-  Range: 1000
-  Damage: 1000
-  SpreadDegrees: 0
-  ProjectilesCount: 1
+--- !u!114 &-6765965966868395423
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5179934649230605806}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f94e83cecd576dc4e8d9fded65b3865b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ProjectilePrefab: {fileID: 7460990098522836823, guid: 1e149f3ed7b84c2428267a2168c1f9e1, type: 3}
+  VisualsSyncMode: 0
 --- !u!114 &-1851313708835495806
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -158,7 +171,7 @@ MonoBehaviour:
   prefabId: 44cc784d5b8c9594baabe6f315e02449
   HasOwner: 1
   SupportAutoCommandTarget: 0
-  TrackInterpolationDelay: 0
+  TrackInterpolationDelay: 1
   GhostGroup: 0
   UsePreSerialization: 0
 --- !u!114 &-6337258574022047128
@@ -174,11 +187,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ComponentOverrides:
-  - FullTypeName: StandardRaycastWeapon
-    EntityIndex: 0
-    PrefabType: -1
-    SendTypeOptimization: 2
-    VariantHash: 0
   - FullTypeName: Unity.Transforms.LocalTransform
     EntityIndex: 0
     PrefabType: -1

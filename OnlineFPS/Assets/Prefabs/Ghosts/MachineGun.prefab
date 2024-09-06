@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1828896461377226316}
   - component: {fileID: 4505144362510529158}
   - component: {fileID: 3941885376359384995}
+  - component: {fileID: 5432777907007034046}
   - component: {fileID: 3941885376359384992}
   - component: {fileID: 3941885376359384993}
   - component: {fileID: 7000641583667140832}
@@ -66,6 +67,9 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -103,7 +107,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c16549610bfe4458aa9389201d072bb6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &3941885376359384992
+--- !u!114 &5432777907007034046
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -112,12 +116,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 2703708565719520083}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f94e83cecd576dc4e8d9fded65b3865b, type: 3}
+  m_Script: {fileID: 11500000, guid: c0ce4c856e86508419032ac135fe111b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  FiringMecanism:
-    AutoFire: 1
-    FiringRate: 40
+  ShotOrigin: {fileID: 5070349038548459520}
+  Automatic: 1
+  FiringRate: 80
+  SpreadDegrees: 4
+  ProjectilesPerShot: 1
   VisualFeedback:
     WeaponBobHAmount: 0.08
     WeaponBobVAmount: 0.06
@@ -135,13 +141,20 @@ MonoBehaviour:
     RecoilMaxFOVKick: 12
     RecoilFOVKickSharpness: 150
     RecoilFOVKickRestitutionSharpness: 20
-  ProjectileVisualsSyncMode: 1
-  ShotOrigin: {fileID: 5070349038548459520}
-  ProjectileVisualPrefab: {fileID: 7460990098522836823, guid: 20e7021256e9255458bad88e6e6a59e6, type: 3}
-  Range: 1000
-  Damage: 4.4
-  SpreadDegrees: 4
-  ProjectilesCount: 1
+--- !u!114 &3941885376359384992
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2703708565719520083}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f94e83cecd576dc4e8d9fded65b3865b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ProjectilePrefab: {fileID: 7460990098522836823, guid: 971c5752433c59e47b103c714dfff62d, type: 3}
+  VisualsSyncMode: 1
 --- !u!114 &3941885376359384993
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -176,7 +189,7 @@ MonoBehaviour:
   prefabId: 913ac431eeee6b64cae9c18f54d21fb1
   HasOwner: 1
   SupportAutoCommandTarget: 0
-  TrackInterpolationDelay: 0
+  TrackInterpolationDelay: 1
   GhostGroup: 0
   UsePreSerialization: 0
 --- !u!114 &3315597668810138967
@@ -281,6 +294,9 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -364,6 +380,9 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:

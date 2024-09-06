@@ -3,15 +3,18 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
-[Serializable]
-public struct MainEntityCamera : IComponentData
+namespace OnlineFPS
 {
-    public MainEntityCamera(float fov)
+    [Serializable]
+    public struct MainEntityCamera : IComponentData
     {
-        BaseFoV = fov;
-        CurrentFoV = fov;
+        public MainEntityCamera(float fov)
+        {
+            BaseFoV = fov;
+            CurrentFoV = fov;
+        }
+
+        public float BaseFoV;
+        public float CurrentFoV;
     }
-    
-    public float BaseFoV;
-    public float CurrentFoV;
 }

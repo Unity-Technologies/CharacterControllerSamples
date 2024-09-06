@@ -3,14 +3,17 @@ using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine;
 
-public class SpawnPointAuthoring : MonoBehaviour
+namespace OnlineFPS
 {
-    public class Baker : Baker<SpawnPointAuthoring>
+    public class SpawnPointAuthoring : MonoBehaviour
     {
-        public override void Bake(SpawnPointAuthoring authoring)
+        public class Baker : Baker<SpawnPointAuthoring>
         {
-            Entity entity = GetEntity(TransformUsageFlags.Dynamic); 
-            AddComponent(entity, new SpawnPoint());
+            public override void Bake(SpawnPointAuthoring authoring)
+            {
+                Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+                AddComponent(entity, new SpawnPoint());
+            }
         }
     }
 }

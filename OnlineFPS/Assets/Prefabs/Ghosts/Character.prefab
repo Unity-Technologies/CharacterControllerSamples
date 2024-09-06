@@ -201,8 +201,11 @@ MonoBehaviour:
   NameTagSocket: {fileID: 397833573}
   WeaponSocket: {fileID: 6371560197271105382}
   WeaponAnimationSocket: {fileID: 6371560197096954920}
-  DeathVFX: {fileID: 7161354016620288120, guid: 098661ecdda5d864ea4212382582b67a, type: 3}
   DeathVFXSpawnPoint: {fileID: 902680416403865457}
+  DeathVFXSize: 3.4
+  DeathVFXSpeed: 16
+  DeathVFXLifetime: 0.4
+  DeathVFXColor: {r: 0, g: 428.90063, b: 1024, a: 1}
   CharacterProperties:
     CustomPhysicsBodyTags:
       Tag00: 0
@@ -252,6 +255,13 @@ MonoBehaviour:
       HasMaxDownwardSlopeChangeAngle: 0
       MaxDownwardSlopeChangeAngle: 90
       ConstrainVelocityToGroundPlane: 1
+    DeathVFXSize: 2
+    DeathVFXLifetime: 1
+    DeathVFXSpeed: 1
+    DeathVFXColor:
+      x: 0
+      y: 140.01012
+      z: 337.79395
     MinViewAngle: -90
     MaxViewAngle: 90
     ViewRollAmount: 8

@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2170352971408066632}
   - component: {fileID: 7123851864635022548}
   - component: {fileID: 3603655668640243304}
+  - component: {fileID: 8720354661457150138}
   - component: {fileID: 7257522025752756596}
   - component: {fileID: 8150666014271365416}
   - component: {fileID: 2074737834649434592}
@@ -63,6 +64,9 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -88,7 +92,7 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &7257522025752756596
+--- !u!114 &8720354661457150138
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -97,12 +101,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 1060756309112113506}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f94e83cecd576dc4e8d9fded65b3865b, type: 3}
+  m_Script: {fileID: 11500000, guid: c0ce4c856e86508419032ac135fe111b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  FiringMecanism:
-    AutoFire: 0
-    FiringRate: 1.3
+  ShotOrigin: {fileID: 7845134715170352240}
+  Automatic: 0
+  FiringRate: 1.3
+  SpreadDegrees: 10
+  ProjectilesPerShot: 24
   VisualFeedback:
     WeaponBobHAmount: 0.08
     WeaponBobVAmount: 0.06
@@ -120,13 +126,20 @@ MonoBehaviour:
     RecoilMaxFOVKick: 25
     RecoilFOVKickSharpness: 150
     RecoilFOVKickRestitutionSharpness: 25
-  ProjectileVisualsSyncMode: 1
-  ShotOrigin: {fileID: 7845134715170352240}
-  ProjectileVisualPrefab: {fileID: 7460990098522836823, guid: 20e7021256e9255458bad88e6e6a59e6, type: 3}
-  Range: 1000
-  Damage: 9
-  SpreadDegrees: 10
-  ProjectilesCount: 24
+--- !u!114 &7257522025752756596
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1060756309112113506}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f94e83cecd576dc4e8d9fded65b3865b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ProjectilePrefab: {fileID: 7460990098522836823, guid: 20e7021256e9255458bad88e6e6a59e6, type: 3}
+  VisualsSyncMode: 1
 --- !u!114 &8150666014271365416
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -158,7 +171,7 @@ MonoBehaviour:
   prefabId: c20f40bc8f9814b409807f3e97fc1631
   HasOwner: 1
   SupportAutoCommandTarget: 0
-  TrackInterpolationDelay: 0
+  TrackInterpolationDelay: 1
   GhostGroup: 0
   UsePreSerialization: 0
 --- !u!114 &5589663089825338699

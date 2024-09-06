@@ -10,53 +10,93 @@ using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine.InputSystem;
 
-public static class MiscUtilities
+namespace OnlineFPS
 {
-    public static void SetShadowModeInHierarchy(EntityManager entityManager, EntityCommandBuffer ecb, Entity onEntity, ref BufferLookup<Child> childBufferFromEntity, UnityEngine.Rendering.ShadowCastingMode mode)
+    public struct SwitchBool
     {
-        if (entityManager.HasComponent<RenderFilterSettings>(onEntity))
+        private bool Current;
+        private bool Previous;
+
+        public void Init(bool val)
         {
-            RenderFilterSettings renderFilterSettings = entityManager.GetSharedComponent<RenderFilterSettings>(onEntity);
-            renderFilterSettings.ShadowCastingMode = mode;
-            ecb.SetSharedComponent(onEntity, renderFilterSettings);
+            Current = val;
+            Previous = val;
         }
 
-        if (childBufferFromEntity.HasBuffer(onEntity))
+        public void Set(bool val)
         {
-            DynamicBuffer<Child> childBuffer = childBufferFromEntity[onEntity];
-            for (int i = 0; i < childBuffer.Length; i++)
+            Previous = Current;
+            Current = val;
+        }
+
+        public bool HasChanged()
+        {
+            return Current != Previous;
+        }
+
+        public void ConsumeChange()
+        {
+            Previous = Current;
+        }
+
+        public bool Get()
+        {
+            return Current;
+        }
+    }
+
+    public static class MiscUtilities
+    {
+        public static void SetShadowModeInHierarchy(EntityManager entityManager, EntityCommandBuffer ecb,
+            Entity onEntity, ref BufferLookup<Child> childBufferFromEntity,
+            UnityEngine.Rendering.ShadowCastingMode mode)
+        {
+            if (entityManager.HasComponent<RenderFilterSettings>(onEntity))
             {
-                SetShadowModeInHierarchy(entityManager, ecb, childBuffer[i].Value, ref childBufferFromEntity, mode);
+                RenderFilterSettings renderFilterSettings =
+                    entityManager.GetSharedComponent<RenderFilterSettings>(onEntity);
+                renderFilterSettings.ShadowCastingMode = mode;
+                ecb.SetSharedComponent(onEntity, renderFilterSettings);
+            }
+
+            if (childBufferFromEntity.HasBuffer(onEntity))
+            {
+                DynamicBuffer<Child> childBuffer = childBufferFromEntity[onEntity];
+                for (int i = 0; i < childBuffer.Length; i++)
+                {
+                    SetShadowModeInHierarchy(entityManager, ecb, childBuffer[i].Value, ref childBufferFromEntity, mode);
+                }
             }
         }
-    }
-    
-    public static void DisableRenderingInHierarchy(EntityCommandBuffer ecb, Entity onEntity, ref BufferLookup<Child> childBufferFromEntity)
-    {
-        ecb.RemoveComponent<MaterialMeshInfo>(onEntity);
 
-        if (childBufferFromEntity.HasBuffer(onEntity))
+        public static void DisableRenderingInHierarchy(EntityCommandBuffer ecb, Entity onEntity,
+            ref BufferLookup<Child> childBufferFromEntity)
         {
-            DynamicBuffer<Child> childBuffer = childBufferFromEntity[onEntity];
-            for (int i = 0; i < childBuffer.Length; i++)
+            ecb.RemoveComponent<MaterialMeshInfo>(onEntity);
+
+            if (childBufferFromEntity.HasBuffer(onEntity))
             {
-                DisableRenderingInHierarchy(ecb, childBuffer[i].Value, ref childBufferFromEntity);
+                DynamicBuffer<Child> childBuffer = childBufferFromEntity[onEntity];
+                for (int i = 0; i < childBuffer.Length; i++)
+                {
+                    DisableRenderingInHierarchy(ecb, childBuffer[i].Value, ref childBufferFromEntity);
+                }
             }
         }
-    }
 
-    public static bool HasSingleton<T>(ref SystemState state) where T : unmanaged, IComponentData
-    {
-        return new EntityQueryBuilder(Allocator.Temp).WithAll<T>().Build(ref state).HasSingleton<T>();
-    }
+        public static bool HasSingleton<T>(ref SystemState state) where T : unmanaged, IComponentData
+        {
+            return new EntityQueryBuilder(Allocator.Temp).WithAll<T>().Build(ref state).HasSingleton<T>();
+        }
 
-    public static T GetSingleton<T>(ref SystemState state) where T : unmanaged, IComponentData
-    {
-        return new EntityQueryBuilder(Allocator.Temp).WithAll<T>().Build(ref state).GetSingleton<T>();
-    }
+        public static T GetSingleton<T>(ref SystemState state) where T : unmanaged, IComponentData
+        {
+            return new EntityQueryBuilder(Allocator.Temp).WithAll<T>().Build(ref state).GetSingleton<T>();
+        }
 
-    public static Entity GetSingletonEntity<T>(ref SystemState state) where T : unmanaged, IComponentData
-    {
-        return new EntityQueryBuilder(Allocator.Temp).WithAll<T>().Build(ref state).GetSingletonEntity();
+        public static Entity GetSingletonEntity<T>(ref SystemState state) where T : unmanaged, IComponentData
+        {
+            return new EntityQueryBuilder(Allocator.Temp).WithAll<T>().Build(ref state).GetSingletonEntity();
+        }
     }
 }

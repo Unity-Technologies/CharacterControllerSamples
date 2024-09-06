@@ -114,3 +114,15 @@
     color: rgb(255, 255, 255);
     background-color: rgb(77, 77, 77);
 }
+
+.OfflineButton {
+    background-color: rgb(153, 5, 0);
+}
+
+.OfflineButton:hover {
+    background-color: rgb(64, 0, 3);
+}
+
+.OfflineButton:active {
+    background-color: rgb(0, 0, 0);
+}

@@ -1,244 +1,288 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Burst;
 using Unity.CharacterController;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Logging;
 using Unity.Mathematics;
 using Unity.NetCode;
+using Unity.Networking.Transport;
+using Unity.Physics;
+using Unity.Physics.Extensions;
 using Unity.Scenes;
 using Unity.Transforms;
 using UnityEngine;
 
-[WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.ThinClientSimulation)]
-[BurstCompile]
-public partial struct ClientGameSystem : ISystem
+namespace OnlineFPS
 {
-    public struct Singleton : IComponentData
-    {
-        public Unity.Mathematics.Random Random;
-        
-        public float TimeWithoutAConnection;
-        public bool Spectator;
-
-        public int DisconnectionFramesCounter;
-    }
-
-    public struct JoinOnceScenesLoadedRequest : IComponentData
-    {
-        public Entity PendingSceneLoadRequest;
-    }
-
     public struct JoinRequest : IRpcCommand
     {
         public FixedString128Bytes PlayerName;
-        public bool Spectator;
-    }
-    
-    public struct DisconnectRequest : IComponentData
-    { }
-    
-    private EntityQuery _singletonQuery;
-    private EntityQuery _spectatorSpawnPointsQuery;
-    
-    [BurstCompile]
-    public void OnCreate(ref SystemState state)
-    {
-        state.RequireForUpdate<GameResources>();
-        
-        _singletonQuery = new EntityQueryBuilder(Allocator.Temp).WithAllRW<Singleton>().Build(state.EntityManager);
-        _spectatorSpawnPointsQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<SpectatorSpawnPoint, LocalToWorld>().Build(state.EntityManager);
-        
-        // Auto-create singleton
-        Entity singletonEntity = state.EntityManager.CreateEntity();
-        state.EntityManager.AddComponentData(singletonEntity, new Singleton
-        {
-            Random = Unity.Mathematics.Random.CreateFromIndex(0),
-        });
+        public bool IsSpectator;
     }
 
-    [BurstCompile]
-    public void OnUpdate(ref SystemState state)
+    public struct RespawnMessageRequest : IRpcCommand
     {
-        ref Singleton singleton = ref _singletonQuery.GetSingletonRW<Singleton>().ValueRW;
-        GameResources gameResources = SystemAPI.GetSingleton<GameResources>();
+        public bool Start;
+        public float CountdownTime;
+    }
 
-        if (SystemAPI.HasSingleton<DisableCharacterDynamicContacts>())
+    [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.ThinClientSimulation)]
+    [UpdateBefore(typeof(GameWorldSystem))]
+    [BurstCompile]
+    public partial struct ClientGameSystem : ISystem
+    {
+        public struct Singleton : IComponentData
         {
-            state.EntityManager.DestroyEntity(SystemAPI.GetSingletonEntity<DisableCharacterDynamicContacts>());
+            public NetworkEndpoint ConnectEndPoint;
+
+            public bool IsSpectator;
+            public Unity.Mathematics.Random Random;
+
+            public float TimeWithoutAConnection;
+            public bool HasHandledConnect;
+            public bool HasSentJoinRequest;
         }
 
-        HandleSendJoinRequestOncePendingScenesLoaded(ref state, ref singleton);
-        HandlePendingJoinRequest(ref state, ref singleton, gameResources);
-        HandleCharacterSetupAndDestruction(ref state);
-        HandleDisconnect(ref state, ref singleton, gameResources);
-        HandleRespawnScreen(ref state, ref singleton, gameResources);
-    }
+        private EntityQuery _singletonQuery;
+        private EntityQuery _spectatorSpawnPointsQuery;
 
-    private void HandleSendJoinRequestOncePendingScenesLoaded(ref SystemState state, ref Singleton singleton)
-    {
-        EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged);
-        
-        foreach (var (request, entity) in SystemAPI.Query<JoinOnceScenesLoadedRequest>().WithEntityAccess())
+        [BurstCompile]
+        public void OnCreate(ref SystemState state)
         {
-            if (SystemAPI.HasComponent<SceneLoadRequest>(request.PendingSceneLoadRequest) && SystemAPI.GetComponent<SceneLoadRequest>(request.PendingSceneLoadRequest).IsLoaded)
-            {
-                LocalGameData localData = SystemAPI.GetSingleton<LocalGameData>();
+            state.RequireForUpdate<GameResources>();
+            state.RequireForUpdate<GameWorldSystem.Singleton>();
 
-                // Send join request
-                if (SystemAPI.HasSingleton<NetworkId>())
+            _singletonQuery = new EntityQueryBuilder(Allocator.Temp).WithAllRW<Singleton>().Build(state.EntityManager);
+            _spectatorSpawnPointsQuery = new EntityQueryBuilder(Allocator.Temp)
+                .WithAll<SpectatorSpawnPoint, LocalToWorld>().Build(state.EntityManager);
+
+            // Auto-create singleton
+            Entity singletonEntity = state.EntityManager.CreateEntity();
+            state.EntityManager.AddComponentData(singletonEntity, new Singleton
+            {
+                Random = Unity.Mathematics.Random.CreateFromIndex(0),
+            });
+        }
+
+        [BurstCompile]
+        public void OnUpdate(ref SystemState state)
+        {
+            if (SystemAPI.HasSingleton<DisableCharacterDynamicContacts>())
+            {
+                state.EntityManager.DestroyEntity(SystemAPI.GetSingletonEntity<DisableCharacterDynamicContacts>());
+            }
+
+            ref Singleton singleton = ref _singletonQuery.GetSingletonRW<Singleton>().ValueRW;
+            GameResources gameResources = SystemAPI.GetSingleton<GameResources>();
+
+            HandleConnect(ref state, ref singleton);
+
+            ref GameWorldSystem.Singleton gameWorldSystemSingleton =
+                ref SystemAPI.GetSingletonRW<GameWorldSystem.Singleton>().ValueRW;
+
+            HandleSendJoinRequest(ref state, ref singleton, ref gameWorldSystemSingleton);
+            HandleWaitForJoinConfirmation(ref state, ref singleton, ref gameWorldSystemSingleton, gameResources);
+            HandleCharacterSetup(ref state, ref gameWorldSystemSingleton);
+            HandleRespawnScreen(ref state, ref singleton, ref gameWorldSystemSingleton);
+            HandleDisconnect(ref state, ref singleton, ref gameWorldSystemSingleton, gameResources);
+        }
+
+        private void HandleConnect(ref SystemState state, ref Singleton singleton)
+        {
+            if (!singleton.HasHandledConnect &&
+                SystemAPI.TryGetSingletonRW(out RefRW<NetworkStreamDriver> netStreamDriver))
+            {
+                netStreamDriver.ValueRW.Connect(state.EntityManager, singleton.ConnectEndPoint);
+                singleton.HasHandledConnect = true;
+            }
+        }
+
+        private void HandleSendJoinRequest(ref SystemState state, ref Singleton singleton,
+            ref GameWorldSystem.Singleton gameWorldSystemSingleto)
+        {
+            if (!singleton.HasSentJoinRequest && SystemAPI.HasSingleton<NetworkId>())
+            {
+                EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>()
+                    .ValueRW
+                    .CreateCommandBuffer(state.WorldUnmanaged);
+
+                bool hasHadSceneLoadRequest = false;
+                bool allSceneLoadRequestsComplete = true;
+                foreach (var (request, entity) in SystemAPI.Query<SceneLoadRequest>().WithEntityAccess())
                 {
+                    hasHadSceneLoadRequest = true;
+                    if (!request.IsLoaded)
+                    {
+                        allSceneLoadRequestsComplete = false;
+                    }
+                }
+
+                if (state.WorldUnmanaged.IsThinClient() || (hasHadSceneLoadRequest && allSceneLoadRequestsComplete))
+                {
+                    // Send join request
                     Entity joinRequestEntity = ecb.CreateEntity();
                     ecb.AddComponent(joinRequestEntity, new JoinRequest
                     {
-                        PlayerName = localData.LocalPlayerName,
-                        Spectator = singleton.Spectator,
+                        PlayerName = gameWorldSystemSingleto.PlayerName,
+                        IsSpectator = singleton.IsSpectator,
                     });
                     ecb.AddComponent(joinRequestEntity, new SendRpcCommandRequest());
-                
-                    ecb.DestroyEntity(request.PendingSceneLoadRequest);
+
+                    singleton.HasSentJoinRequest = true;
+
+                    foreach (var (request, entity) in SystemAPI.Query<SceneLoadRequest>().WithEntityAccess())
+                    {
+                        ecb.DestroyEntity(entity);
+                    }
+                }
+            }
+        }
+
+        private void HandleWaitForJoinConfirmation(ref SystemState state, ref Singleton singleton,
+            ref GameWorldSystem.Singleton gameWorldSystemSingleton, GameResources gameResources)
+        {
+            EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>()
+                .ValueRW.CreateCommandBuffer(state.WorldUnmanaged);
+
+            if (SystemAPI.HasSingleton<NetworkId>() && !SystemAPI.HasSingleton<NetworkStreamInGame>())
+            {
+                // Check for request accept
+                foreach (var (requestAccepted, rpcReceive, entity) in SystemAPI
+                             .Query<JoinRequest, ReceiveRpcCommandRequest>().WithEntityAccess())
+                {
+                    singleton.TimeWithoutAConnection = 0f;
+
+                    // Stream in game
+                    ecb.AddComponent(SystemAPI.GetSingletonEntity<NetworkId>(), new NetworkStreamInGame());
+
+                    // Overwrite client data with data received from server
+                    gameWorldSystemSingleton.PlayerName = requestAccepted.PlayerName;
+                    singleton.IsSpectator = requestAccepted.IsSpectator;
+
+                    // Spectator mode
+                    if (singleton.IsSpectator)
+                    {
+                        LocalToWorld spawnPoint = default;
+                        NativeArray<LocalToWorld> spectatorSpawnPoints =
+                            _spectatorSpawnPointsQuery.ToComponentDataArray<LocalToWorld>(Allocator.Temp);
+                        if (spectatorSpawnPoints.Length > 0)
+                        {
+                            spawnPoint =
+                                spectatorSpawnPoints[singleton.Random.NextInt(0, spectatorSpawnPoints.Length - 1)];
+                        }
+
+                        Entity spectatorEntity = ecb.Instantiate(gameResources.SpectatorPrefab);
+                        ecb.SetComponent(spectatorEntity,
+                            new LocalTransform()
+                                { Position = spawnPoint.Position, Rotation = spawnPoint.Rotation, Scale = 1f });
+
+                        spectatorSpawnPoints.Dispose();
+                    }
+
+                    gameWorldSystemSingleton.HasConnected.Set(true);
+
                     ecb.DestroyEntity(entity);
                 }
             }
         }
-    }
 
-    private void HandlePendingJoinRequest(ref SystemState state, ref Singleton singleton, GameResources gameResources)
-    {
-        EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged);
-        
-        if (SystemAPI.HasSingleton<NetworkId>() && !SystemAPI.HasSingleton<NetworkStreamInGame>())
+        private void HandleCharacterSetup(ref SystemState state, ref GameWorldSystem.Singleton gameWorldSystemSingleton)
         {
-            singleton.TimeWithoutAConnection = 0f;
-            
-            // Check for request accept
-            foreach (var (requestAccepted, rpcReceive, entity) in SystemAPI.Query<ServerGameSystem.JoinRequestAccepted, ReceiveRpcCommandRequest>().WithEntityAccess())
+            if (SystemAPI.HasSingleton<NetworkId>())
             {
-                // Stream in game
-                ecb.AddComponent(SystemAPI.GetSingletonEntity<NetworkId>(), new NetworkStreamInGame());
+                EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>()
+                    .ValueRW.CreateCommandBuffer(state.WorldUnmanaged);
 
-                // Spectator mode
-                if (singleton.Spectator)
+                // Initialize local-owned characters
+                foreach (var (character, owningPlayer, ghostOwner, entity) in SystemAPI
+                             .Query<FirstPersonCharacterComponent, OwningPlayer, GhostOwner>()
+                             .WithAll<GhostOwnerIsLocal>()
+                             .WithDisabled<CharacterInitialized>()
+                             .WithEntityAccess())
                 {
-                    LocalToWorld spawnPoint = default;
-                    NativeArray<LocalToWorld> spectatorSpawnPoints = _spectatorSpawnPointsQuery.ToComponentDataArray<LocalToWorld>(Allocator.Temp);
-                    if (spectatorSpawnPoints.Length > 0)
-                    {
-                        spawnPoint = spectatorSpawnPoints[singleton.Random.NextInt(0, spectatorSpawnPoints.Length - 1)];
-                    }
+                    // Make camera follow character's view
+                    ecb.AddComponent(character.ViewEntity, new MainEntityCamera { BaseFoV = character.BaseFoV });
 
-                    Entity spectatorEntity = ecb.Instantiate(gameResources.SpectatorPrefab);
-                    ecb.SetComponent(spectatorEntity, new LocalTransform() { Position = spawnPoint.Position, Rotation = spawnPoint.Rotation, Scale = 1f });
+                    // Make local character meshes rendering be shadow-only
+                    BufferLookup<Child> childBufferLookup = SystemAPI.GetBufferLookup<Child>();
+                    MiscUtilities.SetShadowModeInHierarchy(state.EntityManager, ecb, entity, ref childBufferLookup,
+                        UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly);
+                }
 
-                    spectatorSpawnPoints.Dispose();
+                // Initialize remote characters
+                foreach (var (character, owningPlayer, ghostOwner, entity) in SystemAPI
+                             .Query<FirstPersonCharacterComponent, OwningPlayer, GhostOwner>()
+                             .WithNone<GhostOwnerIsLocal>()
+                             .WithDisabled<CharacterInitialized>()
+                             .WithEntityAccess())
+                {
+                    // Spawn nameTag
+                    ecb.AddComponent(character.NameTagSocketEntity,
+                        new NameTagProxy { PlayerEntity = owningPlayer.Entity });
+                }
+
+                // Initialize characters common
+                foreach (var (character, physicsCollider, characterInitialized, entity) in SystemAPI
+                             .Query<FirstPersonCharacterComponent, RefRW<PhysicsCollider>,
+                                 EnabledRefRW<CharacterInitialized>>()
+                             .WithDisabled<CharacterInitialized>()
+                             .WithEntityAccess())
+                {
+                    physicsCollider.ValueRW.MakeUnique(entity, ecb);
+
+                    // Mark initialized
+                    characterInitialized.ValueRW = true;
+                }
+            }
+        }
+
+        private void HandleRespawnScreen(ref SystemState state, ref Singleton clientSingleton,
+            ref GameWorldSystem.Singleton gameWorldSystemSingleton)
+        {
+            EntityCommandBuffer ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
+                .CreateCommandBuffer(state.WorldUnmanaged);
+
+            // Handle respawn messages
+            foreach (var (respawnRequest, receiveRPC, entity) in SystemAPI
+                         .Query<RespawnMessageRequest, ReceiveRpcCommandRequest>().WithEntityAccess())
+            {
+                if (respawnRequest.Start)
+                {
+                    gameWorldSystemSingleton.RespawnScreenTimer = respawnRequest.CountdownTime;
+                    gameWorldSystemSingleton.RespawnScreenActive.Set(true);
+                    gameWorldSystemSingleton.CrosshairActive.Set(false);
+                }
+                else
+                {
+                    gameWorldSystemSingleton.RespawnScreenActive.Set(false);
+                    gameWorldSystemSingleton.CrosshairActive.Set(true);
                 }
 
                 ecb.DestroyEntity(entity);
             }
-        }
-    }
-    
-    private void HandleCharacterSetupAndDestruction(ref SystemState state)
-    {
-        if (SystemAPI.HasSingleton<NetworkId>())
-        {
-            EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged);
 
-            // Initialize local-owned characters
-            foreach (var (character, owningPlayer, ghostOwner, entity) in SystemAPI.Query<FirstPersonCharacterComponent, OwningPlayer, GhostOwner>().WithAll<GhostOwnerIsLocal>().WithNone<CharacterInitialized>().WithEntityAccess())
+            // Update timer locally
+            if (gameWorldSystemSingleton.RespawnScreenTimer >= 0f)
             {
-                // Make camera follow character's view
-                ecb.AddComponent(character.ViewEntity, new MainEntityCamera { BaseFoV = character.BaseFoV });
-
-                // Make local character meshes rendering be shadow-only
-                BufferLookup<Child> childBufferLookup = SystemAPI.GetBufferLookup<Child>();
-                MiscUtilities.SetShadowModeInHierarchy(state.EntityManager, ecb, entity, ref childBufferLookup, UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly);
-
-                // Enable crosshair
-                Entity crosshairRequestEntity = ecb.CreateEntity();
-                ecb.AddComponent(crosshairRequestEntity, new CrosshairRequest { Enable = true });
-                ecb.AddComponent(crosshairRequestEntity, new MoveToLocalWorld());
-
-                // Disable respawn screen (if any)
-                Entity respawnScreenRequestEntity = ecb.CreateEntity();
-                ecb.AddComponent(respawnScreenRequestEntity, new RespawnMessageRequest { Start = false });
-                ecb.AddComponent(respawnScreenRequestEntity, new MoveToLocalWorld());
-                
-                // Mark initialized
-                ecb.AddComponent<CharacterInitialized>(entity);
-            }
-            
-            // Initialize remote characters
-            foreach (var (character, owningPlayer, ghostOwner, entity) in SystemAPI.Query<FirstPersonCharacterComponent, OwningPlayer, GhostOwner>().WithNone<GhostOwnerIsLocal>().WithNone<CharacterInitialized>().WithEntityAccess())
-            {
-                // Spawn nameTag
-                ecb.AddComponent(character.NameTagSocketEntity, new NameTagProxy { PlayerEntity = owningPlayer.Entity });
-                
-                // Mark initialized
-                ecb.AddComponent<CharacterInitialized>(entity);
-            }
-        }
-    }
-
-    private void HandleDisconnect(ref SystemState state, ref Singleton singleton, GameResources gameResources)
-    {
-        EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged);
-
-        // Check for connection timeout
-        if (!SystemAPI.HasSingleton<NetworkId>())
-        {
-            singleton.TimeWithoutAConnection += SystemAPI.Time.DeltaTime;
-            if (singleton.TimeWithoutAConnection > gameResources.JoinTimeout)
-            {
-                Entity disconnectEntity = ecb.CreateEntity();
-                ecb.AddComponent(disconnectEntity, new DisconnectRequest());
+                gameWorldSystemSingleton.RespawnScreenTimer -= SystemAPI.Time.DeltaTime;
             }
         }
 
-        // Handle disconnecting & properly disposing world
-        EntityQuery disconnectRequestQuery = SystemAPI.QueryBuilder().WithAll<DisconnectRequest>().Build();
-        if (disconnectRequestQuery.CalculateEntityCount() > 0)
+        private void HandleDisconnect(ref SystemState state, ref Singleton singleton,
+            ref GameWorldSystem.Singleton gameWorldSystemSingleton, GameResources gameResources)
         {
-            // Add disconnect request to connection
-            foreach (var (connection, entity) in SystemAPI.Query<NetworkId>().WithNone<NetworkStreamRequestDisconnect>().WithEntityAccess())
+            // Check for connection timeout
+            if (!SystemAPI.HasSingleton<NetworkId>())
             {
-                ecb.AddComponent(entity, new NetworkStreamRequestDisconnect());
+                singleton.TimeWithoutAConnection += SystemAPI.Time.DeltaTime;
+                if (singleton.TimeWithoutAConnection > gameResources.JoinTimeout)
+                {
+                    gameWorldSystemSingleton.IsAwaitingDisconnect = true;
+                }
             }
-            
-            // Make sure all renderEnvironments are disposed before initiating disconnect
-            EntityQuery renderEnvironmentsQuery = SystemAPI.QueryBuilder().WithAll<RenderEnvironment>().Build();
-            if (renderEnvironmentsQuery.CalculateEntityCount() > 0)
-            {
-                state.EntityManager.DestroyEntity(renderEnvironmentsQuery);
-                singleton.DisconnectionFramesCounter = 0;
-            }
-        
-            // Allow systems to have updated since disconnection, for cleanup
-            if (singleton.DisconnectionFramesCounter > 3)
-            {
-                Entity disposeRequestEntity = ecb.CreateEntity();
-                ecb.AddComponent(disposeRequestEntity, new GameManagementSystem.DisposeClientWorldRequest());
-                ecb.AddComponent(disposeRequestEntity, new MoveToLocalWorld());
-                ecb.DestroyEntity(disconnectRequestQuery, EntityQueryCaptureMode.AtRecord);
-            }
-            
-            singleton.DisconnectionFramesCounter++;
-        }
-    }
-
-    private void HandleRespawnScreen(ref SystemState state, ref Singleton singleton, GameResources gameResources)
-    {
-        EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged);
-
-        foreach (var (respawnScreenRequest, receiveRPC, entity) in SystemAPI.Query<RespawnMessageRequest, ReceiveRpcCommandRequest>().WithEntityAccess())
-        {
-            // Disable crosshair
-            Entity crosshairRequestEntity = ecb.CreateEntity();
-            ecb.AddComponent(crosshairRequestEntity, new CrosshairRequest { Enable = false });
-            ecb.AddComponent(crosshairRequestEntity, new MoveToLocalWorld());
-            
-            // Send request to get processed by UI system
-            ecb.AddComponent(entity, new MoveToLocalWorld());
         }
     }
 }

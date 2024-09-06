@@ -10,6 +10,17 @@ public struct FirstPersonPlayerInputs : IInputComponentData
 }
 ```
 
+Then, add this component to your project, and modify your `FirstPersonPlayerAuthoring` so that it adds this component to the player entity:
+```cs
+[Serializable]
+[GhostComponent(SendTypeOptimization = GhostSendType.OnlyPredictedClients)]
+public struct FirstPersonPlayerNetworkInput : IComponentData
+{
+    [GhostField()]
+    public float2 LastProcessedLookInput;
+}
+```
+
 Then, the player "input" and "control" systems need to be modified in order to use commands properly. Because there are many changes, the full sources for the new systems are provided below. But here's an overview of the changes:
 * `FirstPersonPlayerInputsSystem` now updates in the `GhostInputSystemGroup` and only on clients.
 * Inputs are only gathered for entities with `WithAll<GhostOwnerIsLocal>()`.
@@ -48,8 +59,8 @@ public partial class FirstPersonPlayerInputsSystem : SystemBase
                 y = (Input.GetKey(KeyCode.W) ? 1f : 0f) + (Input.GetKey(KeyCode.S) ? -1f : 0f),
             };
             
-            NetworkInputUtilities.AddInputDelta(ref playerInputs.ValueRW.LookInput.x, Input.GetAxis("Mouse X"));
-            NetworkInputUtilities.AddInputDelta(ref playerInputs.ValueRW.LookInput.y, Input.GetAxis("Mouse Y"));
+            InputDeltaUtilities.AddInputDelta(ref playerInputs.ValueRW.LookInput.x, Input.GetAxis("Mouse X"));
+            InputDeltaUtilities.AddInputDelta(ref playerInputs.ValueRW.LookInput.y, Input.GetAxis("Mouse Y"));
 
             playerInputs.ValueRW.JumpPressed = default;
             if (Input.GetKeyDown(KeyCode.Space))
@@ -78,19 +89,18 @@ public partial struct FirstPersonPlayerVariableStepControlSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        NetworkInputUtilities.GetCurrentAndPreviousTick(SystemAPI.GetSingleton<NetworkTime>(), out NetworkTick currentTick, out NetworkTick previousTick);
-        
-        foreach (var (playerInputsBuffer, player) in SystemAPI.Query<DynamicBuffer<InputBufferData<FirstPersonPlayerInputs>>, FirstPersonPlayer>().WithAll<Simulate>())
+        foreach (var (playerInputs, playerNetworkInput, player) in SystemAPI.Query<FirstPersonPlayerInputs, RefRW<FirstPersonPlayerNetworkInput>, FirstPersonPlayer>().WithAll<Simulate>())
         {
-            NetworkInputUtilities.GetCurrentAndPreviousTickInputs(playerInputsBuffer, currentTick, previousTick, out FirstPersonPlayerInputs currentTickInputs, out FirstPersonPlayerInputs previousTickInputs);
+            // Compute input deltas, compared to last known values
+            float2 lookInputDelta = InputDeltaUtilities.GetInputDelta(
+                playerInputs.LookInput, 
+                playerNetworkInput.ValueRO.LastProcessedLookInput);
+            playerNetworkInput.ValueRW.LastProcessedLookInput = playerInputs.LookInput;
 
             if (SystemAPI.HasComponent<FirstPersonCharacterControl>(player.ControlledCharacter))
             {
                 FirstPersonCharacterControl characterControl = SystemAPI.GetComponent<FirstPersonCharacterControl>(player.ControlledCharacter);
-                
-                characterControl.LookDegreesDelta.x = NetworkInputUtilities.GetInputDelta(currentTickInputs.LookInput.x, previousTickInputs.LookInput.x);
-                characterControl.LookDegreesDelta.y = NetworkInputUtilities.GetInputDelta(currentTickInputs.LookInput.y, previousTickInputs.LookInput.y);
-            
+                characterControl.LookDegreesDelta = lookInputDelta;
                 SystemAPI.SetComponent(player.ControlledCharacter, characterControl);
             }
         }

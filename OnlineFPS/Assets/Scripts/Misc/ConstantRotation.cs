@@ -5,8 +5,11 @@ using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
-[Serializable]
-public struct  ConstantRotation : IComponentData
+namespace OnlineFPS
 {
-    public float3 RotationSpeed;
+    [Serializable]
+    public struct ConstantRotation : IComponentData
+    {
+        public float3 RotationSpeed;
+    }
 }

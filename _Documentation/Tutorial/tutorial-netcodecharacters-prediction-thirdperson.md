@@ -11,6 +11,19 @@ public struct ThirdPersonPlayerInputs : IInputComponentData
 }
 ```
 
+Then, add this component to your project, and modify your `ThirdPersonPlayerAuthoring` so that it adds this component to the player entity:
+```cs
+[Serializable]
+[GhostComponent(SendTypeOptimization = GhostSendType.OnlyPredictedClients)]
+public struct ThirdPersonPlayerNetworkInput : IComponentData
+{
+    [GhostField()]
+    public float2 LastProcessedCameraLookInput;
+    [GhostField()]
+    public float LastProcessedCameraZoomInput;
+}
+```
+
 Then, the player "input" and "control" systems need to be modified in order to use commands properly. Because there are many changes, the full sources for the new systems are provided below. But here's an overview of the changes:
 * `ThirdPersonPlayerInputsSystem` now updates in the `GhostInputSystemGroup` and only on clients.
 * Inputs are only gathered for entities with `WithAll<GhostOwnerIsLocal>()`.
@@ -19,6 +32,7 @@ Then, the player "input" and "control" systems need to be modified in order to u
     * In order to use `NetworkInputUtilities.GetInputDelta`, some systems need to get the current and previous tick inputs based on the inputs buffer, using `NetworkInputUtilities.GetCurrentAndPreviousTick` and `NetworkInputUtilities.GetCurrentAndPreviousTickInputs`.
 * `ThirdPersonPlayerVariableStepControlSystem` and `ThirdPersonPlayerFixedStepControlSystem` now update in prediction system groups.
 ```cs
+
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -49,9 +63,9 @@ public partial class ThirdPersonPlayerInputsSystem : SystemBase
                 y = (Input.GetKey(KeyCode.W) ? 1f : 0f) + (Input.GetKey(KeyCode.S) ? -1f : 0f),
             };
             
-            NetworkInputUtilities.AddInputDelta(ref playerInputs.ValueRW.CameraLookInput.x, Input.GetAxis("Mouse X"));
-            NetworkInputUtilities.AddInputDelta(ref playerInputs.ValueRW.CameraLookInput.y, Input.GetAxis("Mouse Y"));
-            NetworkInputUtilities.AddInputDelta(ref playerInputs.ValueRW.CameraZoomInput, -Input.mouseScrollDelta.y);
+            InputDeltaUtilities.AddInputDelta(ref playerInputs.ValueRW.CameraLookInput.x, Input.GetAxis("Mouse X"));
+            InputDeltaUtilities.AddInputDelta(ref playerInputs.ValueRW.CameraLookInput.y, Input.GetAxis("Mouse Y"));
+            InputDeltaUtilities.AddInputDelta(ref playerInputs.ValueRW.CameraZoomInput, -Input.mouseScrollDelta.y);
 
             playerInputs.ValueRW.JumpPressed = default;
             if (Input.GetKeyDown(KeyCode.Space))
@@ -73,28 +87,30 @@ public partial struct ThirdPersonPlayerVariableStepControlSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<NetworkTime>();
         state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<ThirdPersonPlayer, ThirdPersonPlayerInputs>().Build());
     }
     
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        NetworkInputUtilities.GetCurrentAndPreviousTick(SystemAPI.GetSingleton<NetworkTime>(), out NetworkTick currentTick, out NetworkTick previousTick);
-        
-        foreach (var (playerInputsBuffer, player) in SystemAPI.Query<DynamicBuffer<InputBufferData<ThirdPersonPlayerInputs>>, ThirdPersonPlayer>().WithAll<Simulate>())
-        {
-            NetworkInputUtilities.GetCurrentAndPreviousTickInputs(playerInputsBuffer, currentTick, previousTick, out ThirdPersonPlayerInputs currentTickInputs, out ThirdPersonPlayerInputs previousTickInputs);
+        foreach (var (playerInputs, playerNetworkInput, player) in SystemAPI.Query<ThirdPersonPlayerInputs, RefRW<ThirdPersonPlayerNetworkInput>, ThirdPersonPlayer>().WithAll<Simulate>())
+        {            
+            // Compute input deltas, compared to last known values
+            float2 lookInputDelta = InputDeltaUtilities.GetInputDelta(
+                playerInputs.CameraLookInput, 
+                playerNetworkInput.ValueRO.LastProcessedCameraLookInput);
+            float zoomInputDelta = InputDeltaUtilities.GetInputDelta(
+                playerInputs.CameraZoomInput, 
+                playerNetworkInput.ValueRO.LastProcessedCameraZoomInput);
+            playerNetworkInput.ValueRW.LastProcessedCameraLookInput = playerInputs.CameraLookInput;
+            playerNetworkInput.ValueRW.LastProcessedCameraZoomInput = playerInputs.CameraZoomInput;
             
             if (SystemAPI.HasComponent<OrbitCameraControl>(player.ControlledCamera))
             {
                 OrbitCameraControl cameraControl = SystemAPI.GetComponent<OrbitCameraControl>(player.ControlledCamera);
-                
                 cameraControl.FollowedCharacterEntity = player.ControlledCharacter;
-                cameraControl.LookDegreesDelta.x = NetworkInputUtilities.GetInputDelta(currentTickInputs.CameraLookInput.x, previousTickInputs.CameraLookInput.x);
-                cameraControl.LookDegreesDelta.y = NetworkInputUtilities.GetInputDelta(currentTickInputs.CameraLookInput.y, previousTickInputs.CameraLookInput.y);
-                cameraControl.ZoomDelta = NetworkInputUtilities.GetInputDelta(currentTickInputs.CameraZoomInput, previousTickInputs.CameraZoomInput);
-                
+                cameraControl.LookDegreesDelta = lookInputDelta;
+                cameraControl.ZoomDelta = zoomInputDelta;
                 SystemAPI.SetComponent(player.ControlledCamera, cameraControl);
             }
         }

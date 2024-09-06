@@ -4,16 +4,19 @@ using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
-public class ConstantRotationAuthoring : MonoBehaviour
+namespace OnlineFPS
 {
-    public ConstantRotation ConstantRotation;
-
-    public class Baker : Baker<ConstantRotationAuthoring>
+    public class ConstantRotationAuthoring : MonoBehaviour
     {
-        public override void Bake(ConstantRotationAuthoring authoring)
+        public ConstantRotation ConstantRotation;
+
+        public class Baker : Baker<ConstantRotationAuthoring>
         {
-            Entity entity = GetEntity(TransformUsageFlags.Dynamic);
-            AddComponent(entity, authoring.ConstantRotation);
+            public override void Bake(ConstantRotationAuthoring authoring)
+            {
+                Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+                AddComponent(entity, authoring.ConstantRotation);
+            }
         }
     }
 }

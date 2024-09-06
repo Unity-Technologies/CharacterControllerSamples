@@ -6,13 +6,15 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/OnlineFPS.unity
+    path: Assets/Scenes/Menu.unity
+    guid: 10c4f2bb0cfda5e4e9b81709c8e6ca8b
+  - enabled: 1
+    path: Assets/Scenes/Map1.unity
     guid: 855b43a429ff696419fb4392710344f8
   - enabled: 1
-    path: Assets/Scenes/_LightingScenes/GameScene_Lighting.unity
-    guid: 9f672bbbca0a79546818b18f1c1d9adf
-  - enabled: 1
-    path: Assets/Scenes/_LightingScenes/MenuVisuals_Lighting.unity
-    guid: 724d8166e8be8494bb6f20bde7100cd4
+    path: Assets/Scenes/ContentReferences.unity
+    guid: 6a7db85b8220ea449ad048788f6149c9
   m_configObjects:
     com.unity.input.settings: {fileID: 11400000, guid: 3037ed85607368f4a9b0a84446fd430f, type: 2}
+    com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 7638a1cf53b421c4ead9f24ac8b5532d, type: 3}
+  m_UseUCBPForAssetBundles: 0

@@ -1,0 +1,8 @@
+.StatsText {
+    color: rgb(255, 255, 255);
+    -unity-text-outline-width: 1px;
+    font-size: 16px;
+    -unity-font-style: bold;
+    height: 16px;
+    -unity-text-outline-color: rgb(0, 0, 0);
+}

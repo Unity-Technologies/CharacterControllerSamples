@@ -5,17 +5,20 @@ using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
-[Serializable]
-public struct SpectatorController : IComponentData
+namespace OnlineFPS
 {
     [Serializable]
-    public struct Parameters
+    public struct SpectatorController : IComponentData
     {
-        public float MoveSpeed;
-        public float MoveSharpness;
-        public float RotationSpeed;
-    }
+        [Serializable]
+        public struct Parameters
+        {
+            public float MoveSpeed;
+            public float MoveSharpness;
+            public float RotationSpeed;
+        }
 
-    public Parameters Params;
-    public float3 Velocity;
+        public Parameters Params;
+        public float3 Velocity;
+    }
 }

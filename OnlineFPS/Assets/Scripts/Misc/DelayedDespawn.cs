@@ -1,10 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
+using Unity.NetCode;
 using UnityEngine;
 
-public struct DelayedDespawn : IComponentData
+namespace OnlineFPS
 {
-    public float Timer;
-    public byte HasDisabledRendering;
+    [GhostComponent]
+    [GhostEnabledBit]
+    public struct DelayedDespawn : IComponentData, IEnableableComponent
+    {
+        public uint Ticks;
+        public byte HasHandledPreDespawn;
+    }
 }

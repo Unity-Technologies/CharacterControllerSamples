@@ -11,7 +11,8 @@
                     "id": "5926d1fd-8bc7-48e8-a671-ff59c7d8fae6",
                     "expectedControlType": "",
                     "processors": "Clamp(max=1)",
-                    "interactions": ""
+                    "interactions": "",
+                    "initialStateCheck": true
                 },
                 {
                     "name": "LookDelta",
@@ -19,7 +20,8 @@
                     "id": "8313772a-4db2-4934-89d6-3410caf6d19c",
                     "expectedControlType": "Vector2",
                     "processors": "",
-                    "interactions": ""
+                    "interactions": "",
+                    "initialStateCheck": true
                 },
                 {
                     "name": "LookConst",
@@ -27,15 +29,17 @@
                     "id": "c7859773-cf29-4a35-8002-7294da914c20",
                     "expectedControlType": "",
                     "processors": "",
-                    "interactions": ""
+                    "interactions": "",
+                    "initialStateCheck": true
                 },
                 {
                     "name": "Jump",
                     "type": "Button",
                     "id": "e72bb4f0-769e-419a-b126-e5cceb2c9b10",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
-                    "interactions": ""
+                    "interactions": "",
+                    "initialStateCheck": false
                 },
                 {
                     "name": "Roll",
@@ -43,7 +47,8 @@
                     "id": "12d27c10-f0e3-42fc-a7b2-ba873ab82682",
                     "expectedControlType": "Button",
                     "processors": "",
-                    "interactions": ""
+                    "interactions": "",
+                    "initialStateCheck": false
                 },
                 {
                     "name": "Sprint",
@@ -51,7 +56,8 @@
                     "id": "fe3235ec-7c88-4156-8908-e23daba138a4",
                     "expectedControlType": "Button",
                     "processors": "",
-                    "interactions": ""
+                    "interactions": "",
+                    "initialStateCheck": false
                 },
                 {
                     "name": "CameraZoom",
@@ -59,7 +65,8 @@
                     "id": "b9342fd8-9c52-4100-bb70-6c6d361609b7",
                     "expectedControlType": "",
                     "processors": "",
-                    "interactions": ""
+                    "interactions": "",
+                    "initialStateCheck": true
                 },
                 {
                     "name": "Dash",
@@ -67,7 +74,8 @@
                     "id": "12230fe0-5d15-4f77-90f7-e62d57d5940e",
                     "expectedControlType": "Button",
                     "processors": "",
-                    "interactions": ""
+                    "interactions": "",
+                    "initialStateCheck": false
                 },
                 {
                     "name": "Crouch",
@@ -75,7 +83,8 @@
                     "id": "c25ed409-b6b4-4e95-a936-3284cb98bd8f",
                     "expectedControlType": "Button",
                     "processors": "",
-                    "interactions": ""
+                    "interactions": "",
+                    "initialStateCheck": false
                 },
                 {
                     "name": "Rope",
@@ -83,7 +92,8 @@
                     "id": "56cac786-2ffc-454b-9435-dc8361542e44",
                     "expectedControlType": "Button",
                     "processors": "",
-                    "interactions": ""
+                    "interactions": "",
+                    "initialStateCheck": false
                 },
                 {
                     "name": "Climb",
@@ -91,7 +101,8 @@
                     "id": "1361423f-7b42-42bd-b1b3-ba59d5ef7212",
                     "expectedControlType": "Button",
                     "processors": "",
-                    "interactions": ""
+                    "interactions": "",
+                    "initialStateCheck": false
                 },
                 {
                     "name": "FlyNoCollisions",
@@ -99,7 +110,8 @@
                     "id": "70df9dca-62d7-4902-9c9e-8629a25d62b2",
                     "expectedControlType": "Button",
                     "processors": "",
-                    "interactions": ""
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -386,6 +398,34 @@
                     "processors": "StickDeadzone,ScaleVector2(x=70,y=70)",
                     "groups": "",
                     "action": "LookConst",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "New action map",
+            "id": "efc0ef19-d11d-4022-9644-3e202f678155",
+            "actions": [
+                {
+                    "name": "New action",
+                    "type": "Button",
+                    "id": "030af0c7-70bf-4737-b01a-f8917a742487",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "f4764546-dccc-425b-bb45-68991e02d95e",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

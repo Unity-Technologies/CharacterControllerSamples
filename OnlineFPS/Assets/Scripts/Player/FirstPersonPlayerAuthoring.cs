@@ -1,21 +1,25 @@
 using UnityEngine;
 using Unity.Entities;
 
-[DisallowMultipleComponent]
-public class FirstPersonPlayerAuthoring : MonoBehaviour
+namespace OnlineFPS
 {
-    public GameObject ControlledCharacter;
-
-    public class Baker : Baker<FirstPersonPlayerAuthoring>
+    [DisallowMultipleComponent]
+    public class FirstPersonPlayerAuthoring : MonoBehaviour
     {
-        public override void Bake(FirstPersonPlayerAuthoring authoring)
+        public GameObject ControlledCharacter;
+
+        public class Baker : Baker<FirstPersonPlayerAuthoring>
         {
-            Entity entity = GetEntity(TransformUsageFlags.None);
-            AddComponent(entity, new FirstPersonPlayer
+            public override void Bake(FirstPersonPlayerAuthoring authoring)
             {
-                ControlledCharacter = GetEntity(authoring.ControlledCharacter, TransformUsageFlags.Dynamic),
-            });
-            AddComponent<FirstPersonPlayerCommands>(entity);
+                Entity entity = GetEntity(TransformUsageFlags.None);
+                AddComponent(entity, new FirstPersonPlayer
+                {
+                    ControlledCharacter = GetEntity(authoring.ControlledCharacter, TransformUsageFlags.Dynamic),
+                });
+                AddComponent(entity, new FirstPersonPlayerNetworkInput());
+                AddComponent<FirstPersonPlayerCommands>(entity);
+            }
         }
     }
 }

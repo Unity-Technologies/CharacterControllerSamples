@@ -3,16 +3,19 @@ using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine;
 
-public class SpectatorControllerAuthoring : MonoBehaviour
+namespace OnlineFPS
 {
-    public SpectatorController.Parameters Parameters; 
-
-    public class Baker : Baker<SpectatorControllerAuthoring>
+    public class SpectatorControllerAuthoring : MonoBehaviour
     {
-        public override void Bake(SpectatorControllerAuthoring authoring)
+        public SpectatorController.Parameters Parameters;
+
+        public class Baker : Baker<SpectatorControllerAuthoring>
         {
-            Entity entity = GetEntity(TransformUsageFlags.Dynamic);
-            AddComponent(entity, new SpectatorController { Params = authoring.Parameters } );
+            public override void Bake(SpectatorControllerAuthoring authoring)
+            {
+                Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+                AddComponent(entity, new SpectatorController { Params = authoring.Parameters });
+            }
         }
     }
 }

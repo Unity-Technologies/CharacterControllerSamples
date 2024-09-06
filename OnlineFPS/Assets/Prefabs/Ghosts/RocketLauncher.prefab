@@ -43,6 +43,7 @@ GameObject:
   - component: {fileID: 4072961949000386649}
   - component: {fileID: 1815552374819116075}
   - component: {fileID: 3727884803829846466}
+  - component: {fileID: 1199058673766335019}
   - component: {fileID: -2282343359729973087}
   - component: {fileID: 4787931324156615615}
   - component: {fileID: 5486053908281679626}
@@ -94,6 +95,9 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -131,7 +135,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c16549610bfe4458aa9389201d072bb6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &-2282343359729973087
+--- !u!114 &1199058673766335019
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -140,12 +144,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 9058671491380490423}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 09c20c2811d1f7841a103d315d3d8187, type: 3}
+  m_Script: {fileID: 11500000, guid: c0ce4c856e86508419032ac135fe111b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  FiringMecanism:
-    AutoFire: 0
-    FiringRate: 1
+  ShotOrigin: {fileID: 4568974808937669843}
+  Automatic: 0
+  FiringRate: 1
+  SpreadDegrees: 0
+  ProjectilesPerShot: 1
   VisualFeedback:
     WeaponBobHAmount: 0.08
     WeaponBobVAmount: 0.06
@@ -163,10 +169,19 @@ MonoBehaviour:
     RecoilMaxFOVKick: 18
     RecoilFOVKickSharpness: 150
     RecoilFOVKickRestitutionSharpness: 15
-  ShotOrigin: {fileID: 4568974808937669843}
+--- !u!114 &-2282343359729973087
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9058671491380490423}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 09c20c2811d1f7841a103d315d3d8187, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
   ProjectilePrefab: {fileID: 4435128402928720461, guid: 645ac0e910b9c364496b42cd71eec9c0, type: 3}
-  SpreadDegrees: 0
-  ProjectilesCount: 1
 --- !u!114 &4787931324156615615
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -186,7 +201,7 @@ MonoBehaviour:
   prefabId: b57eb5e59fe483041bcc4dee19f60dbc
   HasOwner: 1
   SupportAutoCommandTarget: 0
-  TrackInterpolationDelay: 0
+  TrackInterpolationDelay: 1
   GhostGroup: 0
   UsePreSerialization: 0
 --- !u!114 &5486053908281679626

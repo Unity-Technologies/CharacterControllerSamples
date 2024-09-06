@@ -79,7 +79,7 @@ public partial struct ServerGameSetupSystem : ISystem
             GameSetup gameSetup = SystemAPI.GetSingleton<GameSetup>();
             
             // When a client wants to join, spawn and setup a character for them
-            foreach (var (recieveRPC, joinRequest, entity) in SystemAPI.Query<ReceiveRpcCommandRequest, ClientJoinRequest>().WithEntityAccess())
+            foreach (var (receiveRPC, joinRequest, entity) in SystemAPI.Query<ReceiveRpcCommandRequest, ClientJoinRequest>().WithEntityAccess())
             {                
                 // Spawn character, player, and camera ghost prefabs
                 Entity characterEntity = ecb.Instantiate(gameSetup.CharacterPrefab);
@@ -87,13 +87,13 @@ public partial struct ServerGameSetupSystem : ISystem
                 Entity cameraEntity = ecb.Instantiate(gameSetup.CameraPrefab);
                     
                 // Add spawned prefabs to the connection entity's linked entities, so they get destroyed along with it
-                ecb.AppendToBuffer(recieveRPC.SourceConnection, new LinkedEntityGroup { Value = characterEntity });
-                ecb.AppendToBuffer(recieveRPC.SourceConnection, new LinkedEntityGroup { Value = playerEntity });
-                ecb.AppendToBuffer(recieveRPC.SourceConnection, new LinkedEntityGroup { Value = cameraEntity });
+                ecb.AppendToBuffer(receiveRPC.SourceConnection, new LinkedEntityGroup { Value = characterEntity });
+                ecb.AppendToBuffer(receiveRPC.SourceConnection, new LinkedEntityGroup { Value = playerEntity });
+                ecb.AppendToBuffer(receiveRPC.SourceConnection, new LinkedEntityGroup { Value = cameraEntity });
                 
                 // Setup the owners of the ghost prefabs (which are all owner-predicted) 
                 // The owner is the client connection that sent the join request
-                int clientConnectionId = SystemAPI.GetComponent<NetworkId>(recieveRPC.SourceConnection).Value;
+                int clientConnectionId = SystemAPI.GetComponent<NetworkId>(receiveRPC.SourceConnection).Value;
                 ecb.SetComponent(characterEntity, new GhostOwner { NetworkId = clientConnectionId });
                 ecb.SetComponent(playerEntity, new GhostOwner { NetworkId = clientConnectionId });
                 ecb.SetComponent(cameraEntity, new GhostOwner { NetworkId = clientConnectionId });
@@ -108,7 +108,7 @@ public partial struct ServerGameSetupSystem : ISystem
                 ecb.SetComponent(characterEntity, LocalTransform.FromPosition(_random.NextFloat3(new float3(-5f,0f,-5f), new float3(5f,0f,5f))));
                 
                 // Allow this client to stream in game
-                ecb.AddComponent<NetworkStreamInGame>(recieveRPC.SourceConnection);
+                ecb.AddComponent<NetworkStreamInGame>(receiveRPC.SourceConnection);
                     
                 // Destroy the RPC since we've processed it
                 ecb.DestroyEntity(entity);

@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Data/UI%20Toolkit/Stylesheets/StatsPanel.uss?fileID=7433441132597879392&amp;guid=3152dce24a7375b41b51516033d0306b&amp;type=3#StatsPanel" />
+    <ui:VisualElement name="StatsPanel" style="flex-grow: 0; width: 250px; align-self: flex-end;">
+        <ui:Label tabindex="-1" text="FPS avg: 000 (0.00ms)" parse-escape-sequences="true" display-tooltip-when-elided="true" name="FramerateAvg" class="StatsText" style="color: rgb(255, 215, 0);" />
+        <ui:Label tabindex="-1" text="FPS min: 000 (0.00ms)" parse-escape-sequences="true" display-tooltip-when-elided="true" name="FramerateMin" class="StatsText" style="color: rgb(255, 0, 0);" />
+        <ui:Label tabindex="-1" text="Ping: 0ms" parse-escape-sequences="true" display-tooltip-when-elided="true" name="Ping" class="StatsText" />
+    </ui:VisualElement>
+</ui:UXML>

@@ -3,21 +3,23 @@ using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine;
 
-public class HealthAuthoring : MonoBehaviour
+namespace OnlineFPS
 {
-    public float MaxHealth = 100f;
-    
-    public class Baker : Baker<HealthAuthoring>
+    public class HealthAuthoring : MonoBehaviour
     {
-        public override void Bake(HealthAuthoring authoring)
+        public float MaxHealth = 100f;
+
+        public class Baker : Baker<HealthAuthoring>
         {
-            Entity entity = GetEntity(TransformUsageFlags.None);
-            AddComponent(entity, new Health
+            public override void Bake(HealthAuthoring authoring)
             {
-                MaxHealth = authoring.MaxHealth,
-                CurrentHealth = authoring.MaxHealth,
-            });
+                Entity entity = GetEntity(TransformUsageFlags.None);
+                AddComponent(entity, new Health
+                {
+                    MaxHealth = authoring.MaxHealth,
+                    CurrentHealth = authoring.MaxHealth,
+                });
+            }
         }
     }
 }
- 

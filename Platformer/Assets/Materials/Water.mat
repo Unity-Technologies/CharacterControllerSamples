@@ -371,6 +371,7 @@ Material:
     - _UnlitColor: {r: 0.17885366, g: 0.37006775, b: 0.6037736, a: 0.59607846}
     - _UnlitColorMap_MipInfo: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!114 &826239324072422183
 MonoBehaviour:
   m_ObjectHideFlags: 11
@@ -383,4 +384,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  version: 7
+  version: 9

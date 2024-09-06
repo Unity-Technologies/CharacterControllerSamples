@@ -4,50 +4,77 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
+using Unity.Physics;
 using Unity.Transforms;
 using UnityEngine;
+using Collider = Unity.Physics.Collider;
 
-[WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation | WorldSystemFilterFlags.ClientSimulation)]
-[UpdateInGroup(typeof(SimulationSystemGroup))]
-[BurstCompile]
-public partial struct DelayedDespawnSystem : ISystem
+namespace OnlineFPS
 {
+    [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation | WorldSystemFilterFlags.ClientSimulation)]
+    [UpdateInGroup(typeof(SimulationSystemGroup))]
     [BurstCompile]
-    private void OnUpdate(ref SystemState state)
+    public partial struct DelayedDespawnSystem : ISystem
     {
-        DelayedDespawnJob job = new DelayedDespawnJob
+        [BurstCompile]
+        private void OnCreate(ref SystemState state)
         {
-            IsServer = state.WorldUnmanaged.IsServer(),
-            DeltaTime = SystemAPI.Time.DeltaTime,
-            ECB = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged),
-            ChildBufferLookup = SystemAPI.GetBufferLookup<Child>(true),
-        };
-        state.Dependency = job.Schedule(state.Dependency);
-    }
+            state.RequireForUpdate<GameResources>();
+        }
 
-    [BurstCompile]
-    public partial struct DelayedDespawnJob : IJobEntity
-    {
-        public bool IsServer;
-        public float DeltaTime;
-        public EntityCommandBuffer ECB;
-        [ReadOnly] public BufferLookup<Child> ChildBufferLookup;
-        
-        void Execute(Entity entity, ref DelayedDespawn delayedDespawn)
+        [BurstCompile]
+        private void OnUpdate(ref SystemState state)
         {
-            if (IsServer)
+            GameResources gameResources = SystemAPI.GetSingleton<GameResources>();
+
+            DelayedDespawnJob job = new DelayedDespawnJob
             {
-                delayedDespawn.Timer -= DeltaTime;
-                if (delayedDespawn.Timer <= 0f)
+                IsServer = state.WorldUnmanaged.IsServer(),
+                DespawnTicks = gameResources.DespawnTicks,
+                ECB = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>().ValueRW
+                    .CreateCommandBuffer(state.WorldUnmanaged),
+                ChildBufferLookup = SystemAPI.GetBufferLookup<Child>(true),
+                PhysicsColliderLookup = SystemAPI.GetComponentLookup<PhysicsCollider>(false),
+            };
+            state.Dependency = job.Schedule(state.Dependency);
+        }
+
+        [BurstCompile]
+        public unsafe partial struct DelayedDespawnJob : IJobEntity
+        {
+            public bool IsServer;
+            public uint DespawnTicks;
+            public EntityCommandBuffer ECB;
+            [ReadOnly] public BufferLookup<Child> ChildBufferLookup;
+            public ComponentLookup<PhysicsCollider> PhysicsColliderLookup;
+
+            void Execute(Entity entity, ref DelayedDespawn delayedDespawn)
+            {
+                if (IsServer)
                 {
-                    ECB.DestroyEntity(entity);
+                    delayedDespawn.Ticks++;
+                    if (delayedDespawn.Ticks > DespawnTicks)
+                    {
+                        ECB.DestroyEntity(entity);
+                    }
                 }
-            }
-            // If client...
-            else if (delayedDespawn.HasDisabledRendering == 0)
-            {
-                MiscUtilities.DisableRenderingInHierarchy(ECB, entity, ref ChildBufferLookup);
-                delayedDespawn.HasDisabledRendering = 1;
+
+                if (delayedDespawn.HasHandledPreDespawn == 0)
+                {
+                    if (!IsServer)
+                    {
+                        MiscUtilities.DisableRenderingInHierarchy(ECB, entity, ref ChildBufferLookup);
+                    }
+
+                    // Disable collisions
+                    if (PhysicsColliderLookup.TryGetComponent(entity, out PhysicsCollider physicsCollider))
+                    {
+                        ref Collider collider = ref *physicsCollider.ColliderPtr;
+                        collider.SetCollisionResponse(CollisionResponsePolicy.None);
+                    }
+
+                    delayedDespawn.HasHandledPreDespawn = 1;
+                }
             }
         }
     }

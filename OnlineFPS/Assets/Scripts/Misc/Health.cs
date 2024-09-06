@@ -5,16 +5,18 @@ using Unity.Entities;
 using Unity.NetCode;
 using UnityEngine;
 
-[Serializable]
-[GhostComponent()]
-public struct Health : IComponentData
+namespace OnlineFPS
 {
-    public float MaxHealth;
-    [GhostField(Quantization = 100)]
-    public float CurrentHealth;
-
-    public bool IsDead()
+    [Serializable]
+    [GhostComponent()]
+    public struct Health : IComponentData
     {
-        return CurrentHealth <= 0f;
+        public float MaxHealth;
+        [GhostField(Quantization = 100)] public float CurrentHealth;
+
+        public bool IsDead()
+        {
+            return CurrentHealth <= 0f;
+        }
     }
 }

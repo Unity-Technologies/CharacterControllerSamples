@@ -12,9 +12,10 @@ GameObject:
   - component: {fileID: 2418391287657054647}
   - component: {fileID: 3233990823830701167}
   - component: {fileID: 788863443883304603}
+  - component: {fileID: 7426047537680517407}
   - component: {fileID: 7164985309084839727}
   - component: {fileID: 5488025636534697902}
-  - component: {fileID: 6481260892641479597}
+  - component: {fileID: 1135347752982597965}
   m_Layer: 0
   m_Name: Rocket
   m_TagString: Untagged
@@ -62,6 +63,9 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -100,12 +104,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aaefc99a12f5feb45851a1c4a2b18fb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Speed: 65
   DirectHitDamage: 100
   MaxRadiusDamage: 130
   DamageRadius: 5
+  ExplosionSize: 10
+--- !u!114 &7426047537680517407
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4435128402928720461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1ccfe9545d3990418ef54cf4f3ecb38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Speed: 65
+  Gravity: 0
   MaxLifetime: 5
-  HitVFXPrefab: {fileID: 7161354016620288120, guid: 9a38edf2b28fb134ebcfec78bd6e9596, type: 3}
   VisualOffsetCorrectionDuration: 0.5
 --- !u!114 &7164985309084839727
 MonoBehaviour:
@@ -141,7 +158,7 @@ MonoBehaviour:
   TrackInterpolationDelay: 0
   GhostGroup: 0
   UsePreSerialization: 0
---- !u!114 &6481260892641479597
+--- !u!114 &1135347752982597965
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -154,98 +171,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ComponentOverrides:
-  - FullTypeName: Projectile
-    EntityIndex: 0
-    PrefabType: -1
-    SendTypeOptimization: 3
-    VariantHash: 0
-  - FullTypeName: ProjectileShotVisuals
-    EntityIndex: 0
-    PrefabType: -1
-    SendTypeOptimization: 3
-    VariantHash: 0
-  - FullTypeName: Unity.NetCode.GhostAuthoringComponentBakingData
-    EntityIndex: 0
-    PrefabType: 7
-    SendTypeOptimization: -1
-    VariantHash: 0
-  - FullTypeName: Unity.NetCode.GhostAuthoringComponentOverridesBaking
-    EntityIndex: 0
-    PrefabType: 7
-    SendTypeOptimization: -1
-    VariantHash: 0
-  - FullTypeName: Unity.NetCode.GhostInstance
-    EntityIndex: 0
-    PrefabType: 7
-    SendTypeOptimization: -1
-    VariantHash: 0
-  - FullTypeName: Unity.NetCode.GhostOwnerIsLocal
-    EntityIndex: 0
-    PrefabType: 7
-    SendTypeOptimization: -1
-    VariantHash: 0
-  - FullTypeName: Unity.NetCode.GhostPrefabRuntimeStrip
-    EntityIndex: 0
-    PrefabType: 7
-    SendTypeOptimization: -1
-    VariantHash: 0
-  - FullTypeName: Unity.NetCode.GhostRootEntityBaking
-    EntityIndex: 0
-    PrefabType: 7
-    SendTypeOptimization: -1
-    VariantHash: 0
-  - FullTypeName: Unity.NetCode.GhostType
-    EntityIndex: 0
-    PrefabType: 7
-    SendTypeOptimization: -1
-    VariantHash: 0
-  - FullTypeName: Unity.NetCode.GhostTypePartition
-    EntityIndex: 0
-    PrefabType: 7
-    SendTypeOptimization: -1
-    VariantHash: 0
-  - FullTypeName: Unity.NetCode.PredictedGhost
-    EntityIndex: 0
-    PrefabType: 7
-    SendTypeOptimization: -1
-    VariantHash: 0
-  - FullTypeName: Unity.NetCode.PredictedGhostSpawnRequest
-    EntityIndex: 0
-    PrefabType: 7
-    SendTypeOptimization: -1
-    VariantHash: 0
-  - FullTypeName: Unity.NetCode.SnapshotData
-    EntityIndex: 0
-    PrefabType: 7
-    SendTypeOptimization: -1
-    VariantHash: 0
-  - FullTypeName: Unity.NetCode.SnapshotDataBuffer
-    EntityIndex: 0
-    PrefabType: 7
-    SendTypeOptimization: -1
-    VariantHash: 0
-  - FullTypeName: Unity.NetCode.SnapshotDynamicDataBuffer
-    EntityIndex: 0
-    PrefabType: 7
-    SendTypeOptimization: -1
-    VariantHash: 0
   - FullTypeName: Unity.Transforms.LocalTransform
     EntityIndex: 0
     PrefabType: -1
-    SendTypeOptimization: 3
-    VariantHash: 17312028693704544116
-  - FullTypeName: Unity.Transforms.LocalTransform
-    EntityIndex: 1
-    PrefabType: -1
-    SendTypeOptimization: 3
-    VariantHash: 10188360468653526834
-  - FullTypeName: Unity.Transforms.LocalTransform
-    EntityIndex: 2
-    PrefabType: -1
-    SendTypeOptimization: 3
-    VariantHash: 10188360468653526834
-  - FullTypeName: WeaponShotIgnoredEntity
-    EntityIndex: 0
-    PrefabType: 7
     SendTypeOptimization: -1
-    VariantHash: 0
+    VariantHash: 18225908329647095764

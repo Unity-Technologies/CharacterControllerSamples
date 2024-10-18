@@ -9,6 +9,7 @@ using Unity.CharacterController;
 
 namespace OnlineFPS
 {
+    [CreateBefore(typeof(Unity.NetCode.TransformDefaultVariantSystem))]
     public partial class DefaultVariantSystem : DefaultVariantSystemBase
     {
         protected override void RegisterDefaultVariants(Dictionary<ComponentType, Rule> defaultVariants)
@@ -27,7 +28,7 @@ namespace OnlineFPS
         [GhostField()] public bool IsGrounded;
     }
 
-// Character interpolation must be Client-only, because it would prevent proper LocalToWorld updates on server otherwise
+    // Character interpolation must be Client-only, because it would prevent proper LocalToWorld updates on server otherwise
     [GhostComponentVariation(typeof(CharacterInterpolation))]
     [GhostComponent(PrefabType = GhostPrefabType.PredictedClient)]
     public struct CharacterInterpolation_GhostVariant

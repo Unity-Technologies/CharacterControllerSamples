@@ -172,6 +172,8 @@ namespace OnlineFPS
         public bool ShootPressed;
         public bool ShootReleased;
         public bool AimHeld;
+
+        public uint InterpolationDelay;
     }
 
     public struct WeaponOwner : IComponentData

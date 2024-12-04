@@ -171,9 +171,11 @@ MonoBehaviour:
   prefabId: 44cc784d5b8c9594baabe6f315e02449
   HasOwner: 1
   SupportAutoCommandTarget: 0
-  TrackInterpolationDelay: 1
+  TrackInterpolationDelay: 0
   GhostGroup: 0
   UsePreSerialization: 0
+  RollbackPredictedSpawnedGhostState: 0
+  RollbackPredictionOnStructuralChanges: 1
 --- !u!114 &-6337258574022047128
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -135,7 +135,8 @@ namespace OnlineFPS
             public ComponentLookup<WeaponControl> WeaponControlLookup;
 
             void Execute(ref FirstPersonPlayerCommands playerCommands,
-                ref FirstPersonPlayerNetworkInput playerNetworkInput, in FirstPersonPlayer player)
+                ref FirstPersonPlayerNetworkInput playerNetworkInput, in FirstPersonPlayer player,
+                in CommandDataInterpolationDelay interpolationDelay)
             {
                 // Compute a rotation delta from inputs, compared to last known value
                 float2 lookYawPitchDegreesDelta = InputDeltaUtilities.GetInputDelta(
@@ -168,6 +169,8 @@ namespace OnlineFPS
 
                         // Aim
                         weaponControl.AimHeld = playerCommands.AimHeld;
+
+                        weaponControl.InterpolationDelay = interpolationDelay.Delay;
 
                         WeaponControlLookup[activeWeapon.Entity] = weaponControl;
                     }
@@ -207,8 +210,7 @@ namespace OnlineFPS
             [ReadOnly] public ComponentLookup<LocalTransform> LocalTransformLookup;
             public ComponentLookup<FirstPersonCharacterControl> CharacterControlLookup;
 
-            void Execute(in FirstPersonPlayerCommands playerCommands, in FirstPersonPlayer player,
-                in CommandDataInterpolationDelay commandInterpolationDelay)
+            void Execute(in FirstPersonPlayerCommands playerCommands, in FirstPersonPlayer player)
             {
                 // Character
                 if (CharacterControlLookup.HasComponent(player.ControlledCharacter))

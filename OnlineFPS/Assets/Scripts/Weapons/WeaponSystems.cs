@@ -200,16 +200,16 @@ namespace OnlineFPS
 
             void Execute(
                 in RaycastWeapon raycastWeapon,
+                in WeaponControl weaponControl,
                 in DynamicBuffer<WeaponProjectileEvent> projectileEvents,
                 ref DynamicBuffer<RaycastWeaponVisualProjectileEvent> visualProjectileEvents,
-                in CommandDataInterpolationDelay interpolationDelay,
                 in DynamicBuffer<WeaponShotIgnoredEntity> ignoredEntities)
             {
                 if (RaycastProjectileLookup.TryGetComponent(raycastWeapon.ProjectilePrefab,
                         out RaycastProjectile raycastProjectile))
                 {
-                    PhysicsWorldHistory.GetCollisionWorldFromTick(NetworkTime.ServerTick, interpolationDelay.Delay,
-                        ref PhysicsWorld, out CollisionWorld collisionWorld);
+                    PhysicsWorldHistory.GetCollisionWorldFromTick(NetworkTime.ServerTick, 
+                        weaponControl.InterpolationDelay, ref PhysicsWorld, out CollisionWorld collisionWorld);
 
                     for (int i = 0; i < projectileEvents.Length; i++)
                     {

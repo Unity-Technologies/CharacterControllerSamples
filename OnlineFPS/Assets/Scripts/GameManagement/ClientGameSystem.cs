@@ -144,7 +144,7 @@ namespace OnlineFPS
         private void HandleWaitForJoinConfirmation(ref SystemState state, ref Singleton singleton,
             ref GameWorldSystem.Singleton gameWorldSystemSingleton, GameResources gameResources)
         {
-            EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<BeginSimulationEntityCommandBufferSystem.Singleton>()
+            EntityCommandBuffer ecb = SystemAPI.GetSingletonRW<EndSimulationEntityCommandBufferSystem.Singleton>()
                 .ValueRW.CreateCommandBuffer(state.WorldUnmanaged);
 
             if (SystemAPI.HasSingleton<NetworkId>() && !SystemAPI.HasSingleton<NetworkStreamInGame>())

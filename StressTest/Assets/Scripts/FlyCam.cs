@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class FlyCam : MonoBehaviour
 {
@@ -14,7 +15,7 @@ public class FlyCam : MonoBehaviour
     private float _pitchAngle = 0f;
     private Vector3 _planarForward = Vector3.forward;
     private Vector3 _currentMoveVelocity = default;
-    private Vector3 _previousMousePos = default;
+    private Vector2 _previousMousePos = default;
 
     void Start()
     {
@@ -24,16 +25,16 @@ public class FlyCam : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetMouseButtonDown(1))
+        if (Mouse.current.rightButton.wasPressedThisFrame)
         {
-            _previousMousePos = Input.mousePosition;
+            _previousMousePos = Mouse.current.position.ReadValue();
         }
 
-        if (Input.GetMouseButton(1))
+        if (Mouse.current.rightButton.isPressed)
         {
             // Rotation Input
-            Vector3 mouseDelta = Input.mousePosition - _previousMousePos;
-            _previousMousePos = Input.mousePosition;
+            Vector3 mouseDelta = (Mouse.current.position.ReadValue() - _previousMousePos);
+            _previousMousePos = Mouse.current.position.ReadValue();
 
             // Yaw
             float yawAngleChange = mouseDelta.x * RotationSpeed * Time.deltaTime;
@@ -50,14 +51,14 @@ public class FlyCam : MonoBehaviour
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, RotationSharpness * Time.deltaTime);
 
             // Move Input
-            Vector3 forwardInput = transform.forward * ((Input.GetKey(KeyCode.W) ? 1f : 0f) + (Input.GetKey(KeyCode.S) ? -1f : 0f));
-            Vector3 rightInput = transform.right * ((Input.GetKey(KeyCode.D) ? 1f : 0f) + (Input.GetKey(KeyCode.A) ? -1f : 0f));
-            Vector3 upInput = transform.up * ((Input.GetKey(KeyCode.E) ? 1f : 0f) + (Input.GetKey(KeyCode.Q) ? -1f : 0f));
+            Vector3 forwardInput = transform.forward * ((Keyboard.current.wKey.isPressed ? 1f : 0f) + (Keyboard.current.sKey.isPressed ? -1f : 0f));
+            Vector3 rightInput = transform.right * ((Keyboard.current.dKey.isPressed ? 1f : 0f) + (Keyboard.current.aKey.isPressed ? -1f : 0f));
+            Vector3 upInput = transform.up * ((Keyboard.current.eKey.isPressed ? 1f : 0f) + (Keyboard.current.qKey.isPressed ? -1f : 0f));
             Vector3 directionalInput = Vector3.ClampMagnitude(forwardInput + rightInput + upInput, 1f);
 
             // Move
             float finalMaxSpeed = MaxMoveSpeed;
-            if (Input.GetKey(KeyCode.LeftShift))
+            if (Keyboard.current.leftShiftKey.isPressed)
             {
                 finalMaxSpeed *= SprintSpeedBoost;
             }

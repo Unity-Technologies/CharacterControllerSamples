@@ -8,6 +8,7 @@ using Unity.Transforms;
 using Unity.Physics.Systems;
 using Unity.CharacterController;
 using Unity.NetCode;
+using UnityEngine.InputSystem;
 
 namespace OnlineFPS
 {
@@ -34,7 +35,7 @@ namespace OnlineFPS
                          .WithAll<GhostOwnerIsLocal>().WithEntityAccess())
             {
                 // Toggle auto-movement (used for testing purposes)
-                if (UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.F8))
+                if (Keyboard.current.f8Key.wasPressedThisFrame)
                 {
                     player.ValueRW.IsAutoMoving = !player.ValueRW.IsAutoMoving;
                 }

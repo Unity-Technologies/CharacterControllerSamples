@@ -9,7 +9,8 @@ using Unity.Physics;
 using Unity.Transforms;
 using Unity.CharacterController;
 
-[UpdateInGroup(typeof(InitializationSystemGroup))]
+[UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
+[UpdateBefore(typeof(FixedStepSimulationSystemGroup))]
 [RequireMatchingQueriesForUpdate]
 [BurstCompile]
 public partial struct PlatformerCharacterInitializationSystem : ISystem
@@ -75,7 +76,7 @@ public partial struct PlatformerCharacterPhysicsUpdateSystem : ISystem
     {
         _context.OnSystemUpdate(ref state, SystemAPI.GetSingletonRW<EndSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged));
         _baseContext.OnSystemUpdate(ref state, SystemAPI.Time, SystemAPI.GetSingleton<PhysicsWorldSingleton>());
-        
+
         PlatformerCharacterPhysicsUpdateJob job = new PlatformerCharacterPhysicsUpdateJob
         {
             Context = _context,
@@ -90,7 +91,7 @@ public partial struct PlatformerCharacterPhysicsUpdateSystem : ISystem
     {
         public PlatformerCharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
-    
+
         void Execute([ChunkIndexInQuery] int chunkIndex, PlatformerCharacterAspect characterAspect)
         {
             Context.SetChunkIndex(chunkIndex);
@@ -131,7 +132,7 @@ public partial struct PlatformerCharacterVariableUpdateSystem : ISystem
         _context.OnSystemCreate(ref state);
         _baseContext = new KinematicCharacterUpdateContext();
         _baseContext.OnSystemCreate(ref state);
-        
+
         state.RequireForUpdate(_characterQuery);
     }
 
@@ -144,7 +145,7 @@ public partial struct PlatformerCharacterVariableUpdateSystem : ISystem
     {
         _context.OnSystemUpdate(ref state, SystemAPI.GetSingletonRW<EndSimulationEntityCommandBufferSystem.Singleton>().ValueRW.CreateCommandBuffer(state.WorldUnmanaged));
         _baseContext.OnSystemUpdate(ref state, SystemAPI.Time, SystemAPI.GetSingleton<PhysicsWorldSingleton>());
-        
+
         PlatformerCharacterVariableUpdateJob job = new PlatformerCharacterVariableUpdateJob
         {
             Context = _context,
@@ -159,7 +160,7 @@ public partial struct PlatformerCharacterVariableUpdateSystem : ISystem
     {
         public PlatformerCharacterUpdateContext Context;
         public KinematicCharacterUpdateContext BaseContext;
-    
+
         void Execute([ChunkIndexInQuery] int chunkIndex, PlatformerCharacterAspect characterAspect)
         {
             Context.SetChunkIndex(chunkIndex);

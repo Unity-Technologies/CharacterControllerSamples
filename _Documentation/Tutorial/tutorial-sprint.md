@@ -17,7 +17,6 @@ public struct ThirdPersonPlayerInputs : IComponentData
 Next, we will modify the `ThirdPersonPlayerInputsSystem` so that it queries that input from the input system, and stores it in the component
 
 ```cs
-[UpdateInGroup(typeof(InitializationSystemGroup))]
 public partial class ThirdPersonPlayerInputsSystem : SystemBase
 {
     // (...)
@@ -28,7 +27,7 @@ public partial class ThirdPersonPlayerInputsSystem : SystemBase
         {
             // (...)
 
-            playerInputs.ValueRW.SprintHeld = Input.GetKey(KeyCode.LeftShift);
+            playerInputs.ValueRW.SprintHeld = Keyboard.current.leftShiftKey.isPressed;
         }
     }
 }

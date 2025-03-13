@@ -9,6 +9,7 @@ using Unity.Physics.Systems;
 using Unity.Transforms;
 using UnityEngine;
 using Unity.CharacterController;
+using UnityEngine.InputSystem;
 
 [UpdateInGroup(typeof(AfterPhysicsSystemGroup))]
 [UpdateAfter(typeof(KinematicCharacterPhysicsUpdateGroup))]
@@ -49,11 +50,10 @@ public partial struct VehicleSystem : ISystem
         }
     }
 
-    [BurstCompile]
-    public void OnUpdate(ref SystemState state)
+    public void OnUpdate(ref SystemState state) 
     {
-        float fwdInput = (Input.GetKey(KeyCode.UpArrow) ? 1f : 0f) + (Input.GetKey(KeyCode.DownArrow) ? -1f : 0f);
-        float sideInput = (Input.GetKey(KeyCode.RightArrow) ? 1f : 0f) + (Input.GetKey(KeyCode.LeftArrow) ? -1f : 0f);
+        float fwdInput = (Keyboard.current.upArrowKey.isPressed ? 1f : 0f) + (Keyboard.current.downArrowKey.isPressed ? -1f : 0f);
+        float sideInput = (Keyboard.current.rightArrowKey.isPressed ? 1f : 0f) + (Keyboard.current.leftArrowKey.isPressed ? -1f : 0f);
 
         VehicleJob job = new VehicleJob
         {
@@ -73,10 +73,10 @@ public partial struct VehicleSystem : ISystem
         public float DeltaTime;
         public float FwdInput;
         public float SideInput;
-        [ReadOnly] 
+        [ReadOnly]
         public CollisionWorld CollisionWorld;
         public ComponentLookup<LocalTransform> LocalTransformLookup;
-        [ReadOnly] 
+        [ReadOnly]
         public ComponentLookup<PhysicsCollider> PhysicsColliderLookup;
 
         void Execute(Entity entity, ref PhysicsVelocity physicsVelocity, in Vehicle vehicle, in PhysicsMass physicsMass, in DynamicBuffer<VehicleWheels> vehicleWheelsBuffer)

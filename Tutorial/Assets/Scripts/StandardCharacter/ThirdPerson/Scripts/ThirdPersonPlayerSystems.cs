@@ -7,8 +7,10 @@ using Unity.Transforms;
 using UnityEngine;
 using Unity.Physics.Systems;
 using Unity.CharacterController;
+using UnityEngine.InputSystem;
 
-[UpdateInGroup(typeof(InitializationSystemGroup))]
+[UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
+[UpdateBefore(typeof(FixedStepSimulationSystemGroup))]
 public partial class ThirdPersonPlayerInputsSystem : SystemBase
 {
     protected override void OnCreate()
@@ -16,7 +18,7 @@ public partial class ThirdPersonPlayerInputsSystem : SystemBase
         RequireForUpdate<FixedTickSystem.Singleton>();
         RequireForUpdate(SystemAPI.QueryBuilder().WithAll<ThirdPersonPlayer, ThirdPersonPlayerInputs>().Build());
     }
-    
+
     protected override void OnUpdate()
     {
         uint tick = SystemAPI.GetSingleton<FixedTickSystem.Singleton>().Tick;
@@ -25,19 +27,19 @@ public partial class ThirdPersonPlayerInputsSystem : SystemBase
         {
             playerInputs.ValueRW.MoveInput = new float2
             {
-                x = (Input.GetKey(KeyCode.D) ? 1f : 0f) + (Input.GetKey(KeyCode.A) ? -1f : 0f),
-                y = (Input.GetKey(KeyCode.W) ? 1f : 0f) + (Input.GetKey(KeyCode.S) ? -1f : 0f),
+                x = (Keyboard.current.dKey.isPressed ? 1f : 0f) + (Keyboard.current.aKey.isPressed ? -1f : 0f),
+                y = (Keyboard.current.wKey.isPressed ? 1f : 0f) + (Keyboard.current.sKey.isPressed ? -1f : 0f),
             };
 
-            playerInputs.ValueRW.CameraLookInput = new float2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
-            playerInputs.ValueRW.CameraZoomInput = -Input.mouseScrollDelta.y;
+            playerInputs.ValueRW.CameraLookInput = Mouse.current.delta.ReadValue();
+            playerInputs.ValueRW.CameraZoomInput = -Mouse.current.scroll.ReadValue().y;
 
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (Keyboard.current.spaceKey.wasPressedThisFrame)
             {
                 playerInputs.ValueRW.JumpPressed.Set(tick);
             }
-            
-            playerInputs.ValueRW.SprintHeld = Input.GetKey(KeyCode.LeftShift);
+
+            playerInputs.ValueRW.SprintHeld = Keyboard.current.leftShiftKey.isPressed;
         }
     }
 }
@@ -55,7 +57,7 @@ public partial struct ThirdPersonPlayerVariableStepControlSystem : ISystem
     {
         state.RequireForUpdate(SystemAPI.QueryBuilder().WithAll<ThirdPersonPlayer, ThirdPersonPlayerInputs>().Build());
     }
-    
+
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
@@ -64,11 +66,11 @@ public partial struct ThirdPersonPlayerVariableStepControlSystem : ISystem
             if (SystemAPI.HasComponent<OrbitCameraControl>(player.ControlledCamera))
             {
                 OrbitCameraControl cameraControl = SystemAPI.GetComponent<OrbitCameraControl>(player.ControlledCamera);
-                
+
                 cameraControl.FollowedCharacterEntity = player.ControlledCharacter;
                 cameraControl.LookDegreesDelta = playerInputs.CameraLookInput;
                 cameraControl.ZoomDelta = playerInputs.CameraZoomInput;
-                
+
                 SystemAPI.SetComponent(player.ControlledCamera, cameraControl);
             }
         }
@@ -105,7 +107,7 @@ public partial struct ThirdPersonPlayerFixedStepControlSystem : ISystem
                 ThirdPersonCharacterControl characterControl = SystemAPI.GetComponent<ThirdPersonCharacterControl>(player.ControlledCharacter);
 
                 float3 characterUp = MathUtilities.GetUpFromRotation(SystemAPI.GetComponent<LocalTransform>(player.ControlledCharacter).Rotation);
-                
+
                 // Get camera rotation, since our movement is relative to it.
                 quaternion cameraRotation = quaternion.identity;
                 if (SystemAPI.HasComponent<OrbitCamera>(player.ControlledCamera))
@@ -118,7 +120,7 @@ public partial struct ThirdPersonPlayerFixedStepControlSystem : ISystem
                 }
                 float3 cameraForwardOnUpPlane = math.normalizesafe(MathUtilities.ProjectOnPlane(MathUtilities.GetForwardFromRotation(cameraRotation), characterUp));
                 float3 cameraRight = MathUtilities.GetRightFromRotation(cameraRotation);
- 
+
                 // Move
                 characterControl.MoveVector = (playerInputs.ValueRW.MoveInput.y * cameraForwardOnUpPlane) + (playerInputs.ValueRW.MoveInput.x * cameraRight);
                 characterControl.MoveVector = MathUtilities.ClampToMaxLength(characterControl.MoveVector, 1f);

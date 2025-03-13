@@ -9,7 +9,8 @@ using Unity.Physics.Systems;
 using Unity.Transforms;
 using UnityEngine;
 
-[UpdateInGroup(typeof(InitializationSystemGroup))]
+[UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
+[UpdateBefore(typeof(FixedStepSimulationSystemGroup))]
 [BurstCompile]
 public partial struct SceneInitializationSystem : ISystem
 {
@@ -48,7 +49,7 @@ public partial struct SceneInitializationSystem : ISystem
             player.ControlledCharacter = characterEntity;
             player.ControlledCamera = cameraEntity;
             SystemAPI.SetComponent(playerEntity, player);
-            
+
             state.EntityManager.DestroyEntity(SystemAPI.GetSingletonEntity<SceneInitialization>());
         }
     }

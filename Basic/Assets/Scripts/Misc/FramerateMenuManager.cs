@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Rendering;
 using System;
+using UnityEngine.InputSystem;
 
 public struct FramerateCalculator
 {
@@ -96,12 +97,12 @@ public class FramerateMenuManager : MonoBehaviour
     void Update()
     {
         // show hide
-        if (Input.GetKeyDown(KeyCode.F1))
+        if (Keyboard.current.f1Key.wasPressedThisFrame)
         {
             MainCanvas.gameObject.SetActive(!MainCanvas.gameObject.activeSelf);
         }
 
-        if (Input.GetKeyDown(KeyCode.F3))
+        if (Keyboard.current.f3Key.wasPressedThisFrame)
         {
             _hasVSync = !_hasVSync;
             UpdateRenderSettings();

@@ -10,7 +10,7 @@ using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.SocialPlatforms;
 
-[UpdateInGroup(typeof(InitializationSystemGroup))]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
 [BurstCompile]
 public partial struct SceneInitializationSystem : ISystem
 {
@@ -29,7 +29,7 @@ public partial struct SceneInitializationSystem : ISystem
         if (SystemAPI.HasSingleton<SceneInitialization>())
         {
             ref SceneInitialization sceneInitializer = ref SystemAPI.GetSingletonRW<SceneInitialization>().ValueRW;
-            
+
             // Cursor
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
@@ -51,7 +51,7 @@ public partial struct SceneInitializationSystem : ISystem
             player.ControlledCharacter = characterEntity;
             player.ControlledCamera = cameraEntity;
             SystemAPI.SetComponent(playerEntity, player);
-            
+
             state.EntityManager.DestroyEntity(SystemAPI.GetSingletonEntity<SceneInitialization>());
         }
     }

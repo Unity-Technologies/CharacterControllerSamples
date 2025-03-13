@@ -8,7 +8,8 @@ using UnityEngine;
 using Unity.CharacterController;
 using Unity.Physics.Systems;
 
-[UpdateInGroup(typeof(InitializationSystemGroup))]
+[UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
+[UpdateBefore(typeof(FixedStepSimulationSystemGroup))]
 public partial class BasicPlayerInputsSystem : SystemBase
 {
     private BasicInputActions InputActions;
@@ -16,7 +17,7 @@ public partial class BasicPlayerInputsSystem : SystemBase
     protected override void OnCreate()
     {
         base.OnCreate();
-        
+
         RequireForUpdate<FixedTickSystem.Singleton>();
         RequireForUpdate(SystemAPI.QueryBuilder().WithAll<BasicPlayer, BasicPlayerInputs>().Build());
 
@@ -29,12 +30,12 @@ public partial class BasicPlayerInputsSystem : SystemBase
     {
         BasicInputActions.DefaultMapActions defaultMapActions = InputActions.DefaultMap;
         uint tick = SystemAPI.GetSingleton<FixedTickSystem.Singleton>().Tick;
-        
+
         foreach (var (playerInputs, player) in SystemAPI.Query<RefRW<BasicPlayerInputs>, BasicPlayer>())
         {
             playerInputs.ValueRW.MoveInput = Vector2.ClampMagnitude(defaultMapActions.Move.ReadValue<Vector2>(), 1f);
             playerInputs.ValueRW.CameraLookInput = default;
-            if(math.lengthsq(defaultMapActions.LookConst.ReadValue<Vector2>()) > math.lengthsq(defaultMapActions.LookDelta.ReadValue<Vector2>()))
+            if (math.lengthsq(defaultMapActions.LookConst.ReadValue<Vector2>()) > math.lengthsq(defaultMapActions.LookDelta.ReadValue<Vector2>()))
             {
                 playerInputs.ValueRW.CameraLookInput = defaultMapActions.LookConst.ReadValue<Vector2>() * SystemAPI.Time.DeltaTime;
             }
@@ -43,7 +44,7 @@ public partial class BasicPlayerInputsSystem : SystemBase
                 playerInputs.ValueRW.CameraLookInput = defaultMapActions.LookDelta.ReadValue<Vector2>();
             }
             playerInputs.ValueRW.CameraZoomInput = defaultMapActions.Scroll.ReadValue<float>();
-            
+
             if (defaultMapActions.Jump.WasPressedThisFrame())
             {
                 playerInputs.ValueRW.JumpPressed.Set(tick);
@@ -71,7 +72,7 @@ public partial struct BasicPlayerVariableStepControlSystem : ISystem
             if (SystemAPI.HasComponent<OrbitCameraControl>(player.ControlledCamera))
             {
                 OrbitCameraControl cameraControl = SystemAPI.GetComponent<OrbitCameraControl>(player.ControlledCamera);
-                
+
                 cameraControl.FollowedCharacterEntity = player.ControlledCharacter;
                 cameraControl.LookDegreesDelta = playerInputs.CameraLookInput;
                 cameraControl.ZoomDelta = playerInputs.CameraZoomInput;
@@ -96,7 +97,7 @@ public partial struct BasicFixedStepPlayerControlSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         uint tick = SystemAPI.GetSingleton<FixedTickSystem.Singleton>().Tick;
-        
+
         foreach (var (playerInputs, player) in SystemAPI.Query<RefRW<BasicPlayerInputs>, BasicPlayer>().WithAll<Simulate>())
         {
             if (SystemAPI.HasComponent<BasicCharacterControl>(player.ControlledCharacter))
@@ -104,7 +105,7 @@ public partial struct BasicFixedStepPlayerControlSystem : ISystem
                 BasicCharacterControl characterControl = SystemAPI.GetComponent<BasicCharacterControl>(player.ControlledCharacter);
 
                 float3 characterUp = MathUtilities.GetUpFromRotation(SystemAPI.GetComponent<LocalTransform>(player.ControlledCharacter).Rotation);
-                
+
                 // Get camera rotation, since our movement is relative to it.
                 quaternion cameraRotation = quaternion.identity;
                 if (SystemAPI.HasComponent<OrbitCamera>(player.ControlledCamera))

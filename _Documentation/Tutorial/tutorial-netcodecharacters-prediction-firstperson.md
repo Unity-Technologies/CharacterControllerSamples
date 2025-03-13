@@ -55,15 +55,14 @@ public partial class FirstPersonPlayerInputsSystem : SystemBase
         {
             playerInputs.ValueRW.MoveInput = new float2
             {
-                x = (Input.GetKey(KeyCode.D) ? 1f : 0f) + (Input.GetKey(KeyCode.A) ? -1f : 0f),
-                y = (Input.GetKey(KeyCode.W) ? 1f : 0f) + (Input.GetKey(KeyCode.S) ? -1f : 0f),
+                x = (Keyboard.current.dKey.isPressed ? 1f : 0f) + (Keyboard.current.aKey.isPressed ? -1f : 0f),
+                y = (Keyboard.current.wKey.isPressed ? 1f : 0f) + (Keyboard.current.sKey.isPressed ? -1f : 0f),
             };
             
-            InputDeltaUtilities.AddInputDelta(ref playerInputs.ValueRW.LookInput.x, Input.GetAxis("Mouse X"));
-            InputDeltaUtilities.AddInputDelta(ref playerInputs.ValueRW.LookInput.y, Input.GetAxis("Mouse Y"));
+            InputDeltaUtilities.AddInputDelta(ref playerInputs.ValueRW.LookInput, Mouse.current.delta.ReadValue());
 
             playerInputs.ValueRW.JumpPressed = default;
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (Keyboard.current.spaceKey.wasPressedThisFrame)
             {
                 playerInputs.ValueRW.JumpPressed.Set();
             }

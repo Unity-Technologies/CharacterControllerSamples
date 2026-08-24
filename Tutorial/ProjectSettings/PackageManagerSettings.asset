@@ -22,10 +22,10 @@ MonoBehaviour:
   m_Registries:
   - m_Id: main
     m_Name: 
-    m_Url: https://packages.unity.com
+    m_Url: https://artifactory.prd.cds.internal.unity3d.com/artifactory/api/npm/upm-candidates
     m_Scopes: []
     m_IsDefault: 1
-    m_Capabilities: 7
+    m_Capabilities: 0
     m_ConfigSource: 0
     m_Compliance:
       m_Status: 0
@@ -35,6 +35,6 @@ MonoBehaviour:
   m_RegistryInfoDraft:
     m_Modified: 0
     m_ErrorMessage: 
-    m_UserModificationsInstanceId: -868
-    m_OriginalInstanceId: -870
+    m_UserModificationsInstanceId: -884
+    m_OriginalInstanceId: -886
   m_LoadAssets: 0

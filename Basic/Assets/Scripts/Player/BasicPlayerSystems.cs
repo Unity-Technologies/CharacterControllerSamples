@@ -17,7 +17,12 @@ public partial class BasicPlayerInputsSystem : SystemBase
 
         RequireForUpdate<FixedTickSystem.Singleton>();
         RequireForUpdate(SystemAPI.QueryBuilder().WithAll<BasicPlayer, BasicPlayerInputs>().Build());
+    }
 
+    protected override void OnStartRunning()
+    {
+        base.OnStartRunning();
+        
         m_InputActions = new BasicInputActions();
         m_InputActions.Enable();
         m_InputActions.DefaultMap.Enable();

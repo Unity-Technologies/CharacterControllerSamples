@@ -106,8 +106,6 @@ namespace OnlineFPS
                 DontDestroyOnLoad(gameObject);
             }
 
-            GameInput.Initialize();
-
             m_MenuState = MenuState.InMenu;
             m_MenuDisplayEnabled = true;
 

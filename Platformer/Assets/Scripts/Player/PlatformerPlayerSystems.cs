@@ -16,6 +16,14 @@ public partial class PlatformerPlayerInputsSystem : SystemBase
 
     protected override void OnCreate()
     {
+        RequireForUpdate<FixedTickSystem.Singleton>();
+        RequireForUpdate(SystemAPI.QueryBuilder().WithAll<PlatformerPlayer, PlatformerPlayerInputs>().Build());
+    }
+
+    protected override void OnStartRunning()
+    {
+        base.OnStartRunning();
+        
         PlatformerInputActions inputActions = new PlatformerInputActions();
         inputActions.Enable();
         inputActions.GameplayMap.Enable();
@@ -23,9 +31,6 @@ public partial class PlatformerPlayerInputsSystem : SystemBase
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
-
-        RequireForUpdate<FixedTickSystem.Singleton>();
-        RequireForUpdate(SystemAPI.QueryBuilder().WithAll<PlatformerPlayer, PlatformerPlayerInputs>().Build());
     }
 
     protected override void OnUpdate()
